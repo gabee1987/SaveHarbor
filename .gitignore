@@ -425,6 +425,14 @@ test-results/
 # Mac bundle stuff
 *.dmg
 *.app
+!SaveHarbor.App/
+!SaveHarbor.App/**/
+!SaveHarbor.App/**/*.cs
+!SaveHarbor.App/**/*.xaml
+!SaveHarbor.App/**/*.csproj
+!SaveHarbor.App/**/*.json
+SaveHarbor.App/[Bb]in/
+SaveHarbor.App/[Oo]bj/
 
 # content below from: https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
 # General
