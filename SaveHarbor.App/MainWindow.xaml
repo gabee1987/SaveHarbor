@@ -6,7 +6,7 @@
         xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
         mc:Ignorable="d"
         Title="SaveHarbor"
-        Height="760"
+        Height="860"
         Width="1360"
         MinHeight="740"
         MinWidth="1020"
@@ -474,7 +474,7 @@
                         <StackPanel>
                             <TextBlock Text="Actions" Style="{StaticResource SectionTitle}" />
 
-                            <UniformGrid Columns="2" Rows="2" Margin="0,14,0,0">
+                            <UniformGrid Columns="2" Rows="3" Margin="0,14,0,0">
                                 <Button Content="Create backup"
                                         Command="{Binding CreateBackupCommand}"
                                         Style="{StaticResource PrimaryButton}"
@@ -483,11 +483,20 @@
                                         Command="{Binding RestoreBackupCommand}"
                                         Style="{StaticResource SecondaryButton}"
                                         Margin="8,0,0,8" />
+                                <Button Content="Import backup"
+                                        Command="{Binding ImportBackupCommand}"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Margin="0,8,8,8" />
                                 <Button Content="Check cloud"
                                         Command="{Binding CheckCloudCommand}"
                                         Style="{StaticResource SecondaryButton}"
-                                        Margin="0,8,8,0" />
+                                        Margin="8,8,0,8" />
                                 <Button Content="Upload current"
+                                        Command="{Binding CheckCloudCommand}"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Margin="0,8,8,0"
+                                        IsEnabled="False" />
+                                <Button Content="Download latest"
                                         Command="{Binding CheckCloudCommand}"
                                         Style="{StaticResource SecondaryButton}"
                                         Margin="8,8,0,0"
@@ -506,8 +515,8 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Cloud sync" FontWeight="SemiBold" />
-                                        <TextBlock Text="Provider not configured" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                                        <TextBlock Text="Import readiness" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding ProfileStatus}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
                                     </StackPanel>
                                     <Border Grid.Column="1"
                                             Background="#2C2418"

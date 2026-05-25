@@ -40,6 +40,33 @@ public sealed class ZipBackupService : IBackupService
         }, cancellationToken);
     }
 
+    public async Task<BackupManifest> ReadManifestAsync(string backupPath, CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(backupPath))
+        {
+            throw new FileNotFoundException("Backup archive was not found.", backupPath);
+        }
+
+        await using var stream = File.OpenRead(backupPath);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        var entry = archive.GetEntry("saveharbor-manifest.json")
+            ?? throw new InvalidOperationException("This archive is missing the SaveHarbor manifest.");
+
+        await using var manifestStream = entry.Open();
+        var manifest = await JsonSerializer.DeserializeAsync<BackupManifest>(manifestStream, JsonOptions, cancellationToken);
+        if (manifest is null || !string.Equals(manifest.Game, "Windrose", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("This backup does not look like a Windrose SaveHarbor backup.");
+        }
+
+        if (string.IsNullOrWhiteSpace(manifest.WorldId))
+        {
+            throw new InvalidOperationException("This backup manifest does not contain a world id.");
+        }
+
+        return manifest;
+    }
+
     public async Task<BackupInfo> CreateBackupAsync(WindroseWorld world, string reason, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(BackupRoot);
@@ -81,6 +108,55 @@ public sealed class ZipBackupService : IBackupService
             {
                 ReplaceDirectory(payloadRoot, targetPath, cancellationToken);
             }, cancellationToken);
+        }
+        finally
+        {
+            if (Directory.Exists(tempPath))
+            {
+                Directory.Delete(tempPath, true);
+            }
+        }
+    }
+
+    public async Task<string> ImportBackupAsNewWorldAsync(
+        string backupPath,
+        WindroseProfile profile,
+        bool overwriteExisting,
+        CancellationToken cancellationToken = default)
+    {
+        var manifest = await ReadManifestAsync(backupPath, cancellationToken);
+        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+
+        if (Directory.Exists(targetWorldPath) && !overwriteExisting)
+        {
+            throw new InvalidOperationException("This world already exists on this computer. Use restore instead, or confirm overwrite.");
+        }
+
+        var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempPath);
+
+        try
+        {
+            ZipFile.ExtractToDirectory(backupPath, tempPath);
+            var payloadRoot = Path.Combine(tempPath, "world");
+            if (!Directory.Exists(payloadRoot))
+            {
+                throw new InvalidOperationException("Backup archive does not contain a world payload.");
+            }
+
+            await Task.Run(() =>
+            {
+                Directory.CreateDirectory(profile.WorldsPath);
+
+                if (Directory.Exists(targetWorldPath))
+                {
+                    Directory.Delete(targetWorldPath, true);
+                }
+
+                CopyDirectory(payloadRoot, targetWorldPath, cancellationToken);
+            }, cancellationToken);
+
+            return targetWorldPath;
         }
         finally
         {

@@ -8,6 +8,8 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
 {
+    private const string DefaultRocksDbVersion = "0.10.0";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -43,6 +45,23 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
             .OrderByDescending(world => world.LastModifiedAt)
             .ThenBy(world => world.WorldName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    public Task<IReadOnlyList<WindroseProfile>> DiscoverProfilesAsync(CancellationToken cancellationToken = default)
+    {
+        var profilesRoot = GetProfilesRoot();
+
+        if (!Directory.Exists(profilesRoot))
+        {
+            return Task.FromResult<IReadOnlyList<WindroseProfile>>([]);
+        }
+
+        var profiles = Directory.EnumerateDirectories(profilesRoot)
+            .Select(CreateProfile)
+            .OrderByDescending(profile => profile.LastModifiedAt)
+            .ToArray();
+
+        return Task.FromResult<IReadOnlyList<WindroseProfile>>(profiles);
     }
 
     public async Task<WindroseWorld?> ReadWorldAsync(string worldPath, CancellationToken cancellationToken = default)
@@ -98,5 +117,36 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
         {
             return DateTimeOffset.MinValue;
         }
+    }
+
+    private static string GetProfilesRoot()
+    {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        return Path.Combine(localAppData, "R5", "Saved", "SaveProfiles");
+    }
+
+    private static WindroseProfile CreateProfile(string profilePath)
+    {
+        var profileDirectory = new DirectoryInfo(profilePath);
+        var rocksDbRoot = Path.Combine(profilePath, "RocksDB");
+        var versionDirectory = Directory.Exists(rocksDbRoot)
+            ? Directory.EnumerateDirectories(rocksDbRoot)
+                .Select(path => new DirectoryInfo(path))
+                .OrderByDescending(directory => directory.LastWriteTimeUtc)
+                .FirstOrDefault()
+            : null;
+
+        var rocksDbVersion = versionDirectory?.Name ?? DefaultRocksDbVersion;
+        var worldsPath = Path.Combine(profilePath, "RocksDB", rocksDbVersion, "Worlds");
+        var lastModified = Directory.Exists(profilePath)
+            ? profileDirectory.LastWriteTimeUtc
+            : DateTime.UtcNow;
+
+        return new WindroseProfile(
+            profileDirectory.Name,
+            profileDirectory.FullName,
+            rocksDbVersion,
+            worldsPath,
+            new DateTimeOffset(lastModified, TimeSpan.Zero).ToLocalTime());
     }
 }

@@ -39,6 +39,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string totalBackupSize = "0 B";
 
+    [ObservableProperty]
+    private string profileStatus = "Checking Windrose profile...";
+
     public ObservableCollection<WindroseWorld> Worlds { get; } = [];
 
     public ObservableCollection<ActivityLogItem> Activity { get; } = [];
@@ -122,6 +125,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             SelectedWorld ??= Worlds.FirstOrDefault();
+            await RefreshProfileStatusAsync();
             await RefreshBackupStatsAsync();
             StatusText = Worlds.Count == 0
                 ? "No Windrose worlds found."
@@ -208,6 +212,82 @@ public partial class MainWindowViewModel : ObservableObject
         });
     }
 
+    [RelayCommand]
+    private async Task ImportBackupAsync()
+    {
+        UpdateGameStatus();
+        if (IsGameRunning)
+        {
+            _dialogService.ShowError("Windrose is running", "Close Windrose before importing a world backup.");
+            return;
+        }
+
+        var backupPath = _dialogService.SelectZipFile(_backupService.BackupRoot);
+        if (backupPath is null)
+        {
+            return;
+        }
+
+        BackupManifest manifest;
+        IReadOnlyList<WindroseProfile> profiles;
+
+        try
+        {
+            manifest = await _backupService.ReadManifestAsync(backupPath);
+            profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("Cannot import backup", ex.Message);
+            AddActivity("Error", ex.Message);
+            return;
+        }
+
+        var profile = profiles.FirstOrDefault();
+        if (profile is null)
+        {
+            _dialogService.ShowError(
+                "Windrose profile not found",
+                "Start Windrose once on this computer, let it reach the main menu or create its local profile, then close it and try importing again.");
+            AddActivity("Error", "Import blocked: Windrose profile not found.");
+            return;
+        }
+
+        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+        var worldExists = Directory.Exists(targetWorldPath);
+        var actionText = worldExists
+            ? "This world already exists on this computer. Importing will replace that local world folder."
+            : "This will add the world to this computer.";
+
+        var confirmed = _dialogService.Confirm(
+            "Import world backup",
+            $"World: {manifest.WorldName}\nWorld ID: {manifest.WorldId}\nProfile: {profile.ProfileId}\n\n{actionText}\n\nKeep Windrose closed while importing.");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await RunBusyAsync("Importing backup as a new world...", async () =>
+        {
+            var importedPath = await _backupService.ImportBackupAsNewWorldAsync(backupPath, profile, overwriteExisting: worldExists);
+            await RefreshBackupStatsAsync();
+            await RefreshProfileStatusAsync();
+
+            var importedWorld = await _saveDiscoveryService.ReadWorldAsync(importedPath);
+            await RefreshAsync();
+            if (importedWorld is not null)
+            {
+                SelectedWorld = Worlds.FirstOrDefault(world =>
+                    string.Equals(world.WorldId, importedWorld.WorldId, StringComparison.OrdinalIgnoreCase));
+            }
+
+            StatusText = $"Imported world backup: {manifest.WorldName}";
+            AddActivity("Success", StatusText);
+            _dialogService.ShowInfo("Import complete", $"Imported {manifest.WorldName}.\n\nStart Windrose and check that the world appears.");
+        });
+    }
+
     [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
     private void OpenWorldFolder()
     {
@@ -227,7 +307,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void CheckCloud()
     {
-        _dialogService.ShowInfo("Cloud sync", "Cloud sync is planned after local backup and restore are verified. The UI is ready for it, but the provider is not implemented yet.");
+        _dialogService.ShowInfo("Cloud sync", "TODO: Cloud sync is planned after local backup and restore are verified.");
         AddActivity("Info", "Cloud sync is not implemented yet.");
     }
 
@@ -277,6 +357,16 @@ public partial class MainWindowViewModel : ObservableObject
         BackupCount = backups.Count;
         TotalBackupSize = FormatBytes(backups.Sum(backup => backup.SizeBytes));
         LastBackup = backups.FirstOrDefault();
+    }
+
+    private async Task RefreshProfileStatusAsync()
+    {
+        var profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+        var profile = profiles.FirstOrDefault();
+
+        ProfileStatus = profile is null
+            ? "No Windrose profile found. Start Windrose once before importing a backup."
+            : $"Profile {profile.ProfileId} • RocksDB {profile.RocksDbVersion}";
     }
 
     private void AddActivity(string level, string message)
