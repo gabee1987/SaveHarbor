@@ -33,6 +33,12 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private BackupInfo? lastBackup;
 
+    [ObservableProperty]
+    private int backupCount;
+
+    [ObservableProperty]
+    private string totalBackupSize = "0 B";
+
     public ObservableCollection<WindroseWorld> Worlds { get; } = [];
 
     public ObservableCollection<ActivityLogItem> Activity { get; } = [];
@@ -48,6 +54,22 @@ public partial class MainWindowViewModel : ObservableObject
     public string SelectedWorldSize => SelectedWorld is null ? "Unknown" : FormatBytes(SelectedWorld.SizeBytes);
 
     public string SelectedWorldFileCount => SelectedWorld is null ? "0 files" : $"{SelectedWorld.FileCount:N0} files";
+
+    public string LatestBackupSummary => LastBackup is null
+        ? "No backups found"
+        : $"{LastBackup.FileName} • {FormatBytes(LastBackup.SizeBytes)}";
+
+    public string LatestBackupAge => LastBackup is null
+        ? "Create a backup before sharing or restoring this world."
+        : $"Created {FormatAge(LastBackup.CreatedAt)}";
+
+    public string SelectedWorldModifiedAge => SelectedWorld is null
+        ? "No world selected"
+        : $"Modified {FormatAge(SelectedWorld.LastModifiedAt)}";
+
+    public string SafetyHint => IsGameRunning
+        ? "Close Windrose before backup, restore, upload, or download."
+        : "Safe for backup and restore. Keep Windrose closed during save operations.";
 
     public MainWindowViewModel(
         IWindroseSaveDiscoveryService saveDiscoveryService,
@@ -65,6 +87,18 @@ public partial class MainWindowViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SelectedWorldSize));
         OnPropertyChanged(nameof(SelectedWorldFileCount));
+        OnPropertyChanged(nameof(SelectedWorldModifiedAge));
+    }
+
+    partial void OnLastBackupChanged(BackupInfo? value)
+    {
+        OnPropertyChanged(nameof(LatestBackupSummary));
+        OnPropertyChanged(nameof(LatestBackupAge));
+    }
+
+    partial void OnIsGameRunningChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SafetyHint));
     }
 
     [RelayCommand]
@@ -88,6 +122,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             SelectedWorld ??= Worlds.FirstOrDefault();
+            await RefreshBackupStatsAsync();
             StatusText = Worlds.Count == 0
                 ? "No Windrose worlds found."
                 : $"Found {Worlds.Count} Windrose world{(Worlds.Count == 1 ? string.Empty : "s")}.";
@@ -114,6 +149,7 @@ public partial class MainWindowViewModel : ObservableObject
         await RunBusyAsync("Creating backup...", async () =>
         {
             LastBackup = await _backupService.CreateBackupAsync(SelectedWorld, "manual");
+            await RefreshBackupStatsAsync();
             StatusText = $"Backup created: {LastBackup.FileName}";
             AddActivity("Success", StatusText);
             _dialogService.ShowInfo("Backup created", $"Saved backup:\n{LastBackup.FilePath}");
@@ -166,6 +202,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             StatusText = "Backup restored successfully.";
+            await RefreshBackupStatsAsync();
             AddActivity("Success", StatusText);
             _dialogService.ShowInfo("Restore complete", "The backup was restored and a pre-restore safety backup was created.");
         });
@@ -234,6 +271,14 @@ public partial class MainWindowViewModel : ObservableObject
         IsGameRunning = _processDetectionService.IsWindroseRunning();
     }
 
+    private async Task RefreshBackupStatsAsync()
+    {
+        var backups = await _backupService.ListBackupsAsync();
+        BackupCount = backups.Count;
+        TotalBackupSize = FormatBytes(backups.Sum(backup => backup.SizeBytes));
+        LastBackup = backups.FirstOrDefault();
+    }
+
     private void AddActivity(string level, string message)
     {
         Activity.Insert(0, new ActivityLogItem(DateTimeOffset.Now, level, message));
@@ -264,5 +309,31 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         return $"{size:0.##} {units[unit]}";
+    }
+
+    private static string FormatAge(DateTimeOffset timestamp)
+    {
+        var elapsed = DateTimeOffset.Now - timestamp;
+        if (elapsed.TotalMinutes < 1)
+        {
+            return "just now";
+        }
+
+        if (elapsed.TotalHours < 1)
+        {
+            return $"{(int)elapsed.TotalMinutes} min ago";
+        }
+
+        if (elapsed.TotalDays < 1)
+        {
+            return $"{(int)elapsed.TotalHours} h ago";
+        }
+
+        if (elapsed.TotalDays < 14)
+        {
+            return $"{(int)elapsed.TotalDays} d ago";
+        }
+
+        return timestamp.ToString("yyyy-MM-dd HH:mm");
     }
 }

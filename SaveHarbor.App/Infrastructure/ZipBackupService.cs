@@ -16,6 +16,30 @@ public sealed class ZipBackupService : IBackupService
         "SaveHarbor",
         "backups");
 
+    public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!Directory.Exists(BackupRoot))
+        {
+            return Task.FromResult<IReadOnlyList<BackupInfo>>([]);
+        }
+
+        return Task.Run<IReadOnlyList<BackupInfo>>(() =>
+        {
+            return Directory.EnumerateFiles(BackupRoot, "*.zip", SearchOption.TopDirectoryOnly)
+                .Select(path =>
+                {
+                    var fileInfo = new FileInfo(path);
+                    return new BackupInfo(
+                        fileInfo.FullName,
+                        fileInfo.Name,
+                        new DateTimeOffset(fileInfo.CreationTime),
+                        fileInfo.Length);
+                })
+                .OrderByDescending(backup => backup.CreatedAt)
+                .ToArray();
+        }, cancellationToken);
+    }
+
     public async Task<BackupInfo> CreateBackupAsync(WindroseWorld world, string reason, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(BackupRoot);

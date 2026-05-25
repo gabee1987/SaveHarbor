@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="SaveHarbor"
         Height="760"
-        Width="1260"
+        Width="1360"
         MinHeight="740"
         MinWidth="1020"
         Background="#0D1114"
@@ -372,7 +372,8 @@
                                     <TextBlock Text="Last modified" Style="{StaticResource MicroLabel}" />
                                     <TextBlock Text="{Binding SelectedWorld.LastModifiedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}, TargetNullValue=Unknown}"
                                                FontWeight="SemiBold"
-                                               Margin="0,4,0,10" />
+                                               Margin="0,4,0,2" />
+                                    <TextBlock Text="{Binding SelectedWorldModifiedAge}" Style="{StaticResource MutedText}" Margin="0,0,0,10" />
                                     <TextBlock Text="Local path" Style="{StaticResource MicroLabel}" />
                                     <TextBlock Text="{Binding SelectedWorld.SavePath, TargetNullValue=No world selected}"
                                                TextWrapping="Wrap"
@@ -390,7 +391,11 @@
                             <Grid Margin="0,10,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="7" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="7" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="9" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
@@ -414,10 +419,10 @@
                                         MinWidth="76"
                                         MinHeight="32" />
 
-                                <TextBlock Grid.Row="2" Text="Last backup" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Row="2" Text="Latest" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
                                 <TextBlock Grid.Row="2"
                                            Grid.Column="1"
-                                           Text="{Binding LastBackup.FileName, TargetNullValue=No backup this session}"
+                                           Text="{Binding LatestBackupSummary}"
                                            TextTrimming="CharacterEllipsis"
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center" />
@@ -429,6 +434,30 @@
                                         Padding="12,5"
                                         MinWidth="112"
                                         MinHeight="32" />
+
+                                <TextBlock Grid.Row="4" Text="Stored" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding BackupCount, StringFormat={}{0:N0} backups}" FontWeight="SemiBold" />
+                                    <TextBlock Text="  •  " Foreground="{StaticResource SubtleBrush}" />
+                                    <TextBlock Text="{Binding TotalBackupSize}" FontWeight="SemiBold" />
+                                </StackPanel>
+                                <TextBlock Grid.Row="4"
+                                           Grid.Column="3"
+                                           Text="{Binding LatestBackupAge}"
+                                           Style="{StaticResource MutedText}"
+                                           VerticalAlignment="Center" />
+
+                                <Border Grid.Row="6"
+                                        Grid.ColumnSpan="4"
+                                        Background="{StaticResource PanelAltBrush}"
+                                        BorderBrush="{StaticResource LineSoftBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="10,7">
+                                    <TextBlock Text="{Binding SafetyHint}"
+                                               Style="{StaticResource MutedText}"
+                                               TextWrapping="Wrap" />
+                                </Border>
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -485,7 +514,7 @@
                                             Padding="9,5"
                                             CornerRadius="7"
                                             VerticalAlignment="Center">
-                                        <TextBlock Text="Later" Foreground="{StaticResource WarnBrush}" FontWeight="SemiBold" FontSize="12" />
+                                        <TextBlock Text="TODO" Foreground="{StaticResource WarnBrush}" FontWeight="SemiBold" FontSize="12" />
                                     </Border>
                                 </Grid>
                             </Border>
