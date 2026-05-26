@@ -653,9 +653,9 @@ Done when:
 
 ### Phase 4 - Test Provider
 
-- [ ] Implement a folder-backed provider for development tests.
-- [ ] Store manifest/versions/locks in a normal local folder.
-- [ ] Use this provider to test sync rules without Google auth.
+- [x] Implement a folder-backed provider for development tests.
+- [x] Store manifest/versions/locks in a normal local folder.
+- [x] Use this provider to test sync rules without Google auth.
 - [ ] Hide this provider from normal users or mark it as developer-only.
 
 Done when:
@@ -665,12 +665,12 @@ Done when:
 
 ### Phase 5 - Sync Rule Engine
 
-- [ ] Implement `RefreshStatusAsync`.
+- [x] Implement `RefreshStatusAsync`.
 - [ ] Implement safe upload check:
-  - [ ] allow first upload if no cloud manifest
-  - [ ] allow upload if local base equals cloud latest
-  - [ ] block upload if cloud latest changed
-- [ ] Implement safe download check.
+  - [x] allow first upload if no cloud manifest
+  - [x] allow upload if local base equals cloud latest
+  - [x] block upload if cloud latest changed
+- [x] Implement safe download check.
 - [ ] Implement active/stale/expired lock interpretation.
 - [ ] Implement conflict status.
 
@@ -694,13 +694,13 @@ Done when:
 
 ### Phase 7 - Download Latest
 
-- [ ] Download ZIP through provider.
-- [ ] Verify SHA-256.
-- [ ] Create pre-download backup.
-- [ ] Restore world folder.
-- [ ] Update local sync state.
-- [ ] Toast success/failure.
-- [ ] Block while Windrose is running.
+- [x] Download ZIP through provider.
+- [x] Verify SHA-256.
+- [x] Create pre-download backup.
+- [x] Restore world folder.
+- [x] Update local sync state.
+- [x] Toast success/failure.
+- [x] Block while Windrose is running.
 
 Done when:
 
@@ -708,15 +708,15 @@ Done when:
 
 ### Phase 8 - Upload Current
 
-- [ ] Refresh cloud manifest immediately before upload.
-- [ ] Block conflict uploads.
-- [ ] Create local backup.
-- [ ] Create ZIP.
-- [ ] Compute SHA-256.
-- [ ] Upload archive and metadata.
-- [ ] Publish manifest last.
-- [ ] Update local sync state.
-- [ ] Clear own lock.
+- [x] Refresh cloud manifest immediately before upload.
+- [x] Block conflict uploads.
+- [x] Create local backup.
+- [x] Create ZIP.
+- [x] Compute SHA-256.
+- [x] Upload archive and metadata.
+- [x] Publish manifest last.
+- [x] Update local sync state.
+- [x] Clear own lock.
 
 Done when:
 
@@ -724,12 +724,12 @@ Done when:
 
 ### Phase 9 - Session Lock
 
-- [ ] Add `Start session`.
-- [ ] Add `End session`.
+- [x] Add `Start session`.
+- [x] Add `End session`.
 - [ ] Auto-create lock after download if user chooses to play.
 - [ ] Add heartbeat timer while SaveHarbor is open.
-- [ ] Show other player's active/stale lock.
-- [ ] Clear own lock after successful upload.
+- [x] Show other player's active/stale lock.
+- [x] Clear own lock after successful upload.
 - [ ] Handle app close gracefully by leaving lock to expire.
 
 Done when:

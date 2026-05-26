@@ -27,6 +27,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="8" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <TextBlock Text="Local files" Style="{StaticResource MicroLabel}" />
@@ -73,7 +75,9 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="8" />
+                        <RowDefinition Height="7" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
@@ -99,8 +103,8 @@
                         </Grid.ColumnDefinitions>
                         <Button Content="Check"
                                 Command="{Binding CheckCloudCommand}"
-                                MinHeight="32"
-                                Padding="9,5"
+                                MinHeight="30"
+                                Padding="8,4"
                                 Background="#1E2E44"
                                 BorderBrush="#36577D"
                                 Foreground="{StaticResource InkBrush}"
@@ -108,26 +112,51 @@
                                 ToolTip="Check the cloud manifest, latest version, and active session state." />
                         <Button Grid.Column="2"
                                 Content="Upload"
-                                Command="{Binding CheckCloudCommand}"
-                                MinHeight="32"
-                                Padding="9,5"
+                                Command="{Binding UploadCloudCommand}"
+                                MinHeight="30"
+                                Padding="8,4"
                                 Background="#1E332D"
                                 BorderBrush="#357866"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                IsEnabled="False"
-                                ToolTip="Upload current will be enabled after the Google Drive provider is implemented. Uploads will be blocked if cloud changed while you played." />
+                                ToolTip="Upload the selected local world to the cloud provider. Upload is blocked if cloud changed while you played." />
                         <Button Grid.Column="4"
                                 Content="Download"
-                                Command="{Binding CheckCloudCommand}"
-                                MinHeight="32"
-                                Padding="9,5"
+                                Command="{Binding DownloadCloudCommand}"
+                                MinHeight="30"
+                                Padding="8,4"
                                 Background="#352A1E"
                                 BorderBrush="#8A6634"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                IsEnabled="False"
-                                ToolTip="Download latest will be enabled after the Google Drive provider is implemented. A local backup will be created before restore." />
+                                ToolTip="Download and restore the latest cloud save. A local backup is created before restore." />
+                    </Grid>
+
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Start session"
+                                Command="{Binding StartCloudSessionCommand}"
+                                MinHeight="30"
+                                Padding="8,4"
+                                Background="#1E2E44"
+                                BorderBrush="#36577D"
+                                Foreground="{StaticResource InkBrush}"
+                                Style="{StaticResource SecondaryButton}"
+                                ToolTip="Mark that you are starting to play from the current cloud version, so friends see an active session warning." />
+                        <Button Grid.Column="2"
+                                Content="End session"
+                                Command="{Binding EndCloudSessionCommand}"
+                                MinHeight="30"
+                                Padding="8,4"
+                                Background="#1A2229"
+                                BorderBrush="{StaticResource LineBrush}"
+                                Foreground="{StaticResource InkBrush}"
+                                Style="{StaticResource SecondaryButton}"
+                                ToolTip="Clear your active session lock if you stop playing without uploading." />
                     </Grid>
                 </Grid>
             </Border>

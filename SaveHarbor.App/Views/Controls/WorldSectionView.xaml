@@ -18,13 +18,21 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="World" Style="{StaticResource SectionTitle}"
                            ToolTip="The selected local Windrose world SaveHarbor will back up, restore, upload, or replace." />
-                <Button Grid.Column="1"
-                        Content="Refresh"
-                        Command="{Binding RefreshCommand}"
-                        Style="{StaticResource SecondaryButton}"
-                        Padding="10,4"
-                        MinHeight="30"
-                        ToolTip="Scan the Windrose save folder again and refresh world/backup status." />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Open folder"
+                            Command="{Binding OpenWorldFolderCommand}"
+                            Style="{StaticResource SecondaryButton}"
+                            Padding="10,4"
+                            MinHeight="30"
+                            Margin="0,0,8,0"
+                            ToolTip="Open the selected Windrose world save folder." />
+                    <Button Content="Refresh"
+                            Command="{Binding RefreshCommand}"
+                            Style="{StaticResource SecondaryButton}"
+                            Padding="10,4"
+                            MinHeight="30"
+                            ToolTip="Scan the Windrose save folder again and refresh world/backup status." />
+                </StackPanel>
             </Grid>
 
             <ComboBox Grid.Row="1"

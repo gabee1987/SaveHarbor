@@ -22,7 +22,7 @@ public partial class App : Application
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IToastService, ToastService>();
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
-                services.AddSingleton<ICloudProvider, NotConfiguredCloudProvider>();
+                services.AddSingleton<ICloudProvider, FolderCloudProvider>();
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();

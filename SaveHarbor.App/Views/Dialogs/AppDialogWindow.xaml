@@ -1,0 +1,88 @@
+<Window x:Class="SaveHarbor.App.Views.Dialogs.AppDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding DialogTitle, RelativeSource={RelativeSource Self}}"
+        Width="460"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource AppBackgroundBrush}"
+        FontFamily="Segoe UI"
+        FontSize="13">
+    <Border Background="{StaticResource PanelBrush}"
+            BorderBrush="{StaticResource LineBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="18">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="18" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Width="34"
+                        Height="34"
+                        CornerRadius="17"
+                        Background="{StaticResource InputBrush}"
+                        BorderBrush="{Binding AccentBrush, RelativeSource={RelativeSource AncestorType=Window}}"
+                        BorderThickness="1">
+                    <TextBlock Text="{Binding IconText, RelativeSource={RelativeSource AncestorType=Window}}"
+                               Foreground="{Binding AccentBrush, RelativeSource={RelativeSource AncestorType=Window}}"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DialogTitle, RelativeSource={RelativeSource AncestorType=Window}}"
+                               FontSize="16"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Subtitle, RelativeSource={RelativeSource AncestorType=Window}}"
+                               Style="{StaticResource MutedText}"
+                               TextWrapping="Wrap"
+                               Margin="0,3,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Grid.Row="2"
+                       Text="{Binding Message, RelativeSource={RelativeSource AncestorType=Window}}"
+                       Foreground="{StaticResource InkBrush}"
+                       TextWrapping="Wrap"
+                       LineHeight="19" />
+
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="1"
+                        Content="{Binding CancelText, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Style="{StaticResource SecondaryButton}"
+                        MinWidth="104"
+                        MinHeight="34"
+                        Visibility="{Binding CancelVisibility, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Click="CancelButton_Click" />
+
+                <Button Grid.Column="3"
+                        Content="{Binding PrimaryText, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Style="{StaticResource PrimaryButton}"
+                        MinWidth="104"
+                        MinHeight="34"
+                        Click="PrimaryButton_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

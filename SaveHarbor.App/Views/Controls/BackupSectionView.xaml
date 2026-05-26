@@ -66,52 +66,38 @@
                         CornerRadius="7"
                         Padding="9"
                         ToolTip="Latest backup details. Click filename or path to copy it.">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="Latest backup" Style="{StaticResource MicroLabel}" />
-                            <TextBlock Text="{Binding LatestBackupFileName}"
-                                       FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis"
-                                       Margin="0,3,0,0"
-                                       behaviors:CopyOnClick.Text="{Binding LatestBackupFileName}">
-                                <TextBlock.ToolTip>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding LatestBackupFileName}" />
-                                        <TextBlock Text="Click to copy" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
-                                    </StackPanel>
-                                </TextBlock.ToolTip>
-                            </TextBlock>
-                            <TextBlock Text="{Binding LatestBackupDetails}"
-                                       Style="{StaticResource MutedText}"
-                                       Margin="0,2,0,0" />
-                            <TextBlock Text="{Binding LatestBackupPath}"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource InkBrush}"
-                                       Margin="0,4,0,0"
-                                       behaviors:CopyOnClick.Text="{Binding LatestBackupPath}">
-                                <TextBlock.ToolTip>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding LatestBackupPath}" />
-                                        <TextBlock Text="Click to copy" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
-                                    </StackPanel>
-                                </TextBlock.ToolTip>
-                            </TextBlock>
-                        </StackPanel>
-                        <Button Grid.Column="2"
-                                Content="World folder"
-                                Command="{Binding OpenWorldFolderCommand}"
-                                Style="{StaticResource SecondaryButton}"
-                                Padding="10,4"
-                                MinWidth="100"
-                                MinHeight="30"
-                                VerticalAlignment="Center"
-                                ToolTip="Open the selected Windrose world folder." />
-                    </Grid>
+                    <StackPanel>
+                        <TextBlock Text="{Binding LatestBackupHeader}"
+                                   Style="{StaticResource MutedText}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   FontSize="11" />
+                        <TextBlock Text="{Binding LatestBackupFileName}"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,3,0,0"
+                                   behaviors:CopyOnClick.Text="{Binding LatestBackupFileName}">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding LatestBackupFileName}" />
+                                    <TextBlock Text="Click to copy" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <TextBlock Text="{Binding LatestBackupPath}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource InkBrush}"
+                                   Margin="0,4,0,0"
+                                   behaviors:CopyOnClick.Text="{Binding LatestBackupPath}">
+                            <TextBlock.ToolTip>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding LatestBackupPath}" />
+                                    <TextBlock Text="Click to copy" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                    </StackPanel>
                 </Border>
 
                 <Grid Grid.Row="4">

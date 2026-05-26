@@ -1,5 +1,7 @@
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
+using System.IO;
+using System.Security.Cryptography;
 
 namespace SaveHarbor.App.Infrastructure;
 
@@ -7,11 +9,16 @@ public sealed class CloudSyncService : ICloudSyncService
 {
     private readonly ICloudProvider cloudProvider;
     private readonly ILocalSyncStateService localSyncStateService;
+    private readonly IBackupService backupService;
 
-    public CloudSyncService(ICloudProvider cloudProvider, ILocalSyncStateService localSyncStateService)
+    public CloudSyncService(
+        ICloudProvider cloudProvider,
+        ILocalSyncStateService localSyncStateService,
+        IBackupService backupService)
     {
         this.cloudProvider = cloudProvider;
         this.localSyncStateService = localSyncStateService;
+        this.backupService = backupService;
     }
 
     public async Task<CloudSyncStatus> RefreshStatusAsync(WindroseWorld world, CancellationToken cancellationToken = default)
@@ -122,36 +129,195 @@ public sealed class CloudSyncService : ICloudSyncService
             $"Local save is based on v{latestVersion.VersionNumber}.");
     }
 
-    public Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudSyncResult(
-            false,
-            CloudSyncState.NotConnected,
-            "Download latest will be enabled after the Google Drive provider is implemented."));
+        var status = await RefreshStatusAsync(world, cancellationToken);
+        if (!status.Connection.IsConnected)
+        {
+            return new CloudSyncResult(false, status.State, "Cloud sync is not connected.");
+        }
+
+        if (status.LatestVersion is null)
+        {
+            return new CloudSyncResult(false, status.State, "No cloud save is available for this world.");
+        }
+
+        var tempPath = Path.Combine(
+            Path.GetTempPath(),
+            "SaveHarbor",
+            "cloud-downloads",
+            $"{Guid.NewGuid():N}_{status.LatestVersion.ArchiveFileName}");
+
+        try
+        {
+            var download = await cloudProvider.DownloadVersionAsync(
+                new CloudDownloadRequest(world, status.LatestVersion, tempPath),
+                cancellationToken);
+
+            if (!download.IsSuccess || download.ArchivePath is null)
+            {
+                return new CloudSyncResult(false, status.State, download.Message);
+            }
+
+            var archiveSha256 = await ComputeFileSha256Async(download.ArchivePath, cancellationToken);
+            if (!string.Equals(archiveSha256, status.LatestVersion.ArchiveSha256, StringComparison.OrdinalIgnoreCase))
+            {
+                return new CloudSyncResult(false, CloudSyncState.Error, "Downloaded archive hash did not match the cloud manifest. Local save was not changed.");
+            }
+
+            await backupService.RestoreBackupAsync(download.ArchivePath, world, cancellationToken);
+
+            var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
+            localState.LastKnownCloudVersionNumber = status.LatestVersion.VersionNumber;
+            localState.LastKnownCloudVersionId = status.LatestVersion.VersionId;
+            localState.LocalBaseVersionNumber = status.LatestVersion.VersionNumber;
+            localState.LocalBaseVersionId = status.LatestVersion.VersionId;
+            localState.LastDownloadedAtUtc = DateTimeOffset.UtcNow;
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+
+            return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Downloaded {world.WorldName} v{status.LatestVersion.VersionNumber}. Local backup was created first.");
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
     }
 
-    public Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudSyncResult(
-            false,
-            CloudSyncState.NotConnected,
-            "Upload current will be enabled after the Google Drive provider is implemented."));
+        var status = await RefreshStatusAsync(world, cancellationToken);
+        if (!status.Connection.IsConnected)
+        {
+            return new CloudSyncResult(false, status.State, "Cloud sync is not connected.");
+        }
+
+        if (status.LatestVersion is not null &&
+            status.LocalState.LocalBaseVersionNumber != status.LatestVersion.VersionNumber)
+        {
+            return new CloudSyncResult(
+                false,
+                CloudSyncState.Conflict,
+                $"Upload blocked. Cloud is v{status.LatestVersion.VersionNumber}, but this local save is based on {(status.LocalState.LocalBaseVersionNumber is null ? "no cloud version" : $"v{status.LocalState.LocalBaseVersionNumber}")}.");
+        }
+
+        var backup = await backupService.CreateBackupAsync(world, "cloud-upload", cancellationToken);
+        var archiveSha256 = await ComputeFileSha256Async(backup.FilePath, cancellationToken);
+        var nextVersionNumber = (status.LatestVersion?.VersionNumber ?? 0) + 1;
+        var safePlayer = MakeSafeFileName(Environment.UserName);
+        var versionId = $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{safePlayer}_v{nextVersionNumber}";
+        var archiveFileName = $"{versionId}.zip";
+
+        var version = new CloudVersionMetadata
+        {
+            VersionNumber = nextVersionNumber,
+            VersionId = versionId,
+            UploadedAtUtc = DateTimeOffset.UtcNow,
+            UploadedBy = Environment.UserName,
+            UploaderMachine = Environment.MachineName,
+            ArchiveFileName = archiveFileName,
+            ArchiveSha256 = archiveSha256,
+            ArchiveSizeBytes = new FileInfo(backup.FilePath).Length,
+            SourceWorldModifiedAtUtc = world.LastModifiedAt.ToUniversalTime(),
+            BasedOnVersionNumber = status.LatestVersion?.VersionNumber ?? 0,
+            BasedOnVersionId = status.LatestVersion?.VersionId ?? string.Empty
+        };
+
+        var upload = await cloudProvider.UploadVersionAsync(
+            new CloudUploadRequest(world, backup.FilePath, version, status.Manifest),
+            cancellationToken);
+
+        if (!upload.IsSuccess)
+        {
+            return new CloudSyncResult(false, CloudSyncState.Error, upload.Message);
+        }
+
+        var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
+        localState.LastKnownCloudVersionNumber = version.VersionNumber;
+        localState.LastKnownCloudVersionId = version.VersionId;
+        localState.LocalBaseVersionNumber = version.VersionNumber;
+        localState.LocalBaseVersionId = version.VersionId;
+        localState.LastUploadedAtUtc = DateTimeOffset.UtcNow;
+        localState.LastLocalBackupPath = backup.FilePath;
+        await localSyncStateService.SaveAsync(localState, cancellationToken);
+
+        if (IsOwnLock(status.SessionLock))
+        {
+            await cloudProvider.ClearSessionLockAsync(world.WorldId, status.SessionLock!.LockId, cancellationToken);
+        }
+
+        return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Uploaded {world.WorldName} v{version.VersionNumber}.");
     }
 
-    public Task<CloudSyncResult> StartSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> StartSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudSyncResult(
-            false,
-            CloudSyncState.NotConnected,
-            "Session locks will be enabled after the Google Drive provider is implemented."));
+        var status = await RefreshStatusAsync(world, cancellationToken);
+        if (!status.Connection.IsConnected)
+        {
+            return new CloudSyncResult(false, status.State, "Cloud sync is not connected.");
+        }
+
+        if (status.LatestVersion is null)
+        {
+            return new CloudSyncResult(false, status.State, "Upload this world first before starting a shared play session.");
+        }
+
+        if (status.LocalState.LocalBaseVersionNumber != status.LatestVersion.VersionNumber)
+        {
+            return new CloudSyncResult(false, CloudSyncState.CloudNewer, "Download the latest cloud save before starting a shared play session.");
+        }
+
+        if (IsActiveOtherPlayerLock(status.SessionLock))
+        {
+            return new CloudSyncResult(false, CloudSyncState.SomeonePlaying, $"{status.SessionLock!.PlayerName} already appears to be playing.");
+        }
+
+        if (IsActiveOwnLock(status.SessionLock))
+        {
+            return new CloudSyncResult(true, CloudSyncState.SomeonePlaying, $"Session is already active for {world.WorldName} from v{status.SessionLock!.BasedOnVersionNumber}.");
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var sessionLock = new CloudSessionLock
+        {
+            LockId = Guid.NewGuid().ToString("D"),
+            WorldId = world.WorldId,
+            PlayerName = Environment.UserName,
+            MachineName = Environment.MachineName,
+            StartedAtUtc = now,
+            LastHeartbeatAtUtc = now,
+            BasedOnVersionNumber = status.LatestVersion.VersionNumber,
+            BasedOnVersionId = status.LatestVersion.VersionId,
+            ExpiresAtUtc = now.AddHours(6),
+            Status = "Playing"
+        };
+
+        await cloudProvider.WriteSessionLockAsync(sessionLock, cancellationToken);
+        return new CloudSyncResult(true, CloudSyncState.SomeonePlaying, $"Session started for {world.WorldName} from v{status.LatestVersion.VersionNumber}.");
     }
 
-    public Task<CloudSyncResult> EndSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> EndSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudSyncResult(
-            false,
-            CloudSyncState.NotConnected,
-            "Session locks will be enabled after the Google Drive provider is implemented."));
+        var status = await RefreshStatusAsync(world, cancellationToken);
+        if (!status.Connection.IsConnected)
+        {
+            return new CloudSyncResult(false, status.State, "Cloud sync is not connected.");
+        }
+
+        if (status.SessionLock is null)
+        {
+            return new CloudSyncResult(true, status.State, "No active session lock exists.");
+        }
+
+        if (!IsOwnLock(status.SessionLock))
+        {
+            return new CloudSyncResult(false, CloudSyncState.SomeonePlaying, $"{status.SessionLock.PlayerName} owns the active session lock.");
+        }
+
+        await cloudProvider.ClearSessionLockAsync(world.WorldId, status.SessionLock.LockId, cancellationToken);
+        return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Session ended for {world.WorldName}.");
     }
 
     private static bool IsActiveOtherPlayerLock(CloudSessionLock? sessionLock)
@@ -167,5 +333,29 @@ public sealed class CloudSyncService : ICloudSyncService
         }
 
         return !string.Equals(sessionLock.MachineName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsOwnLock(CloudSessionLock? sessionLock)
+    {
+        return sessionLock is not null &&
+            string.Equals(sessionLock.MachineName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsActiveOwnLock(CloudSessionLock? sessionLock)
+    {
+        return IsOwnLock(sessionLock) && DateTimeOffset.UtcNow <= sessionLock!.ExpiresAtUtc;
+    }
+
+    private static async Task<string> ComputeFileSha256Async(string path, CancellationToken cancellationToken)
+    {
+        await using var stream = File.OpenRead(path);
+        var hash = await SHA256.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(hash);
+    }
+
+    private static string MakeSafeFileName(string value)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Join("_", value.Split(invalid, StringSplitOptions.RemoveEmptyEntries)).Trim();
     }
 }
