@@ -51,5 +51,10 @@
                 <controls:ActivitySectionView Grid.Row="2" />
             </Grid>
         </Grid>
+
+        <controls:ToastHostView Grid.RowSpan="2"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,14,20,0" />
     </Grid>
 </Window>

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Views.Behaviors;
 
@@ -60,6 +61,13 @@ public static class CopyOnClick
         }
 
         Clipboard.SetText(text);
+        ToastService.Current?.Success("Copied", Abbreviate(text));
         e.Handled = true;
+    }
+
+    private static string Abbreviate(string value)
+    {
+        const int maxLength = 90;
+        return value.Length <= maxLength ? value : $"{value[..maxLength]}...";
     }
 }

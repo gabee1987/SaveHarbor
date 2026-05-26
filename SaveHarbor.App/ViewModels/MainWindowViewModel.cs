@@ -14,6 +14,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IBackupService _backupService;
     private readonly IProcessDetectionService _processDetectionService;
     private readonly IDialogService _dialogService;
+    private readonly IToastService _toastService;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]
@@ -45,6 +46,8 @@ public partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<WindroseWorld> Worlds { get; } = [];
 
     public ObservableCollection<ActivityLogItem> Activity { get; } = [];
+
+    public ObservableCollection<ToastNotification> Toasts { get; } = [];
 
     public string BackupRoot => _backupService.BackupRoot;
 
@@ -88,12 +91,16 @@ public partial class MainWindowViewModel : ObservableObject
         IWindroseSaveDiscoveryService saveDiscoveryService,
         IBackupService backupService,
         IProcessDetectionService processDetectionService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IToastService toastService)
     {
         _saveDiscoveryService = saveDiscoveryService;
         _backupService = backupService;
         _processDetectionService = processDetectionService;
         _dialogService = dialogService;
+        _toastService = toastService;
+
+        _toastService.ToastRequested += OnToastRequested;
     }
 
     partial void OnSelectedWorldChanged(WindroseWorld? value)
@@ -169,6 +176,7 @@ public partial class MainWindowViewModel : ObservableObject
         UpdateGameStatus();
         if (IsGameRunning)
         {
+            _toastService.Warning("Windrose is running", "Close the game before creating a backup.");
             _dialogService.ShowError("Windrose is running", "Close Windrose before creating a backup so the RocksDB save files are not copied while they are changing.");
             return;
         }
@@ -179,6 +187,7 @@ public partial class MainWindowViewModel : ObservableObject
             await RefreshBackupStatsAsync();
             StatusText = $"Backup created: {LastBackup.FileName}";
             AddActivity("Success", StatusText);
+            _toastService.Success("Backup created", LastBackup.FileName);
             _dialogService.ShowInfo("Backup created", $"Saved backup:\n{LastBackup.FilePath}");
         });
     }
@@ -194,6 +203,7 @@ public partial class MainWindowViewModel : ObservableObject
         UpdateGameStatus();
         if (IsGameRunning)
         {
+            _toastService.Warning("Windrose is running", "Close the game before restoring a backup.");
             _dialogService.ShowError("Windrose is running", "Close Windrose before restoring a backup.");
             return;
         }
@@ -231,6 +241,7 @@ public partial class MainWindowViewModel : ObservableObject
             StatusText = "Backup restored successfully.";
             await RefreshBackupStatsAsync();
             AddActivity("Success", StatusText);
+            _toastService.Success("Restore complete", "Backup restored and safety backup created.");
             _dialogService.ShowInfo("Restore complete", "The backup was restored and a pre-restore safety backup was created.");
         });
     }
@@ -241,6 +252,7 @@ public partial class MainWindowViewModel : ObservableObject
         UpdateGameStatus();
         if (IsGameRunning)
         {
+            _toastService.Warning("Windrose is running", "Close the game before importing a backup.");
             _dialogService.ShowError("Windrose is running", "Close Windrose before importing a world backup.");
             return;
         }
@@ -261,6 +273,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            _toastService.Error("Cannot import backup", ex.Message);
             _dialogService.ShowError("Cannot import backup", ex.Message);
             AddActivity("Error", ex.Message);
             return;
@@ -269,6 +282,7 @@ public partial class MainWindowViewModel : ObservableObject
         var profile = profiles.FirstOrDefault();
         if (profile is null)
         {
+            _toastService.Warning("Profile not found", "Start Windrose once, close it, then import again.");
             _dialogService.ShowError(
                 "Windrose profile not found",
                 "Start Windrose once on this computer, let it reach the main menu or create its local profile, then close it and try importing again.");
@@ -307,6 +321,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             StatusText = $"Imported world backup: {manifest.WorldName}";
             AddActivity("Success", StatusText);
+            _toastService.Success("Import complete", manifest.WorldName);
             _dialogService.ShowInfo("Import complete", $"Imported {manifest.WorldName}.\n\nStart Windrose and check that the world appears.");
         });
     }
@@ -332,6 +347,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _dialogService.ShowInfo("Cloud sync", "TODO: Cloud sync is planned after local backup and restore are verified.");
         AddActivity("Info", "Cloud sync is not implemented yet.");
+        _toastService.Info("Cloud sync", "Not implemented yet.");
     }
 
     private bool HasSelectedWorld()
@@ -352,6 +368,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             StatusText = "Operation failed.";
             AddActivity("Error", ex.Message);
+            _toastService.Error("Operation failed", ex.Message);
             _dialogService.ShowError("SaveHarbor error", ex.Message);
         }
         finally
@@ -399,6 +416,32 @@ public partial class MainWindowViewModel : ObservableObject
         {
             Activity.RemoveAt(Activity.Count - 1);
         }
+    }
+
+    private async void OnToastRequested(object? sender, ToastNotification toast)
+    {
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            Toasts.Insert(0, toast);
+            while (Toasts.Count > 4)
+            {
+                Toasts.RemoveAt(Toasts.Count - 1);
+            }
+        });
+
+        await Task.Delay(TimeSpan.FromSeconds(toast.Kind == ToastKind.Error ? 6 : 3.5));
+
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            toast.IsClosing = true;
+        });
+
+        await Task.Delay(TimeSpan.FromMilliseconds(460));
+
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            Toasts.Remove(toast);
+        });
     }
 
     private static void OpenFolder(string path)

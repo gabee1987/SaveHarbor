@@ -20,6 +20,7 @@ public partial class App : Application
                 services.AddSingleton<IBackupService, ZipBackupService>();
                 services.AddSingleton<IProcessDetectionService, WindowsProcessDetectionService>();
                 services.AddSingleton<IDialogService, WpfDialogService>();
+                services.AddSingleton<IToastService, ToastService>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
             })
