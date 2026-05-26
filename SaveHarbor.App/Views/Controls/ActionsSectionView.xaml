@@ -1,0 +1,126 @@
+<UserControl x:Class="SaveHarbor.App.Views.Controls.ActionsSectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors">
+    <Border Style="{StaticResource Panel}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Actions" Style="{StaticResource SectionTitle}"
+                       ToolTip="Commands for local backup/restore/import and cloud synchronization." />
+
+            <Border Grid.Row="1"
+                    Margin="0,10,0,0"
+                    Background="{StaticResource PanelAltBrush}"
+                    BorderBrush="{StaticResource LineSoftBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="10"
+                    ToolTip="Local save operations. These work without cloud sync.">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="8" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Local files" Style="{StaticResource MicroLabel}" />
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Backup"
+                                Command="{Binding CreateBackupCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                MinHeight="32"
+                                Padding="9,5"
+                                ToolTip="Create a zip backup of the selected world. Windrose must be closed." />
+                        <Button Grid.Column="2"
+                                Content="Restore"
+                                Command="{Binding RestoreBackupCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                MinHeight="32"
+                                Padding="9,5"
+                                ToolTip="Replace the selected local world from a SaveHarbor backup. A safety backup is created first." />
+                        <Button Grid.Column="4"
+                                Content="Import"
+                                Command="{Binding ImportBackupCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                MinHeight="32"
+                                Padding="9,5"
+                                ToolTip="Import a SaveHarbor backup as a world on this PC. Useful for a friend receiving the world for the first time." />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="3"
+                    Background="{StaticResource PanelAltBrush}"
+                    BorderBrush="{StaticResource LineSoftBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="10"
+                    ToolTip="Cloud sync actions. These will become active after the Google Drive provider is implemented.">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="8" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Cloud sync" Style="{StaticResource MicroLabel}" />
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Check"
+                                Command="{Binding CheckCloudCommand}"
+                                MinHeight="32"
+                                Padding="9,5"
+                                Background="#1E2E44"
+                                BorderBrush="#36577D"
+                                Foreground="{StaticResource InkBrush}"
+                                Style="{StaticResource SecondaryButton}"
+                                ToolTip="Check the cloud manifest for the latest shared world version. Not implemented yet." />
+                        <Button Grid.Column="2"
+                                Content="Upload"
+                                Command="{Binding CheckCloudCommand}"
+                                MinHeight="32"
+                                Padding="9,5"
+                                Background="#1E332D"
+                                BorderBrush="#357866"
+                                Foreground="{StaticResource InkBrush}"
+                                Style="{StaticResource SecondaryButton}"
+                                IsEnabled="False"
+                                ToolTip="Upload the selected local world to cloud storage. Not implemented yet." />
+                        <Button Grid.Column="4"
+                                Content="Download"
+                                Command="{Binding CheckCloudCommand}"
+                                MinHeight="32"
+                                Padding="9,5"
+                                Background="#352A1E"
+                                BorderBrush="#8A6634"
+                                Foreground="{StaticResource InkBrush}"
+                                Style="{StaticResource SecondaryButton}"
+                                IsEnabled="False"
+                                ToolTip="Download and restore the newest cloud world version. Not implemented yet." />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

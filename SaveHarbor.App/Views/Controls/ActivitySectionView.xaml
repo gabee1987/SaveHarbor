@@ -1,0 +1,64 @@
+<UserControl x:Class="SaveHarbor.App.Views.Controls.ActivitySectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain">
+    <Border Style="{StaticResource Panel}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Activity" Style="{StaticResource SectionTitle}"
+                       ToolTip="Recent SaveHarbor operations and errors." />
+
+            <ScrollViewer Grid.Row="1"
+                          Margin="0,10,0,0"
+                          Padding="0"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          ToolTip="Scroll through recent operation history.">
+                <ItemsControl ItemsSource="{Binding Activity}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type domain:ActivityLogItem}">
+                            <Border BorderBrush="{StaticResource LineSoftBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    Padding="0,7">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="70" />
+                                        <ColumnDefinition Width="72" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"
+                                               Style="{StaticResource MutedText}" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Level}"
+                                               FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Level}" Value="Success">
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Message}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{StaticResource InkBrush}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

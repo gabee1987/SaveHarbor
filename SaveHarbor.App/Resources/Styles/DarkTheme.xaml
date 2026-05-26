@@ -25,7 +25,7 @@
 
     <Style x:Key="MutedText" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="11" />
     </Style>
 
     <Style x:Key="MicroLabel" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
@@ -34,7 +34,7 @@
     </Style>
 
     <Style x:Key="SectionTitle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontSize" Value="15" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
     </Style>
@@ -44,7 +44,37 @@
         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="16" />
+        <Setter Property="Padding" Value="13" />
+    </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="MaxWidth" Value="760" />
+        <Setter Property="HasDropShadow" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="7"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter>
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="PrimaryButton" TargetType="Button">
@@ -52,10 +82,10 @@
         <Setter Property="Foreground" Value="#06100E" />
         <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="16,11" />
+        <Setter Property="Padding" Value="13,8" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="MinHeight" Value="38" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -110,8 +140,8 @@
         <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
         <Setter Property="Background" Value="{StaticResource InputBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
-        <Setter Property="Padding" Value="10,8" />
-        <Setter Property="MinHeight" Value="50" />
+        <Setter Property="Padding" Value="9,7" />
+        <Setter Property="MinHeight" Value="44" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -120,7 +150,8 @@
                         <ToggleButton x:Name="ToggleButton"
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                       ClickMode="Press"
-                                      Focusable="False">
+                                      Focusable="False"
+                                      Padding="{TemplateBinding Padding}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border x:Name="Chrome"
@@ -191,7 +222,7 @@
     <Style TargetType="ComboBoxItem">
         <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
         <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-        <Setter Property="Padding" Value="10,9" />
+        <Setter Property="Padding" Value="9,7" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>

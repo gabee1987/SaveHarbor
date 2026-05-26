@@ -3,389 +3,53 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+        xmlns:controls="clr-namespace:SaveHarbor.App.Views.Controls"
         mc:Ignorable="d"
         Title="SaveHarbor"
-        Height="860"
-        Width="1360"
-        MinHeight="740"
-        MinWidth="1020"
+        Height="690"
+        Width="1120"
+        MinHeight="660"
+        MinWidth="1040"
         Background="#0D1114"
         FontFamily="Segoe UI"
-        FontSize="14"
+        FontSize="13"
         WindowStartupLocation="CenterScreen">
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/DarkTheme.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
-
     <Grid Background="{StaticResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Margin="28,20,28,12">
+        <controls:HeaderStatusView />
+
+        <Grid Grid.Row="1" Margin="20,0,20,16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="1.02*" MinWidth="400" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="1.18*" MinWidth="470" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel>
-                <TextBlock Text="SaveHarbor" FontSize="30" FontWeight="SemiBold" />
-                <TextBlock Text="Windrose world sharing helper" Style="{StaticResource MutedText}" FontSize="13" Margin="1,5,0,0" />
-            </StackPanel>
-
-            <Border Grid.Column="1"
-                    Padding="13,9"
-                    CornerRadius="8"
-                    Background="{StaticResource PanelBrush}"
-                    BorderBrush="{StaticResource LineBrush}"
-                    BorderThickness="1"
-                    VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="9" Height="9" Margin="0,0,8,0">
-                        <Ellipse.Style>
-                            <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
-                                        <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Ellipse.Style>
-                    </Ellipse>
-                    <TextBlock FontWeight="SemiBold">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="Game closed" />
-                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
-                                        <Setter Property="Text" Value="Game running" />
-                                        <Setter Property="Foreground" Value="{StaticResource WarnBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <Grid Grid.Row="1" Margin="28,0,28,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.05*" MinWidth="430" />
-                    <ColumnDefinition Width="18" />
-                    <ColumnDefinition Width="1.25*" MinWidth="500" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel>
-                    <Border Style="{StaticResource Panel}">
-                        <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="World" Style="{StaticResource SectionTitle}" />
-                                <Button Grid.Column="1"
-                                        Content="Refresh"
-                                        Command="{Binding RefreshCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Padding="13,7"
-                                        MinHeight="36" />
-                            </Grid>
-
-                            <ComboBox ItemsSource="{Binding Worlds}"
-                                      SelectedItem="{Binding SelectedWorld}"
-                                      Margin="0,12,0,0" />
-
-                            <Grid Margin="0,14,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="10" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <StackPanel>
-                                    <TextBlock Text="World name" Style="{StaticResource MicroLabel}" />
-                                    <TextBlock Text="{Binding SelectedWorld.WorldName, TargetNullValue=Not selected}" FontWeight="SemiBold" Margin="0,4,0,0" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Preset" Style="{StaticResource MicroLabel}" />
-                                    <TextBlock Text="{Binding SelectedWorld.WorldPresetType, TargetNullValue=Unknown}" FontWeight="SemiBold" Margin="0,4,0,0" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2">
-                                    <TextBlock Text="Size" Style="{StaticResource MicroLabel}" />
-                                    <TextBlock Text="{Binding SelectedWorldSize}" FontWeight="SemiBold" Margin="0,4,0,0" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2" Grid.Column="1">
-                                    <TextBlock Text="Files" Style="{StaticResource MicroLabel}" />
-                                    <TextBlock Text="{Binding SelectedWorldFileCount}" FontWeight="SemiBold" Margin="0,4,0,0" />
-                                </StackPanel>
-                            </Grid>
-
-                            <Border Margin="0,14,0,0"
-                                    Background="{StaticResource PanelAltBrush}"
-                                    BorderBrush="{StaticResource LineSoftBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Padding="12">
-                                <StackPanel>
-                                    <TextBlock Text="Last modified" Style="{StaticResource MicroLabel}" />
-                                    <TextBlock Text="{Binding SelectedWorld.LastModifiedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}, TargetNullValue=Unknown}"
-                                               FontWeight="SemiBold"
-                                               Margin="0,4,0,2" />
-                                    <TextBlock Text="{Binding SelectedWorldModifiedAge}" Style="{StaticResource MutedText}" Margin="0,0,0,10" />
-                                    <TextBlock Text="Local path" Style="{StaticResource MicroLabel}" />
-                                    <TextBlock Text="{Binding SelectedWorld.SavePath, TargetNullValue=No world selected}"
-                                               TextWrapping="Wrap"
-                                               Margin="0,5,0,0"
-                                               Foreground="{StaticResource InkBrush}" />
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Panel}" Margin="0,10,0,0" Padding="16,14">
-                        <StackPanel>
-                            <TextBlock Text="Local safety" Style="{StaticResource SectionTitle}" />
-
-                            <Grid Margin="0,10,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="7" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="7" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="9" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="96" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Text="Backups" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding BackupRoot}"
-                                           TextTrimming="CharacterEllipsis"
-                                           Foreground="{StaticResource InkBrush}"
-                                           VerticalAlignment="Center" />
-                                <Button Grid.Column="3"
-                                        Content="Open"
-                                        Command="{Binding OpenBackupFolderCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Padding="12,5"
-                                        MinWidth="76"
-                                        MinHeight="32" />
-
-                                <TextBlock Grid.Row="2" Text="Latest" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
-                                <TextBlock Grid.Row="2"
-                                           Grid.Column="1"
-                                           Text="{Binding LatestBackupSummary}"
-                                           TextTrimming="CharacterEllipsis"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center" />
-                                <Button Grid.Row="2"
-                                        Grid.Column="3"
-                                        Content="World folder"
-                                        Command="{Binding OpenWorldFolderCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Padding="12,5"
-                                        MinWidth="112"
-                                        MinHeight="32" />
-
-                                <TextBlock Grid.Row="4" Text="Stored" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding BackupCount, StringFormat={}{0:N0} backups}" FontWeight="SemiBold" />
-                                    <TextBlock Text="  •  " Foreground="{StaticResource SubtleBrush}" />
-                                    <TextBlock Text="{Binding TotalBackupSize}" FontWeight="SemiBold" />
-                                </StackPanel>
-                                <TextBlock Grid.Row="4"
-                                           Grid.Column="3"
-                                           Text="{Binding LatestBackupAge}"
-                                           Style="{StaticResource MutedText}"
-                                           VerticalAlignment="Center" />
-
-                                <Border Grid.Row="6"
-                                        Grid.ColumnSpan="4"
-                                        Background="{StaticResource PanelAltBrush}"
-                                        BorderBrush="{StaticResource LineSoftBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="7"
-                                        Padding="10,7">
-                                    <TextBlock Text="{Binding SafetyHint}"
-                                               Style="{StaticResource MutedText}"
-                                               TextWrapping="Wrap" />
-                                </Border>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <Border Style="{StaticResource Panel}">
-                        <StackPanel>
-                            <TextBlock Text="Actions" Style="{StaticResource SectionTitle}" />
-
-                            <UniformGrid Columns="2" Rows="3" Margin="0,14,0,0">
-                                <Button Content="Create backup"
-                                        Command="{Binding CreateBackupCommand}"
-                                        Style="{StaticResource PrimaryButton}"
-                                        Margin="0,0,8,8" />
-                                <Button Content="Restore backup"
-                                        Command="{Binding RestoreBackupCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Margin="8,0,0,8" />
-                                <Button Content="Import backup"
-                                        Command="{Binding ImportBackupCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Margin="0,8,8,8" />
-                                <Button Content="Check cloud"
-                                        Command="{Binding CheckCloudCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Margin="8,8,0,8" />
-                                <Button Content="Upload current"
-                                        Command="{Binding CheckCloudCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Margin="0,8,8,0"
-                                        IsEnabled="False" />
-                                <Button Content="Download latest"
-                                        Command="{Binding CheckCloudCommand}"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Margin="8,8,0,0"
-                                        IsEnabled="False" />
-                            </UniformGrid>
-
-                            <Border Margin="0,14,0,0"
-                                    CornerRadius="8"
-                                    Background="{StaticResource PanelAltBrush}"
-                                    BorderBrush="{StaticResource LineSoftBrush}"
-                                    BorderThickness="1"
-                                    Padding="12">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="Import readiness" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding ProfileStatus}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
-                                    </StackPanel>
-                                    <Border Grid.Column="1"
-                                            Background="#2C2418"
-                                            Padding="9,5"
-                                            CornerRadius="7"
-                                            VerticalAlignment="Center">
-                                        <TextBlock Text="TODO" Foreground="{StaticResource WarnBrush}" FontWeight="SemiBold" FontSize="12" />
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="2" Style="{StaticResource Panel}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Activity" Style="{StaticResource SectionTitle}" />
-
-                            <ScrollViewer Grid.Row="1"
-                                          Margin="0,14,0,0"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding Activity}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type domain:ActivityLogItem}">
-                                            <Border BorderBrush="{StaticResource LineSoftBrush}"
-                                                    BorderThickness="0,0,0,1"
-                                                    Padding="0,10">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="78" />
-                                                        <ColumnDefinition Width="84" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"
-                                                               Style="{StaticResource MutedText}" />
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding Level}"
-                                                               FontWeight="SemiBold">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Level}" Value="Success">
-                                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Level}" Value="Error">
-                                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                    <TextBlock Grid.Column="2"
-                                                               Text="{Binding Message}"
-                                                               TextWrapping="Wrap"
-                                                               Foreground="{StaticResource InkBrush}" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Grid>
-
-        <Border Grid.Row="2"
-                Margin="28,12,28,18"
-                Background="{StaticResource PanelBrush}"
-                BorderBrush="{StaticResource LineBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="11">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="180" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
-                <ProgressBar Grid.Column="1"
-                             Height="6"
-                             IsIndeterminate="True"
-                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-                             VerticalAlignment="Center"
-                             Foreground="{StaticResource AccentBrush}"
-                             Background="{StaticResource LineBrush}" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <controls:WorldSectionView />
+                <controls:BackupSectionView Grid.Row="2" />
             </Grid>
-        </Border>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <controls:ActionsSectionView />
+                <controls:ActivitySectionView Grid.Row="2" />
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

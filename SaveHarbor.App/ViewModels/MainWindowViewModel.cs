@@ -62,9 +62,19 @@ public partial class MainWindowViewModel : ObservableObject
         ? "No backups found"
         : $"{LastBackup.FileName} • {FormatBytes(LastBackup.SizeBytes)}";
 
+    public string LatestBackupFileName => LastBackup?.FileName ?? "No backups found";
+
+    public string LatestBackupPath => LastBackup?.FilePath ?? "Create a backup to see the latest backup path here.";
+
     public string LatestBackupAge => LastBackup is null
         ? "Create a backup before sharing or restoring this world."
         : $"Created {FormatAge(LastBackup.CreatedAt)}";
+
+    public string LatestBackupDetails => LastBackup is null
+        ? "No backup has been created yet."
+        : $"{FormatBytes(LastBackup.SizeBytes)} • {LatestBackupAge}";
+
+    public string BackupStorageSummary => $"{BackupCount:N0} backups • {TotalBackupSize}";
 
     public string SelectedWorldModifiedAge => SelectedWorld is null
         ? "No world selected"
@@ -96,7 +106,20 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnLastBackupChanged(BackupInfo? value)
     {
         OnPropertyChanged(nameof(LatestBackupSummary));
+        OnPropertyChanged(nameof(LatestBackupFileName));
+        OnPropertyChanged(nameof(LatestBackupPath));
         OnPropertyChanged(nameof(LatestBackupAge));
+        OnPropertyChanged(nameof(LatestBackupDetails));
+    }
+
+    partial void OnBackupCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(BackupStorageSummary));
+    }
+
+    partial void OnTotalBackupSizeChanged(string value)
+    {
+        OnPropertyChanged(nameof(BackupStorageSummary));
     }
 
     partial void OnIsGameRunningChanged(bool value)
@@ -129,7 +152,7 @@ public partial class MainWindowViewModel : ObservableObject
             await RefreshBackupStatsAsync();
             StatusText = Worlds.Count == 0
                 ? "No Windrose worlds found."
-                : $"Found {Worlds.Count} Windrose world{(Worlds.Count == 1 ? string.Empty : "s")}.";
+                : $"Found {Worlds.Count} world{(Worlds.Count == 1 ? string.Empty : "s")}.";
 
             AddActivity("Info", StatusText);
         });

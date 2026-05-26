@@ -1,0 +1,85 @@
+<UserControl x:Class="SaveHarbor.App.Views.Controls.HeaderStatusView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors">
+    <Grid Margin="20,14,20,10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel ToolTip="SaveHarbor helps you back up, import, restore, and later sync Windrose worlds.">
+            <TextBlock Text="SaveHarbor" FontSize="25" FontWeight="SemiBold" />
+            <TextBlock Text="Windrose world sharing helper" Style="{StaticResource MutedText}" FontSize="12" Margin="1,2,0,0" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Padding="11,7"
+                    CornerRadius="8"
+                    Background="{StaticResource PanelBrush}"
+                    BorderBrush="{StaticResource LineBrush}"
+                    BorderThickness="1"
+                    MaxWidth="360"
+                    ToolTip="Latest operation status. This replaces the old bottom status bar.">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Status" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding StatusText}"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="10,0,0,0"
+                               Foreground="{StaticResource InkBrush}"
+                               VerticalAlignment="Center"
+                               behaviors:CopyOnClick.Text="{Binding StatusText}">
+                        <TextBlock.ToolTip>
+                            <StackPanel>
+                                <TextBlock Text="{Binding StatusText}" />
+                                <TextBlock Text="Click to copy" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </TextBlock.ToolTip>
+                    </TextBlock>
+                </Grid>
+            </Border>
+
+            <Border Padding="11,7"
+                    CornerRadius="8"
+                    Background="{StaticResource PanelBrush}"
+                    BorderBrush="{StaticResource LineBrush}"
+                    BorderThickness="1"
+                    Margin="10,0,0,0"
+                    ToolTip="Shows whether Windrose appears to be running. Save operations are blocked while the game is open.">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="9" Height="9" Margin="0,0,8,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock FontWeight="SemiBold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Game closed" />
+                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
+                                        <Setter Property="Text" Value="Game running" />
+                                        <Setter Property="Foreground" Value="{StaticResource WarnBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>
