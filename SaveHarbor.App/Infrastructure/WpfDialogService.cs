@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
+using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.Views.Dialogs;
 
@@ -11,17 +12,24 @@ public sealed class WpfDialogService : IDialogService
 {
     public void ShowInfo(string title, string message)
     {
-        ShowDialog(title, "Operation completed", message, "i", "OK", null, "AccentBrush");
+        ShowDialog(title, UiTextCatalog.Get("Dialog.OperationCompleted"), message, "i", UiTextCatalog.Get("Dialog.Ok"), null, "AccentBrush");
     }
 
     public void ShowError(string title, string message)
     {
-        ShowDialog(title, "SaveHarbor needs your attention", message, "!", "OK", null, "DangerBrush");
+        ShowDialog(title, UiTextCatalog.Get("Dialog.NeedsAttention"), message, "!", UiTextCatalog.Get("Dialog.Ok"), null, "DangerBrush");
     }
 
     public bool Confirm(string title, string message)
     {
-        return ShowDialog(title, "Please confirm this action", message, "!", "Continue", "Cancel", "WarnBrush") == true;
+        return ShowDialog(
+            title,
+            UiTextCatalog.Get("Dialog.ConfirmAction"),
+            message,
+            "!",
+            UiTextCatalog.Get("Dialog.Continue"),
+            UiTextCatalog.Get("Dialog.Cancel"),
+            "WarnBrush") == true;
     }
 
     public string? SelectZipFile(string initialDirectory)

@@ -1,7 +1,8 @@
 <UserControl x:Class="SaveHarbor.App.Views.Controls.ActionsSectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors">
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <Border Style="{StaticResource Panel}">
         <Grid>
             <Grid.RowDefinitions>
@@ -11,8 +12,8 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Actions" Style="{StaticResource SectionTitle}"
-                       ToolTip="Commands for local backup/restore/import and cloud synchronization." />
+            <TextBlock Text="{ui:UiText Actions.Title}" Style="{StaticResource SectionTitle}"
+                       ToolTip="{ui:UiText Actions.TitleTooltip}" />
 
             <Border Grid.Row="1"
                     Margin="0,10,0,0"
@@ -21,7 +22,7 @@
                     BorderThickness="1"
                     CornerRadius="8"
                     Padding="10"
-                    ToolTip="Local save operations. These work without cloud sync.">
+                    ToolTip="{ui:UiText Actions.LocalFilesTooltip}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -31,7 +32,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="Local files" Style="{StaticResource MicroLabel}" />
+                    <TextBlock Text="{ui:UiText Actions.LocalFiles}" Style="{StaticResource MicroLabel}" />
 
                     <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
@@ -41,26 +42,26 @@
                             <ColumnDefinition Width="6" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button Content="Backup"
+                        <Button Content="{ui:UiText Actions.Backup}"
                                 Command="{Binding CreateBackupCommand}"
                                 Style="{StaticResource PrimaryButton}"
                                 MinHeight="32"
                                 Padding="9,5"
-                                ToolTip="Create a zip backup of the selected world. Windrose must be closed." />
+                                ToolTip="{ui:UiText Actions.BackupTooltip}" />
                         <Button Grid.Column="2"
-                                Content="Restore"
+                                Content="{ui:UiText Actions.Restore}"
                                 Command="{Binding RestoreBackupCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 MinHeight="32"
                                 Padding="9,5"
-                                ToolTip="Replace the selected local world from a SaveHarbor backup. A safety backup is created first." />
+                                ToolTip="{ui:UiText Actions.RestoreTooltip}" />
                         <Button Grid.Column="4"
-                                Content="Import"
+                                Content="{ui:UiText Actions.Import}"
                                 Command="{Binding ImportBackupCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 MinHeight="32"
                                 Padding="9,5"
-                                ToolTip="Import a SaveHarbor backup as a world on this PC. Useful for a friend receiving the world for the first time." />
+                                ToolTip="{ui:UiText Actions.ImportTooltip}" />
                     </Grid>
                 </Grid>
             </Border>
@@ -71,7 +72,7 @@
                     BorderThickness="1"
                     CornerRadius="8"
                     Padding="10"
-                    ToolTip="Cloud sync state and actions. Google Drive will be added behind this provider-independent sync layer.">
+                    ToolTip="{ui:UiText Actions.CloudTooltip}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -86,7 +87,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Cloud sync" Style="{StaticResource MicroLabel}" />
+                        <TextBlock Text="{ui:UiText Actions.CloudSync}" Style="{StaticResource MicroLabel}" />
                         <TextBlock Grid.Column="1"
                                    Text="{Binding CloudProviderText}"
                                    Style="{StaticResource MutedText}"
@@ -101,7 +102,7 @@
                             <ColumnDefinition Width="6" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button Content="Check"
+                        <Button Content="{ui:UiText Actions.Check}"
                                 Command="{Binding CheckCloudCommand}"
                                 MinHeight="30"
                                 Padding="8,4"
@@ -109,9 +110,9 @@
                                 BorderBrush="#36577D"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                ToolTip="Check the cloud manifest, latest version, and active session state." />
+                                ToolTip="{ui:UiText Actions.CheckTooltip}" />
                         <Button Grid.Column="2"
-                                Content="Upload"
+                                Content="{ui:UiText Actions.Upload}"
                                 Command="{Binding UploadCloudCommand}"
                                 MinHeight="30"
                                 Padding="8,4"
@@ -119,9 +120,9 @@
                                 BorderBrush="#357866"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                ToolTip="Upload the selected local world to the cloud provider. Upload is blocked if cloud changed while you played." />
+                                ToolTip="{ui:UiText Actions.UploadTooltip}" />
                         <Button Grid.Column="4"
-                                Content="Download"
+                                Content="{ui:UiText Actions.Download}"
                                 Command="{Binding DownloadCloudCommand}"
                                 MinHeight="30"
                                 Padding="8,4"
@@ -129,7 +130,7 @@
                                 BorderBrush="#8A6634"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                ToolTip="Download and restore the latest cloud save. A local backup is created before restore." />
+                                ToolTip="{ui:UiText Actions.DownloadTooltip}" />
                     </Grid>
 
                     <Grid Grid.Row="4">
@@ -138,7 +139,7 @@
                             <ColumnDefinition Width="6" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button Content="Start session"
+                        <Button Content="{ui:UiText Actions.StartSession}"
                                 Command="{Binding StartCloudSessionCommand}"
                                 MinHeight="30"
                                 Padding="8,4"
@@ -146,9 +147,9 @@
                                 BorderBrush="#36577D"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                ToolTip="Mark that you are starting to play from the current cloud version, so friends see an active session warning." />
+                                ToolTip="{ui:UiText Actions.StartSessionTooltip}" />
                         <Button Grid.Column="2"
-                                Content="End session"
+                                Content="{ui:UiText Actions.EndSession}"
                                 Command="{Binding EndCloudSessionCommand}"
                                 MinHeight="30"
                                 Padding="8,4"
@@ -156,7 +157,7 @@
                                 BorderBrush="{StaticResource LineBrush}"
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
-                                ToolTip="Clear your active session lock if you stop playing without uploading." />
+                                ToolTip="{ui:UiText Actions.EndSessionTooltip}" />
                     </Grid>
                 </Grid>
             </Border>

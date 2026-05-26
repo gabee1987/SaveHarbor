@@ -1,7 +1,8 @@
 <UserControl x:Class="SaveHarbor.App.Views.Controls.ActivitySectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:domain="clr-namespace:SaveHarbor.App.Domain">
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <Border Style="{StaticResource Panel}">
         <Grid>
             <Grid.RowDefinitions>
@@ -9,15 +10,15 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Activity" Style="{StaticResource SectionTitle}"
-                       ToolTip="Recent SaveHarbor operations and errors." />
+            <TextBlock Text="{ui:UiText Activity.Title}" Style="{StaticResource SectionTitle}"
+                       ToolTip="{ui:UiText Activity.TitleTooltip}" />
 
             <ScrollViewer Grid.Row="1"
                           Margin="0,10,0,0"
                           Padding="0"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
-                          ToolTip="Scroll through recent operation history.">
+                          ToolTip="{ui:UiText Activity.ScrollTooltip}">
                 <ItemsControl ItemsSource="{Binding Activity}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type domain:ActivityLogItem}">
