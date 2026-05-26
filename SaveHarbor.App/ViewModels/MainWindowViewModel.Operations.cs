@@ -1,0 +1,135 @@
+using System.Diagnostics;
+using SaveHarbor.App.Domain;
+using SaveHarbor.App.Utilities;
+
+namespace SaveHarbor.App.ViewModels;
+
+public partial class MainWindowViewModel
+{
+    private bool HasSelectedWorld()
+    {
+        return SelectedWorld is not null && !IsBusy;
+    }
+
+    private async Task RunBusyAsync(string busyText, Func<Task> action)
+    {
+        try
+        {
+            IsBusy = true;
+            StatusText = busyText;
+            NotifyCommandStates();
+            await action();
+        }
+        catch (Exception ex)
+        {
+            StatusText = "Operation failed.";
+            AddActivity("Error", ex.Message);
+            _toastService.Error("Operation failed", ex.Message);
+            _dialogService.ShowError("SaveHarbor error", ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+            UpdateGameStatus();
+            NotifyCommandStates();
+        }
+    }
+
+    private void NotifyCommandStates()
+    {
+        CreateBackupCommand.NotifyCanExecuteChanged();
+        RestoreBackupCommand.NotifyCanExecuteChanged();
+        OpenWorldFolderCommand.NotifyCanExecuteChanged();
+        UploadCloudCommand.NotifyCanExecuteChanged();
+        DownloadCloudCommand.NotifyCanExecuteChanged();
+        StartCloudSessionCommand.NotifyCanExecuteChanged();
+        EndCloudSessionCommand.NotifyCanExecuteChanged();
+    }
+
+    private void UpdateGameStatus()
+    {
+        IsGameRunning = _processDetectionService.IsWindroseRunning();
+    }
+
+    private async Task RefreshBackupStatsAsync()
+    {
+        var backups = await _backupService.ListBackupsAsync();
+        BackupCount = backups.Count;
+        TotalBackupSize = DisplayFormatter.FormatBytes(backups.Sum(backup => backup.SizeBytes));
+        LastBackup = backups.FirstOrDefault();
+    }
+
+    private async Task RefreshProfileStatusAsync()
+    {
+        var profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+        var profile = profiles.FirstOrDefault();
+
+        ProfileStatus = profile is null
+            ? "No Windrose profile found. Start Windrose once before importing a backup."
+            : $"Profile {profile.ProfileId} • RocksDB {profile.RocksDbVersion}";
+    }
+
+    private async Task RefreshCloudStatusAsync(bool showToast)
+    {
+        if (SelectedWorld is null)
+        {
+            CloudStatus = null;
+            return;
+        }
+
+        try
+        {
+            CloudStatus = await _cloudSyncService.RefreshStatusAsync(SelectedWorld);
+            if (showToast)
+            {
+                _toastService.Info(CloudStatus.Title, CloudStatus.Detail);
+                AddActivity("Info", $"{CloudStatus.Title}: {CloudStatus.Detail}");
+            }
+        }
+        catch (Exception ex)
+        {
+            AddActivity("Error", ex.Message);
+            _toastService.Error("Cloud check failed", ex.Message);
+        }
+    }
+
+    private async Task RefreshSelectedWorldFromDiskAsync()
+    {
+        if (SelectedWorld is null)
+        {
+            return;
+        }
+
+        var refreshed = await _saveDiscoveryService.ReadWorldAsync(SelectedWorld.SavePath);
+        if (refreshed is null)
+        {
+            return;
+        }
+
+        var index = Worlds.IndexOf(SelectedWorld);
+        if (index >= 0)
+        {
+            Worlds[index] = refreshed;
+        }
+
+        SelectedWorld = refreshed;
+    }
+
+    private void AddActivity(string level, string message)
+    {
+        Activity.Insert(0, new ActivityLogItem(DateTimeOffset.Now, level, message));
+        while (Activity.Count > 12)
+        {
+            Activity.RemoveAt(Activity.Count - 1);
+        }
+    }
+
+    private static void OpenFolder(string path)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = path,
+            UseShellExecute = true
+        });
+    }
+}

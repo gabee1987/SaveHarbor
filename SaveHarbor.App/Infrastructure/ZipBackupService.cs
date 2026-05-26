@@ -1,9 +1,9 @@
 using System.IO;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text.Json;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
@@ -71,7 +71,7 @@ public sealed class ZipBackupService : IBackupService
     {
         Directory.CreateDirectory(BackupRoot);
 
-        var safeWorldName = MakeSafeFileName(world.WorldName);
+        var safeWorldName = FileNameSanitizer.MakeSafeFileName(world.WorldName);
         var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss");
         var fileName = $"{timestamp}_{safeWorldName}_{reason}.zip";
         var targetPath = Path.Combine(BackupRoot, fileName);
@@ -187,7 +187,7 @@ public sealed class ZipBackupService : IBackupService
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 Reason = reason,
                 FileCount = Directory.EnumerateFiles(payloadRoot, "*", SearchOption.AllDirectories).Count(),
-                PayloadSha256 = ComputeDirectoryHash(payloadRoot)
+                PayloadSha256 = DirectoryHashCalculator.ComputeSha256(payloadRoot)
             };
 
             var manifestPath = Path.Combine(tempPath, "saveharbor-manifest.json");
@@ -248,25 +248,4 @@ public sealed class ZipBackupService : IBackupService
         Directory.Move(stagingPath, target);
     }
 
-    private static string ComputeDirectoryHash(string root)
-    {
-        using var sha = SHA256.Create();
-        foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-                     .OrderBy(file => Path.GetRelativePath(root, file), StringComparer.OrdinalIgnoreCase))
-        {
-            var relativePathBytes = System.Text.Encoding.UTF8.GetBytes(Path.GetRelativePath(root, file).Replace('\\', '/'));
-            sha.TransformBlock(relativePathBytes, 0, relativePathBytes.Length, null, 0);
-            var bytes = File.ReadAllBytes(file);
-            sha.TransformBlock(bytes, 0, bytes.Length, null, 0);
-        }
-
-        sha.TransformFinalBlock([], 0, 0);
-        return Convert.ToHexString(sha.Hash ?? []);
-    }
-
-    private static string MakeSafeFileName(string value)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        return string.Join("_", value.Split(invalid, StringSplitOptions.RemoveEmptyEntries)).Trim();
-    }
 }
