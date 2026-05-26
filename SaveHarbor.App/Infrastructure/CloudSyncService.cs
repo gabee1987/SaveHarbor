@@ -38,7 +38,7 @@ public sealed class CloudSyncService : ICloudSyncService
                 null,
                 localState,
                 "Cloud not connected",
-                "Connect Google Drive when the provider is implemented.");
+                "Connect a cloud provider before syncing this world.");
         }
 
         var manifest = await cloudProvider.GetWorldManifestAsync(world.WorldId, cancellationToken);
@@ -63,7 +63,7 @@ public sealed class CloudSyncService : ICloudSyncService
                 sessionLock,
                 localState,
                 "No cloud save",
-                "Upload this world to create the first shared cloud save.");
+                "This world has no shared cloud version yet. Upload current to create v1.");
         }
 
         if (IsActiveOtherPlayerLock(sessionLock))
@@ -75,8 +75,8 @@ public sealed class CloudSyncService : ICloudSyncService
                 latestVersion,
                 sessionLock,
                 localState,
-                $"{sessionLock!.PlayerName} is playing",
-                $"Started from v{sessionLock.BasedOnVersionNumber}.");
+                "Someone playing",
+                $"{sessionLock!.PlayerName} is playing from cloud v{sessionLock.BasedOnVersionNumber}.");
         }
 
         if (localState.LocalBaseVersionNumber is null)
@@ -88,8 +88,8 @@ public sealed class CloudSyncService : ICloudSyncService
                 latestVersion,
                 sessionLock,
                 localState,
-                "Cloud save available",
-                $"Latest cloud save is v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}.");
+                "Download needed",
+                $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. This local world has no cloud base version yet.");
         }
 
         if (localState.LocalBaseVersionNumber < latestVersion.VersionNumber)
@@ -102,7 +102,7 @@ public sealed class CloudSyncService : ICloudSyncService
                 sessionLock,
                 localState,
                 "Cloud is newer",
-                $"Latest cloud save is v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}.");
+                $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. Local is based on v{localState.LocalBaseVersionNumber}.");
         }
 
         if (localState.LocalBaseVersionNumber > latestVersion.VersionNumber)
@@ -114,8 +114,8 @@ public sealed class CloudSyncService : ICloudSyncService
                 latestVersion,
                 sessionLock,
                 localState,
-                "Cloud conflict",
-                "Local sync state is ahead of cloud. Check cloud state before continuing.");
+                "Sync conflict",
+                $"Local is based on v{localState.LocalBaseVersionNumber}, but cloud latest is v{latestVersion.VersionNumber}. Review before syncing.");
         }
 
         return new CloudSyncStatus(
@@ -125,8 +125,8 @@ public sealed class CloudSyncService : ICloudSyncService
             latestVersion,
             sessionLock,
             localState,
-            "Cloud up to date",
-            $"Local save is based on v{latestVersion.VersionNumber}.");
+            "In sync",
+            $"Local world is based on the latest cloud version: v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}.");
     }
 
     public async Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default)

@@ -6,7 +6,7 @@
     <Grid Margin="20,14,20,10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="760" />
+            <ColumnDefinition Width="780" />
         </Grid.ColumnDefinitions>
 
         <StackPanel ToolTip="SaveHarbor helps you back up, import, restore, and later sync Windrose worlds.">
@@ -14,25 +14,28 @@
             <TextBlock Text="Windrose world sharing helper" Style="{StaticResource MutedText}" FontSize="12" Margin="1,2,0,0" />
         </StackPanel>
 
-        <WrapPanel Grid.Column="1"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Center"
-                   Orientation="Horizontal">
+        <Grid Grid.Column="1"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="105" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="145" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="96" />
+            </Grid.ColumnDefinitions>
+
             <Border Style="{StaticResource HeaderChip}"
-                    Width="185"
                     ToolTip="Latest operation status. This replaces the old bottom status bar.">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Status" Style="{StaticResource MicroLabel}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding StatusText}"
+                <StackPanel>
+                    <TextBlock Text="Status" Style="{StaticResource HeaderChipLabel}" />
+                    <TextBlock Text="{Binding StatusText}"
                                TextTrimming="CharacterEllipsis"
-                               Margin="10,0,0,0"
-                               Foreground="{StaticResource InkBrush}"
-                               VerticalAlignment="Center"
+                               Style="{StaticResource HeaderChipValue}"
                                behaviors:CopyOnClick.Text="{Binding StatusText}">
                         <TextBlock.ToolTip>
                             <StackPanel>
@@ -41,11 +44,11 @@
                             </StackPanel>
                         </TextBlock.ToolTip>
                     </TextBlock>
-                </Grid>
+                </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource HeaderChip}"
-                    Width="145">
+            <Border Grid.Column="2"
+                    Style="{StaticResource HeaderChip}">
                 <Border.ToolTip>
                     <StackPanel>
                         <TextBlock Text="{Binding CloudDetailText}" />
@@ -54,11 +57,11 @@
                 </Border.ToolTip>
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Ellipse Width="8" Height="8" Margin="0,0,7,0">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Top" Margin="0,4,0,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
                                 <Setter Property="Fill" Value="{StaticResource SubtleBrush}" />
@@ -82,48 +85,44 @@
                             </Style>
                         </Ellipse.Style>
                     </Ellipse>
-                    <TextBlock Grid.Column="1" Text="Cloud" Style="{StaticResource HeaderChipLabel}" />
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding CloudStateText}"
-                               Style="{StaticResource HeaderChipValue}" />
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Cloud" Style="{StaticResource HeaderChipLabel}" />
+                        <TextBlock Text="{Binding CloudStateText}"
+                                   Style="{StaticResource HeaderChipValue}" />
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Style="{StaticResource HeaderChip}"
-                    Width="120"
+            <Border Grid.Column="4"
+                    Style="{StaticResource HeaderChip}"
                     ToolTip="The newest published cloud save version.">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
                     <TextBlock Text="Latest" Style="{StaticResource HeaderChipLabel}" />
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding CloudLatestVersionText}"
+                    <TextBlock Text="{Binding CloudLatestVersionText}"
                                Style="{StaticResource HeaderChipValue}" />
-                </Grid>
+                </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource HeaderChip}"
-                    Width="140"
-                    ToolTip="Shows if another player appears to have started a cloud play session.">
+            <Border Grid.Column="6"
+                    Style="{StaticResource HeaderChip}"
+                    ToolTip="{Binding CloudSessionTooltip}">
+                <StackPanel>
+                    <TextBlock Text="Session" Style="{StaticResource HeaderChipLabel}" />
+                    <TextBlock Text="{Binding CloudSessionText}"
+                               Style="{StaticResource HeaderChipValue}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="8"
+                    Style="{StaticResource HeaderChip}"
+                    ToolTip="Shows whether Windrose appears to be running. Save operations are blocked while the game is open.">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Session" Style="{StaticResource HeaderChipLabel}" />
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding CloudSessionText}"
-                               Style="{StaticResource HeaderChipValue}" />
-                </Grid>
-            </Border>
-
-            <Border Style="{StaticResource HeaderChip}"
-                    Width="120"
-                    ToolTip="Shows whether Windrose appears to be running. Save operations are blocked while the game is open.">
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="9" Height="9" Margin="0,0,8,0">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Top" Margin="0,4,0,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
                                 <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
@@ -135,22 +134,25 @@
                             </Style>
                         </Ellipse.Style>
                     </Ellipse>
-                    <TextBlock FontWeight="SemiBold">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="Game closed" />
-                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
-                                        <Setter Property="Text" Value="Game running" />
-                                        <Setter Property="Foreground" Value="{StaticResource WarnBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Game" Style="{StaticResource HeaderChipLabel}" />
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource HeaderChipValue}">
+                                    <Setter Property="Text" Value="Closed" />
+                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
+                                            <Setter Property="Text" Value="Running" />
+                                            <Setter Property="Foreground" Value="{StaticResource WarnBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
             </Border>
-        </WrapPanel>
+        </Grid>
     </Grid>
 </UserControl>

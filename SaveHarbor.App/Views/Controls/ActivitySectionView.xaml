@@ -42,6 +42,9 @@
                                                     <DataTrigger Binding="{Binding Level}" Value="Success">
                                                         <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                                     </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Level}" Value="Info">
+                                                        <Setter Property="Foreground" Value="{StaticResource InfoBrush}" />
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding Level}" Value="Error">
                                                         <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                                     </DataTrigger>
