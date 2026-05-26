@@ -1,11 +1,12 @@
 <UserControl x:Class="SaveHarbor.App.Views.Controls.HeaderStatusView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors">
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain">
     <Grid Margin="20,14,20,10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="760" />
         </Grid.ColumnDefinitions>
 
         <StackPanel ToolTip="SaveHarbor helps you back up, import, restore, and later sync Windrose worlds.">
@@ -13,13 +14,12 @@
             <TextBlock Text="Windrose world sharing helper" Style="{StaticResource MutedText}" FontSize="12" Margin="1,2,0,0" />
         </StackPanel>
 
-        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-            <Border Padding="11,7"
-                    CornerRadius="8"
-                    Background="{StaticResource PanelBrush}"
-                    BorderBrush="{StaticResource LineBrush}"
-                    BorderThickness="1"
-                    MaxWidth="360"
+        <WrapPanel Grid.Column="1"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Center"
+                   Orientation="Horizontal">
+            <Border Style="{StaticResource HeaderChip}"
+                    Width="185"
                     ToolTip="Latest operation status. This replaces the old bottom status bar.">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -44,12 +44,83 @@
                 </Grid>
             </Border>
 
-            <Border Padding="11,7"
-                    CornerRadius="8"
-                    Background="{StaticResource PanelBrush}"
-                    BorderBrush="{StaticResource LineBrush}"
-                    BorderThickness="1"
-                    Margin="10,0,0,0"
+            <Border Style="{StaticResource HeaderChip}"
+                    Width="145">
+                <Border.ToolTip>
+                    <StackPanel>
+                        <TextBlock Text="{Binding CloudDetailText}" />
+                        <TextBlock Text="{Binding CloudAccountText}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border.ToolTip>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Ellipse Width="8" Height="8" Margin="0,0,7,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource SubtleBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.UpToDate}">
+                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.LocalNewerUploadSafe}">
+                                        <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.CloudNewer}">
+                                        <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.SomeonePlaying}">
+                                        <Setter Property="Fill" Value="{StaticResource WarnBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.Conflict}">
+                                        <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Grid.Column="1" Text="Cloud" Style="{StaticResource HeaderChipLabel}" />
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding CloudStateText}"
+                               Style="{StaticResource HeaderChipValue}" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource HeaderChip}"
+                    Width="120"
+                    ToolTip="The newest published cloud save version.">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Latest" Style="{StaticResource HeaderChipLabel}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding CloudLatestVersionText}"
+                               Style="{StaticResource HeaderChipValue}" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource HeaderChip}"
+                    Width="140"
+                    ToolTip="Shows if another player appears to have started a cloud play session.">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Session" Style="{StaticResource HeaderChipLabel}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding CloudSessionText}"
+                               Style="{StaticResource HeaderChipValue}" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource HeaderChip}"
+                    Width="120"
                     ToolTip="Shows whether Windrose appears to be running. Save operations are blocked while the game is open.">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse Width="9" Height="9" Margin="0,0,8,0">
@@ -80,6 +151,6 @@
                     </TextBlock>
                 </StackPanel>
             </Border>
-        </StackPanel>
+        </WrapPanel>
     </Grid>
 </UserControl>

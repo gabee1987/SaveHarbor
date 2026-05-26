@@ -15,6 +15,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IProcessDetectionService _processDetectionService;
     private readonly IDialogService _dialogService;
     private readonly IToastService _toastService;
+    private readonly ICloudSyncService _cloudSyncService;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]
@@ -42,6 +43,9 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private string profileStatus = "Checking Windrose profile...";
+
+    [ObservableProperty]
+    private CloudSyncStatus? cloudStatus;
 
     public ObservableCollection<WindroseWorld> Worlds { get; } = [];
 
@@ -87,18 +91,40 @@ public partial class MainWindowViewModel : ObservableObject
         ? "Close Windrose before backup, restore, upload, or download."
         : "Safe for backup and restore. Keep Windrose closed during save operations.";
 
+    public string CloudStateText => CloudStatus?.Title ?? "Cloud not checked";
+
+    public string CloudDetailText => CloudStatus?.Detail ?? "Check cloud status after selecting a world.";
+
+    public string CloudProviderText => CloudStatus?.Connection.ProviderName ?? "Not configured";
+
+    public string CloudAccountText => CloudStatus?.Connection.AccountEmail ?? "No account connected";
+
+    public string CloudLatestVersionText => CloudStatus?.LatestVersion is null
+        ? "No cloud version"
+        : $"v{CloudStatus.LatestVersion.VersionNumber} by {CloudStatus.LatestVersion.UploadedBy}";
+
+    public string CloudLocalBaseText => CloudStatus?.LocalState.LocalBaseVersionNumber is null
+        ? "No local base version"
+        : $"Local base v{CloudStatus.LocalState.LocalBaseVersionNumber}";
+
+    public string CloudSessionText => CloudStatus?.SessionLock is null
+        ? "No active session"
+        : $"{CloudStatus.SessionLock.PlayerName} started from v{CloudStatus.SessionLock.BasedOnVersionNumber}";
+
     public MainWindowViewModel(
         IWindroseSaveDiscoveryService saveDiscoveryService,
         IBackupService backupService,
         IProcessDetectionService processDetectionService,
         IDialogService dialogService,
-        IToastService toastService)
+        IToastService toastService,
+        ICloudSyncService cloudSyncService)
     {
         _saveDiscoveryService = saveDiscoveryService;
         _backupService = backupService;
         _processDetectionService = processDetectionService;
         _dialogService = dialogService;
         _toastService = toastService;
+        _cloudSyncService = cloudSyncService;
 
         _toastService.ToastRequested += OnToastRequested;
     }
@@ -108,6 +134,18 @@ public partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedWorldSize));
         OnPropertyChanged(nameof(SelectedWorldFileCount));
         OnPropertyChanged(nameof(SelectedWorldModifiedAge));
+        _ = RefreshCloudStatusAsync(showToast: false);
+    }
+
+    partial void OnCloudStatusChanged(CloudSyncStatus? value)
+    {
+        OnPropertyChanged(nameof(CloudStateText));
+        OnPropertyChanged(nameof(CloudDetailText));
+        OnPropertyChanged(nameof(CloudProviderText));
+        OnPropertyChanged(nameof(CloudAccountText));
+        OnPropertyChanged(nameof(CloudLatestVersionText));
+        OnPropertyChanged(nameof(CloudLocalBaseText));
+        OnPropertyChanged(nameof(CloudSessionText));
     }
 
     partial void OnLastBackupChanged(BackupInfo? value)
@@ -157,6 +195,7 @@ public partial class MainWindowViewModel : ObservableObject
             SelectedWorld ??= Worlds.FirstOrDefault();
             await RefreshProfileStatusAsync();
             await RefreshBackupStatsAsync();
+            await RefreshCloudStatusAsync(showToast: false);
             StatusText = Worlds.Count == 0
                 ? "No Windrose worlds found."
                 : $"Found {Worlds.Count} world{(Worlds.Count == 1 ? string.Empty : "s")}.";
@@ -343,11 +382,9 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CheckCloud()
+    private async Task CheckCloudAsync()
     {
-        _dialogService.ShowInfo("Cloud sync", "TODO: Cloud sync is planned after local backup and restore are verified.");
-        AddActivity("Info", "Cloud sync is not implemented yet.");
-        _toastService.Info("Cloud sync", "Not implemented yet.");
+        await RefreshCloudStatusAsync(showToast: true);
     }
 
     private bool HasSelectedWorld()
@@ -407,6 +444,30 @@ public partial class MainWindowViewModel : ObservableObject
         ProfileStatus = profile is null
             ? "No Windrose profile found. Start Windrose once before importing a backup."
             : $"Profile {profile.ProfileId} • RocksDB {profile.RocksDbVersion}";
+    }
+
+    private async Task RefreshCloudStatusAsync(bool showToast)
+    {
+        if (SelectedWorld is null)
+        {
+            CloudStatus = null;
+            return;
+        }
+
+        try
+        {
+            CloudStatus = await _cloudSyncService.RefreshStatusAsync(SelectedWorld);
+            if (showToast)
+            {
+                _toastService.Info(CloudStatus.Title, CloudStatus.Detail);
+                AddActivity("Info", $"{CloudStatus.Title}: {CloudStatus.Detail}");
+            }
+        }
+        catch (Exception ex)
+        {
+            AddActivity("Error", ex.Message);
+            _toastService.Error("Cloud check failed", ex.Message);
+        }
     }
 
     private void AddActivity(string level, string message)
