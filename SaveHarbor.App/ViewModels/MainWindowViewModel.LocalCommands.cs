@@ -26,7 +26,16 @@ public partial class MainWindowViewModel
                 Worlds.Add(world);
             }
 
-            SelectedWorld ??= Worlds.FirstOrDefault();
+            suppressSelectedWorldCloudRefresh = true;
+            try
+            {
+                SelectedWorld ??= Worlds.FirstOrDefault();
+            }
+            finally
+            {
+                suppressSelectedWorldCloudRefresh = false;
+            }
+
             await RefreshProfileStatusAsync();
             await RefreshBackupStatsAsync();
             await RefreshCloudStatusAsync(showToast: false);

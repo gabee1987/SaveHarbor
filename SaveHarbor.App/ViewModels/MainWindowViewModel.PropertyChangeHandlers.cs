@@ -9,7 +9,11 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(SelectedWorldSize));
         OnPropertyChanged(nameof(SelectedWorldFileCount));
         OnPropertyChanged(nameof(SelectedWorldModifiedAge));
-        _ = RefreshCloudStatusAsync(showToast: false);
+
+        if (!suppressSelectedWorldCloudRefresh)
+        {
+            _ = RefreshCloudStatusAsync(showToast: false);
+        }
     }
 
     partial void OnCloudStatusChanged(CloudSyncStatus? value)

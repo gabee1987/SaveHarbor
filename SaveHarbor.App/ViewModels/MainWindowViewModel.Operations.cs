@@ -15,12 +15,12 @@ public partial class MainWindowViewModel
     {
         try
         {
-            _logger.Information(AppLogKeyword.Ui, "Starting operation: {Operation}", busyText);
+            _logger.Debug(AppLogKeyword.Ui, "Starting operation: {Operation}", busyText);
             IsBusy = true;
             StatusText = busyText;
             NotifyCommandStates();
             await action();
-            _logger.Information(AppLogKeyword.Ui, "Completed operation: {Operation}", busyText);
+            _logger.Debug(AppLogKeyword.Ui, "Completed operation: {Operation}", busyText);
         }
         catch (Exception ex)
         {
@@ -116,7 +116,15 @@ public partial class MainWindowViewModel
             Worlds[index] = refreshed;
         }
 
-        SelectedWorld = refreshed;
+        suppressSelectedWorldCloudRefresh = true;
+        try
+        {
+            SelectedWorld = refreshed;
+        }
+        finally
+        {
+            suppressSelectedWorldCloudRefresh = false;
+        }
     }
 
     private void AddActivity(string level, string message)

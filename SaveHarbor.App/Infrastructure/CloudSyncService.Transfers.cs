@@ -8,7 +8,7 @@ public sealed partial class CloudSyncService
 {
     public async Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        logger.Information(AppLogKeyword.CloudDownload, "Starting cloud download for world {WorldId}", world.WorldId);
+        logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (!status.Connection.IsConnected)
@@ -78,7 +78,7 @@ public sealed partial class CloudSyncService
 
     public async Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        logger.Information(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);
+        logger.Debug(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (!status.Connection.IsConnected)

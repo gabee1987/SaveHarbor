@@ -16,6 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ICloudSyncService _cloudSyncService;
     private readonly IAppErrorHandler _errorHandler;
     private readonly IAppLogger _logger;
+    private bool suppressSelectedWorldCloudRefresh;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]

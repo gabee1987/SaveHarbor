@@ -4,6 +4,8 @@ namespace SaveHarbor.App.Services;
 
 public interface IAppLogger
 {
+    void Debug(AppLogKeyword keyword, string messageTemplate, params object?[] propertyValues);
+
     void Information(AppLogKeyword keyword, string messageTemplate, params object?[] propertyValues);
 
     void Warning(AppLogKeyword keyword, string messageTemplate, params object?[] propertyValues);

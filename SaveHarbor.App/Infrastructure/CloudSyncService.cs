@@ -24,7 +24,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
     public async Task<CloudSyncStatus> RefreshStatusAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        logger.Information(AppLogKeyword.CloudSync, "Refreshing cloud status for world {WorldId} ({WorldName})", world.WorldId, world.WorldName);
+        logger.Debug(AppLogKeyword.CloudSync, "Refreshing cloud status for world {WorldId} ({WorldName})", world.WorldId, world.WorldName);
 
         var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
         localState.LastCloudCheckAtUtc = DateTimeOffset.UtcNow;
@@ -59,7 +59,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
         if (manifest is null || latestVersion is null)
         {
-            logger.Information(AppLogKeyword.CloudSync, "No cloud save exists for world {WorldId}", world.WorldId);
+            logger.Debug(AppLogKeyword.CloudSync, "No cloud save exists for world {WorldId}", world.WorldId);
             return new CloudSyncStatus(
                 CloudSyncState.ConnectedNoCloudSave,
                 connection,
@@ -92,7 +92,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
         if (localState.LocalBaseVersionNumber is null)
         {
-            logger.Information(AppLogKeyword.CloudSync, "Cloud is newer because local world {WorldId} has no base version", world.WorldId);
+            logger.Debug(AppLogKeyword.CloudSync, "Cloud is newer because local world {WorldId} has no base version", world.WorldId);
             return new CloudSyncStatus(
                 CloudSyncState.CloudNewer,
                 connection,
@@ -106,7 +106,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
         if (localState.LocalBaseVersionNumber < latestVersion.VersionNumber)
         {
-            logger.Information(
+            logger.Debug(
                 AppLogKeyword.CloudSync,
                 "Cloud is newer for world {WorldId}. LocalBase={LocalBaseVersion} Latest={LatestVersion}",
                 world.WorldId,
@@ -144,7 +144,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
                 $"Local is based on v{localState.LocalBaseVersionNumber}, but cloud latest is v{latestVersion.VersionNumber}. Review before syncing.");
         }
 
-        logger.Information(AppLogKeyword.CloudSync, "World {WorldId} is in sync at version {VersionNumber}", world.WorldId, latestVersion.VersionNumber);
+        logger.Debug(AppLogKeyword.CloudSync, "World {WorldId} is in sync at version {VersionNumber}", world.WorldId, latestVersion.VersionNumber);
         return new CloudSyncStatus(
             CloudSyncState.UpToDate,
             connection,

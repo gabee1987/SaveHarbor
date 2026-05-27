@@ -1,12 +1,15 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
 using Serilog;
+using Serilog.Events;
 
 namespace SaveHarbor.App;
 
@@ -14,15 +17,18 @@ public partial class App : Application
 {
     private readonly IHost _host;
     private readonly IAppDataPathProvider _pathProvider = new AppDataPathProvider();
+    private readonly AppLoggingOptions _loggingOptions;
 
     public App()
     {
-        ConfigureLogging(_pathProvider);
+        _loggingOptions = LoadLoggingOptions();
+        ConfigureLogging(_pathProvider, _loggingOptions);
 
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
                 services.AddSingleton(_pathProvider);
+                services.AddSingleton(_loggingOptions);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
                 services.AddSingleton<IWindroseSaveDiscoveryService, WindroseSaveDiscoveryService>();
@@ -47,7 +53,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         await _host.StartAsync();
-        Log.ForContext("Keyword", "App").Information("SaveHarbor started");
+        LogAppInformation(_loggingOptions, "SaveHarbor started");
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
@@ -60,14 +66,70 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        Log.ForContext("Keyword", "App").Information("SaveHarbor exiting");
+        LogAppInformation(_loggingOptions, "SaveHarbor exiting");
         await _host.StopAsync();
         _host.Dispose();
         Log.CloseAndFlush();
         base.OnExit(e);
     }
 
-    private static void ConfigureLogging(IAppDataPathProvider pathProvider)
+    private static AppLoggingOptions LoadLoggingOptions()
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
+
+        var defaults = new AppLoggingOptions();
+        var section = configuration.GetSection(AppLoggingOptions.SectionName);
+        if (!section.Exists())
+        {
+            return defaults;
+        }
+
+        var options = new AppLoggingOptions
+        {
+            Enabled = ReadBool(section[nameof(AppLoggingOptions.Enabled)], defaults.Enabled),
+            DefaultMinimumLevel = ReadLevel(
+                section[nameof(AppLoggingOptions.DefaultMinimumLevel)],
+                defaults.DefaultMinimumLevel),
+            RetainedFileCountLimit = ReadInt(
+                section[nameof(AppLoggingOptions.RetainedFileCountLimit)],
+                defaults.RetainedFileCountLimit),
+            KeywordMinimumLevels = new Dictionary<AppLogKeyword, LogEventLevel>(defaults.KeywordMinimumLevels)
+        };
+
+        foreach (var keywordSection in section.GetSection(nameof(AppLoggingOptions.KeywordMinimumLevels)).GetChildren())
+        {
+            if (Enum.TryParse<AppLogKeyword>(keywordSection.Key, ignoreCase: true, out var keyword))
+            {
+                options.KeywordMinimumLevels[keyword] = ReadLevel(
+                    keywordSection.Value,
+                    options.KeywordMinimumLevels.GetValueOrDefault(keyword, options.DefaultMinimumLevel));
+            }
+        }
+
+        return options;
+    }
+
+    private static LogEventLevel ReadLevel(string? value, LogEventLevel fallback)
+    {
+        return Enum.TryParse<LogEventLevel>(value, ignoreCase: true, out var level)
+            ? level
+            : fallback;
+    }
+
+    private static bool ReadBool(string? value, bool fallback)
+    {
+        return bool.TryParse(value, out var result) ? result : fallback;
+    }
+
+    private static int ReadInt(string? value, int fallback)
+    {
+        return int.TryParse(value, out var result) && result > 0 ? result : fallback;
+    }
+
+    private static void ConfigureLogging(IAppDataPathProvider pathProvider, AppLoggingOptions options)
     {
         Directory.CreateDirectory(pathProvider.LocalLogsPath);
         Directory.CreateDirectory(pathProvider.CloudLogsPath);
@@ -75,19 +137,39 @@ public partial class App : Application
         const string outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{Keyword}] {Message:lj}{NewLine}{Exception}";
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Is(GetLowestConfiguredLevel(options))
             .Enrich.FromLogContext()
             .WriteTo.File(
                 Path.Combine(pathProvider.LocalLogsPath, "saveharbor-.log"),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14,
+                retainedFileCountLimit: options.RetainedFileCountLimit,
                 outputTemplate: outputTemplate)
             .WriteTo.File(
                 Path.Combine(pathProvider.CloudLogsPath, "saveharbor-cloud-.log"),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14,
+                retainedFileCountLimit: options.RetainedFileCountLimit,
                 outputTemplate: outputTemplate)
             .CreateLogger();
+    }
+
+    private static LogEventLevel GetLowestConfiguredLevel(AppLoggingOptions options)
+    {
+        if (options.KeywordMinimumLevels.Count == 0)
+        {
+            return options.DefaultMinimumLevel;
+        }
+
+        return options.KeywordMinimumLevels.Values
+            .Append(options.DefaultMinimumLevel)
+            .Min();
+    }
+
+    private static void LogAppInformation(AppLoggingOptions options, string message)
+    {
+        if (options.IsEnabled(AppLogKeyword.App, LogEventLevel.Information))
+        {
+            Log.ForContext("Keyword", AppLogKeyword.App.ToString()).Information(message);
+        }
     }
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

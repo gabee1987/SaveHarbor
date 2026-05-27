@@ -6,7 +6,7 @@ public sealed partial class CloudSyncService
 {
     public async Task<CloudSyncResult> StartSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        logger.Information(AppLogKeyword.CloudSession, "Starting cloud session for world {WorldId}", world.WorldId);
+        logger.Debug(AppLogKeyword.CloudSession, "Starting cloud session for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (!status.Connection.IsConnected)
@@ -60,7 +60,7 @@ public sealed partial class CloudSyncService
 
     public async Task<CloudSyncResult> EndSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
-        logger.Information(AppLogKeyword.CloudSession, "Ending cloud session for world {WorldId}", world.WorldId);
+        logger.Debug(AppLogKeyword.CloudSession, "Ending cloud session for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (!status.Connection.IsConnected)
