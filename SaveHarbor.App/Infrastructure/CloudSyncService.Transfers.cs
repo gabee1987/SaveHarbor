@@ -8,14 +8,18 @@ public sealed partial class CloudSyncService
 {
     public async Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
+        logger.Information(AppLogKeyword.CloudDownload, "Starting cloud download for world {WorldId}", world.WorldId);
+
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (!status.Connection.IsConnected)
         {
+            logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because provider is not connected for world {WorldId}", world.WorldId);
             return new CloudSyncResult(false, status.State, "Cloud sync is not connected.");
         }
 
         if (status.LatestVersion is null)
         {
+            logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because no cloud save exists for world {WorldId}", world.WorldId);
             return new CloudSyncResult(false, status.State, "No cloud save is available for this world.");
         }
 
@@ -33,12 +37,20 @@ public sealed partial class CloudSyncService
 
             if (!download.IsSuccess || download.ArchivePath is null)
             {
+                logger.Warning(AppLogKeyword.CloudDownload, "Cloud download failed for world {WorldId}: {Message}", world.WorldId, download.Message);
                 return new CloudSyncResult(false, status.State, download.Message);
             }
 
             var archiveSha256 = await FileHashCalculator.ComputeSha256Async(download.ArchivePath, cancellationToken);
             if (!string.Equals(archiveSha256, status.LatestVersion.ArchiveSha256, StringComparison.OrdinalIgnoreCase))
             {
+                logger.Warning(
+                    AppLogKeyword.CloudDownload,
+                    "Cloud download hash mismatch for world {WorldId}. Expected={ExpectedHash} Actual={ActualHash}",
+                    world.WorldId,
+                    status.LatestVersion.ArchiveSha256,
+                    archiveSha256);
+
                 return new CloudSyncResult(false, CloudSyncState.Error, "Downloaded archive hash did not match the cloud manifest. Local save was not changed.");
             }
 
@@ -52,6 +64,7 @@ public sealed partial class CloudSyncService
             localState.LastDownloadedAtUtc = DateTimeOffset.UtcNow;
             await localSyncStateService.SaveAsync(localState, cancellationToken);
 
+            logger.Information(AppLogKeyword.CloudDownload, "Completed cloud download for world {WorldId} version {VersionNumber}", world.WorldId, status.LatestVersion.VersionNumber);
             return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Downloaded {world.WorldName} v{status.LatestVersion.VersionNumber}. Local backup was created first.");
         }
         finally
@@ -65,15 +78,25 @@ public sealed partial class CloudSyncService
 
     public async Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
+        logger.Information(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);
+
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (!status.Connection.IsConnected)
         {
+            logger.Warning(AppLogKeyword.CloudUpload, "Cloud upload blocked because provider is not connected for world {WorldId}", world.WorldId);
             return new CloudSyncResult(false, status.State, "Cloud sync is not connected.");
         }
 
         if (status.LatestVersion is not null &&
             status.LocalState.LocalBaseVersionNumber != status.LatestVersion.VersionNumber)
         {
+            logger.Warning(
+                AppLogKeyword.CloudUpload,
+                "Cloud upload blocked by conflict for world {WorldId}. LocalBase={LocalBaseVersion} Latest={LatestVersion}",
+                world.WorldId,
+                status.LocalState.LocalBaseVersionNumber,
+                status.LatestVersion.VersionNumber);
+
             return new CloudSyncResult(
                 false,
                 CloudSyncState.Conflict,
@@ -107,6 +130,7 @@ public sealed partial class CloudSyncService
 
         if (!upload.IsSuccess)
         {
+            logger.Warning(AppLogKeyword.CloudUpload, "Cloud upload failed for world {WorldId}: {Message}", world.WorldId, upload.Message);
             return new CloudSyncResult(false, CloudSyncState.Error, upload.Message);
         }
 
@@ -124,6 +148,7 @@ public sealed partial class CloudSyncService
             await cloudProvider.ClearSessionLockAsync(world.WorldId, status.SessionLock!.LockId, cancellationToken);
         }
 
+        logger.Information(AppLogKeyword.CloudUpload, "Completed cloud upload for world {WorldId} version {VersionNumber}", world.WorldId, version.VersionNumber);
         return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Uploaded {world.WorldName} v{version.VersionNumber}.");
     }
 }

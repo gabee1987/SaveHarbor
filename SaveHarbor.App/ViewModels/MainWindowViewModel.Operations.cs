@@ -15,17 +15,20 @@ public partial class MainWindowViewModel
     {
         try
         {
+            _logger.Information(AppLogKeyword.Ui, "Starting operation: {Operation}", busyText);
             IsBusy = true;
             StatusText = busyText;
             NotifyCommandStates();
             await action();
+            _logger.Information(AppLogKeyword.Ui, "Completed operation: {Operation}", busyText);
         }
         catch (Exception ex)
         {
+            var error = _errorHandler.Handle(ex, busyText, AppLogKeyword.Ui);
             StatusText = "Operation failed.";
-            AddActivity("Error", ex.Message);
-            _toastService.Error("Operation failed", ex.Message);
-            _dialogService.ShowError("SaveHarbor error", ex.Message);
+            AddActivity("Error", FormatActivityError(error));
+            _toastService.Error("Operation failed", error.UserMessage);
+            _dialogService.ShowError("SaveHarbor error", FormatDialogError(error));
         }
         finally
         {
@@ -88,8 +91,9 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            AddActivity("Error", ex.Message);
-            _toastService.Error("Cloud check failed", ex.Message);
+            var error = _errorHandler.Handle(ex, "Refresh cloud status", AppLogKeyword.CloudSync);
+            AddActivity("Error", FormatActivityError(error));
+            _toastService.Error("Cloud check failed", error.UserMessage);
         }
     }
 
@@ -122,6 +126,16 @@ public partial class MainWindowViewModel
         {
             Activity.RemoveAt(Activity.Count - 1);
         }
+    }
+
+    private static string FormatActivityError(AppError error)
+    {
+        return $"{error.Code} [{error.ErrorId}]: {error.UserMessage}";
+    }
+
+    private static string FormatDialogError(AppError error)
+    {
+        return $"{error.UserMessage}\n\nError ID: {error.ErrorId}\nCode: {error.Code}\nDetails: {error.TechnicalMessage}";
     }
 
     private static void OpenFolder(string path)

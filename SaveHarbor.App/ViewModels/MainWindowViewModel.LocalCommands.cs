@@ -136,9 +136,10 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            _toastService.Error("Cannot import backup", ex.Message);
-            _dialogService.ShowError("Cannot import backup", ex.Message);
-            AddActivity("Error", ex.Message);
+            var error = _errorHandler.Handle(ex, "Read import backup", AppLogKeyword.Import);
+            _toastService.Error("Cannot import backup", error.UserMessage);
+            _dialogService.ShowError("Cannot import backup", FormatDialogError(error));
+            AddActivity("Error", FormatActivityError(error));
             return;
         }
 

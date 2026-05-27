@@ -14,6 +14,8 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly IToastService _toastService;
     private readonly ICloudSyncService _cloudSyncService;
+    private readonly IAppErrorHandler _errorHandler;
+    private readonly IAppLogger _logger;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]
@@ -55,7 +57,9 @@ public partial class MainWindowViewModel : ObservableObject
         IProcessDetectionService processDetectionService,
         IDialogService dialogService,
         IToastService toastService,
-        ICloudSyncService cloudSyncService)
+        ICloudSyncService cloudSyncService,
+        IAppErrorHandler errorHandler,
+        IAppLogger logger)
     {
         _saveDiscoveryService = saveDiscoveryService;
         _backupService = backupService;
@@ -63,6 +67,8 @@ public partial class MainWindowViewModel : ObservableObject
         _dialogService = dialogService;
         _toastService = toastService;
         _cloudSyncService = cloudSyncService;
+        _errorHandler = errorHandler;
+        _logger = logger;
 
         _toastService.ToastRequested += OnToastRequested;
     }

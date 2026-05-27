@@ -12,10 +12,12 @@ public sealed class FolderCloudProvider : ICloudProvider
         WriteIndented = true
     };
 
-    private readonly string rootPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SaveHarbor",
-        "cloud-test");
+    private readonly string rootPath;
+
+    public FolderCloudProvider(IAppDataPathProvider pathProvider)
+    {
+        rootPath = pathProvider.LocalTestCloudRoot;
+    }
 
     public string ProviderName => "Local test cloud";
 
