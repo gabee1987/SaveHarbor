@@ -75,7 +75,10 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task CheckCloudAsync()
     {
-        await RefreshCloudStatusAsync(showToast: true);
+        await RunBusyAsync("Checking cloud status...", async () =>
+        {
+            await RefreshCloudStatusAsync(showToast: true);
+        });
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedWorld))]

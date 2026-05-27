@@ -1,0 +1,56 @@
+<UserControl x:Class="SaveHarbor.App.Views.Controls.IndeterminateProgressLineView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="3"
+             Visibility="{Binding IsActive, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+    <Border Background="#10161A"
+            ClipToBounds="True">
+        <Canvas Height="3">
+            <Border Width="360"
+                    Height="3"
+                    Background="{StaticResource AccentBrush}"
+                    CornerRadius="2">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="ProgressSegmentPrimaryTransform" X="-420" />
+                </Border.RenderTransform>
+            </Border>
+
+            <Border Width="190"
+                    Height="3"
+                    Background="{StaticResource AccentHoverBrush}"
+                    CornerRadius="2"
+                    Opacity="0.82">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="ProgressSegmentSecondaryTransform" X="-260" />
+                </Border.RenderTransform>
+            </Border>
+        </Canvas>
+        <Border.Triggers>
+            <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard>
+                    <Storyboard RepeatBehavior="Forever">
+                        <DoubleAnimation Storyboard.TargetName="ProgressSegmentPrimaryTransform"
+                                         Storyboard.TargetProperty="X"
+                                         From="-420"
+                                         To="1160"
+                                         Duration="0:0:1.75">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseInOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="ProgressSegmentSecondaryTransform"
+                                         Storyboard.TargetProperty="X"
+                                         From="-260"
+                                         To="1160"
+                                         BeginTime="0:0:0.48"
+                                         Duration="0:0:1.45">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseInOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+        </Border.Triggers>
+    </Border>
+</UserControl>

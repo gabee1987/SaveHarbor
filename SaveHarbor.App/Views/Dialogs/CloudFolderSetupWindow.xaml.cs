@@ -68,6 +68,7 @@ public partial class CloudFolderSetupWindow : Window
     {
         TestButton.IsEnabled = !isBusy;
         FolderInput.IsEnabled = !isBusy;
+        SetupProgressLine.IsActive = isBusy;
         if (message is not null)
         {
             StatusText.Text = message;
