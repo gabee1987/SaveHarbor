@@ -27,7 +27,10 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Configuration\google-client-secret.json" Condition="Exists('Configuration\google-client-secret.json')">
+    <Content Include="Configuration\google-client-secret.json" Condition="Exists('Configuration\google-client-secret.json') and !Exists('Configuration\google-client-secret.enc')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Configuration\google-client-secret.enc" Condition="Exists('Configuration\google-client-secret.enc')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

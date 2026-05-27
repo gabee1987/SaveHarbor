@@ -50,10 +50,16 @@ public sealed class CloudProviderOptions
                 : Path.Combine(AppContext.BaseDirectory, configuredPath);
         }
 
-        var bundledPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "google-client-secret.json");
-        if (File.Exists(bundledPath))
+        var bundledEncryptedPath = Path.Combine(AppContext.BaseDirectory, "Configuration", GoogleClientSecretsProtector.EncryptedFileName);
+        if (File.Exists(bundledEncryptedPath))
         {
-            return bundledPath;
+            return bundledEncryptedPath;
+        }
+
+        var bundledPlainPath = Path.Combine(AppContext.BaseDirectory, "Configuration", GoogleClientSecretsProtector.PlainFileName);
+        if (File.Exists(bundledPlainPath))
+        {
+            return bundledPlainPath;
         }
 
         return pathProvider.GoogleClientSecretsPath;

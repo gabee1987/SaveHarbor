@@ -434,6 +434,7 @@ test-results/
 SaveHarbor.App/[Bb]in/
 SaveHarbor.App/[Oo]bj/
 SaveHarbor.App/Configuration/google-client-secret.json
+SaveHarbor.App/Configuration/google-client-secret.enc
 
 # content below from: https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
 # General

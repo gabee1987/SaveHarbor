@@ -381,7 +381,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
     private ClientSecrets LoadClientSecrets()
     {
         var secretsPath = options.ResolveGoogleClientSecretsPath(pathProvider);
-        using var stream = System.IO.File.OpenRead(secretsPath);
+        using var stream = GoogleClientSecretsProtector.OpenRead(secretsPath);
         return GoogleClientSecrets.FromStream(stream).Secrets;
     }
 
