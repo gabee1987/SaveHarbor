@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.Configuration;
@@ -18,10 +19,12 @@ public partial class App : Application
     private readonly IHost _host;
     private readonly IAppDataPathProvider _pathProvider = new AppDataPathProvider();
     private readonly AppLoggingOptions _loggingOptions;
+    private readonly CloudProviderOptions _cloudProviderOptions;
 
     public App()
     {
         _loggingOptions = LoadLoggingOptions();
+        _cloudProviderOptions = LoadCloudProviderOptions();
         ConfigureLogging(_pathProvider, _loggingOptions);
 
         _host = Host.CreateDefaultBuilder()
@@ -29,6 +32,7 @@ public partial class App : Application
             {
                 services.AddSingleton(_pathProvider);
                 services.AddSingleton(_loggingOptions);
+                services.AddSingleton(_cloudProviderOptions);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
                 services.AddSingleton<IWindroseSaveDiscoveryService, WindroseSaveDiscoveryService>();
@@ -37,7 +41,16 @@ public partial class App : Application
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IToastService, ToastService>();
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
-                services.AddSingleton<ICloudProvider, FolderCloudProvider>();
+                services.AddSingleton<FolderCloudProvider>();
+                services.AddSingleton<GoogleDriveCloudProvider>();
+                services.AddSingleton<ICloudProvider>(serviceProvider =>
+                {
+                    var options = serviceProvider.GetRequiredService<CloudProviderOptions>();
+                    return string.Equals(options.Provider, CloudProviderKind.LocalTest, StringComparison.OrdinalIgnoreCase)
+                        ? serviceProvider.GetRequiredService<FolderCloudProvider>()
+                        : serviceProvider.GetRequiredService<GoogleDriveCloudProvider>();
+                });
+                services.AddSingleton<ICloudSetupService, CloudProviderSettingsService>();
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
@@ -107,6 +120,55 @@ public partial class App : Application
                     keywordSection.Value,
                     options.KeywordMinimumLevels.GetValueOrDefault(keyword, options.DefaultMinimumLevel));
             }
+        }
+
+        return options;
+    }
+
+    private static CloudProviderOptions LoadCloudProviderOptions()
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
+
+        var defaults = new CloudProviderOptions();
+        var section = configuration.GetSection(CloudProviderOptions.SectionName);
+        if (!section.Exists())
+        {
+            return defaults;
+        }
+
+        var options = new CloudProviderOptions
+        {
+            Provider = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.Provider)])
+                ? defaults.Provider
+                : section[nameof(CloudProviderOptions.Provider)]!,
+            GoogleAppFolderName = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.GoogleAppFolderName)])
+                ? defaults.GoogleAppFolderName
+                : section[nameof(CloudProviderOptions.GoogleAppFolderName)]!,
+            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath,
+            GoogleSharedFolderId = section[nameof(CloudProviderOptions.GoogleSharedFolderId)] ?? defaults.GoogleSharedFolderId
+        };
+
+        var pathProvider = new AppDataPathProvider();
+        var localSettingsPath = pathProvider.CloudProviderSettingsPath;
+        if (!File.Exists(localSettingsPath))
+        {
+            return options;
+        }
+
+        try
+        {
+            var localSettings = JsonSerializer.Deserialize<LocalCloudProviderSettings>(File.ReadAllText(localSettingsPath));
+            if (!string.IsNullOrWhiteSpace(localSettings?.GoogleSharedFolderId))
+            {
+                options.GoogleSharedFolderId = localSettings.GoogleSharedFolderId;
+            }
+        }
+        catch
+        {
+            // A broken local setup file should not stop the app from starting.
         }
 
         return options;

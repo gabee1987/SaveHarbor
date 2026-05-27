@@ -4,6 +4,8 @@ namespace SaveHarbor.App.Services;
 
 public interface ICloudSyncService
 {
+    Task<CloudConnectionResult> ConnectAsync(CancellationToken cancellationToken = default);
+
     Task<CloudSyncStatus> RefreshStatusAsync(WindroseWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default);

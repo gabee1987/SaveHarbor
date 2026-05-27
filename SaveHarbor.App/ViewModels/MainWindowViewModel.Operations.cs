@@ -11,6 +11,11 @@ public partial class MainWindowViewModel
         return SelectedWorld is not null && !IsBusy;
     }
 
+    private bool IsNotBusy()
+    {
+        return !IsBusy;
+    }
+
     private async Task RunBusyAsync(string busyText, Func<Task> action)
     {
         try
@@ -43,6 +48,9 @@ public partial class MainWindowViewModel
         CreateBackupCommand.NotifyCanExecuteChanged();
         RestoreBackupCommand.NotifyCanExecuteChanged();
         OpenWorldFolderCommand.NotifyCanExecuteChanged();
+        SetupCloudFolderCommand.NotifyCanExecuteChanged();
+        ConnectCloudCommand.NotifyCanExecuteChanged();
+        CheckCloudCommand.NotifyCanExecuteChanged();
         UploadCloudCommand.NotifyCanExecuteChanged();
         DownloadCloudCommand.NotifyCanExecuteChanged();
         StartCloudSessionCommand.NotifyCanExecuteChanged();

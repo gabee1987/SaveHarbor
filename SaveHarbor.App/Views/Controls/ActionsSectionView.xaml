@@ -86,12 +86,22 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{ui:UiText Actions.CloudSync}" Style="{StaticResource MicroLabel}" />
                         <TextBlock Grid.Column="1"
                                    Text="{Binding CloudProviderText}"
                                    Style="{StaticResource MutedText}"
                                    ToolTip="{Binding CloudAccountText}" />
+                        <Button Grid.Column="3"
+                                Content="{ui:UiText Actions.SetupCloud}"
+                                Command="{Binding SetupCloudFolderCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                MinHeight="24"
+                                Padding="8,2"
+                                FontSize="11"
+                                ToolTip="{ui:UiText Actions.SetupCloudTooltip}" />
                     </Grid>
 
                     <Grid Grid.Row="2">
@@ -101,8 +111,20 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="6" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button Content="{ui:UiText Actions.Check}"
+                        <Button Content="{ui:UiText Actions.Connect}"
+                                Command="{Binding ConnectCloudCommand}"
+                                MinHeight="30"
+                                Padding="8,4"
+                                Background="#173D42"
+                                BorderBrush="#19B8AA"
+                                Foreground="{StaticResource InkBrush}"
+                                Style="{StaticResource SecondaryButton}"
+                                ToolTip="{ui:UiText Actions.ConnectTooltip}" />
+                        <Button Grid.Column="2"
+                                Content="{ui:UiText Actions.Check}"
                                 Command="{Binding CheckCloudCommand}"
                                 MinHeight="30"
                                 Padding="8,4"
@@ -111,7 +133,7 @@
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
                                 ToolTip="{ui:UiText Actions.CheckTooltip}" />
-                        <Button Grid.Column="2"
+                        <Button Grid.Column="4"
                                 Content="{ui:UiText Actions.Upload}"
                                 Command="{Binding UploadCloudCommand}"
                                 MinHeight="30"
@@ -121,7 +143,7 @@
                                 Foreground="{StaticResource InkBrush}"
                                 Style="{StaticResource SecondaryButton}"
                                 ToolTip="{ui:UiText Actions.UploadTooltip}" />
-                        <Button Grid.Column="4"
+                        <Button Grid.Column="6"
                                 Content="{ui:UiText Actions.Download}"
                                 Command="{Binding DownloadCloudCommand}"
                                 MinHeight="30"

@@ -477,24 +477,32 @@ Open question to decide during implementation:
 
 On first connection:
 
-- Find or create root folder `SaveHarbor`.
-- Find or create world folder by `worldId`.
-- Store Drive folder IDs in settings.
+- Use the configured shared Google Drive folder ID as the SaveHarbor root.
+- The folder is created manually once by the group owner and shared with friends' Google accounts.
+- Validate that the connected Google account can read and edit that shared folder.
+- Find or create world folder by `worldId` inside the shared root.
+- Let users paste/test/save the shared folder link in-app.
+- Store local setup under `%LocalAppData%\SaveHarbor\cloud-provider-settings.json`.
 
 Settings should store:
 
 ```json
 {
-  "cloudProvider": "GoogleDrive",
-  "googleDrive": {
+  "cloudProvider": {
+    "provider": "GoogleDrive",
+    "googleSharedFolderId": "...",
     "accountEmail": "gabee@example.com",
-    "rootFolderId": "...",
     "worldFolderIds": {
       "C8320961717B4D7C459CB58190797ECC": "..."
     }
   }
 }
 ```
+
+Important:
+
+- The app must not silently create a personal Drive root for each player.
+- If no shared folder ID is configured, Google sync stays not connected and shows setup guidance.
 
 ### Upload Safety
 
@@ -739,15 +747,30 @@ Done when:
 
 ### Phase 10 - Google Drive Provider
 
-- [ ] Add Google Drive API packages.
-- [ ] Implement OAuth connect.
-- [ ] Store token securely for current Windows user.
-- [ ] Find/create root folder.
-- [ ] Find/create world folder.
-- [ ] Implement manifest read/write.
-- [ ] Implement version upload/download.
-- [ ] Implement lock read/write/clear.
-- [ ] Handle auth/network/rate-limit errors.
+- [x] Add Google Drive API packages.
+- [x] Implement OAuth connect.
+- [x] Store token for current Windows user.
+- [x] Use a configured shared folder as the root.
+- [x] Validate connected account access to the shared folder.
+- [x] Find/create world folder.
+- [x] Implement manifest read/write.
+- [x] Implement version upload/download.
+- [x] Implement lock read/write/clear.
+- [ ] Handle auth/network/rate-limit errors with richer user-facing recovery messages.
+
+Current implementation note:
+
+- The provider is selected by `SaveHarbor:CloudProvider:Provider` in `appsettings.json`.
+- `GoogleDrive` is now the default provider.
+- `LocalTest` remains available for development by changing the provider setting.
+- Google OAuth client secrets are read from `%LocalAppData%\SaveHarbor\google-client-secret.json` by default, or from `SaveHarbor:CloudProvider:GoogleClientSecretsPath`.
+- The Google shared folder is configured with `SaveHarbor:CloudProvider:GoogleSharedFolderId`.
+- The shared folder ID can be pasted as the raw folder ID or as a Google Drive folder URL.
+- If `appsettings.json` already contains a shared folder ID, the first-run setup is skipped.
+- If no shared folder ID is configured, SaveHarbor prompts for setup and also exposes a compact `Setup` button in Cloud sync.
+- Saved local setup overrides `appsettings.json` on that PC.
+- SaveHarbor opens Google sign-in only when the user clicks `Connect`.
+- After the first successful connection, SaveHarbor reuses/refreshes the saved token silently on later app starts.
 
 Done when:
 

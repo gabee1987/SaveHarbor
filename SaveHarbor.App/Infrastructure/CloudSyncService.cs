@@ -22,6 +22,12 @@ public sealed partial class CloudSyncService : ICloudSyncService
         this.logger = logger;
     }
 
+    public async Task<CloudConnectionResult> ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        logger.Debug(AppLogKeyword.CloudProvider, "Connecting cloud provider {ProviderName}", cloudProvider.ProviderName);
+        return await cloudProvider.ConnectAsync(cancellationToken);
+    }
+
     public async Task<CloudSyncStatus> RefreshStatusAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudSync, "Refreshing cloud status for world {WorldId} ({WorldName})", world.WorldId, world.WorldName);

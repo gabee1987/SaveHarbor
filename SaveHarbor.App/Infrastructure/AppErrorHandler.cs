@@ -1,5 +1,7 @@
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
+using Google;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 
@@ -50,6 +52,7 @@ public sealed class AppErrorHandler : IAppErrorHandler
             UnauthorizedAccessException => AppErrorCode.AccessDenied,
             FileNotFoundException or DirectoryNotFoundException => AppErrorCode.FileNotFound,
             JsonException => AppErrorCode.InvalidData,
+            GoogleApiException or HttpRequestException or TaskCanceledException => AppErrorCode.CloudProviderFailure,
             IOException => AppErrorCode.FileSystem,
             InvalidOperationException => AppErrorCode.InvalidOperation,
             _ => AppErrorCode.Unexpected
@@ -65,6 +68,7 @@ public sealed class AppErrorHandler : IAppErrorHandler
             AppErrorCode.FileSystem => "SaveHarbor could not complete a file operation. Check that the files are not locked and try again.",
             AppErrorCode.InvalidData => "SaveHarbor found invalid or corrupted data while reading a file.",
             AppErrorCode.InvalidOperation => "The operation cannot continue in the current state.",
+            AppErrorCode.CloudProviderFailure => "SaveHarbor could not reach or update the cloud provider. Check the connection and try again.",
             _ => "SaveHarbor hit an unexpected error. Check the log for details."
         };
     }

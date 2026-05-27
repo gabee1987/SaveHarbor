@@ -4,7 +4,75 @@ namespace SaveHarbor.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    [RelayCommand]
+    private async Task PromptCloudFolderSetupIfNeededAsync()
+    {
+        if (_cloudSetupService.HasSharedFolderConfigured)
+        {
+            return;
+        }
+
+        var confirmed = _dialogService.Confirm(
+            "Set up cloud sync",
+            "Google Drive sync needs one shared folder for your group.\n\nPaste and test the shared folder link now, or cancel and use the Setup button later.");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await SetupCloudFolderAsync();
+    }
+
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    private async Task SetupCloudFolderAsync()
+    {
+        var input = _dialogService.ConfigureCloudFolder(
+            _cloudSetupService.CurrentSharedFolderId,
+            _cloudSetupService.TestSharedFolderAsync);
+
+        if (input is null)
+        {
+            return;
+        }
+
+        await RunBusyAsync("Saving cloud folder setup...", async () =>
+        {
+            await _cloudSetupService.SaveSharedFolderAsync(input);
+            await RefreshCloudStatusAsync(showToast: false);
+
+            StatusText = "Cloud folder setup saved.";
+            AddActivity("Success", StatusText);
+            _toastService.Success("Cloud folder saved", "SaveHarbor will use this shared Google Drive folder.");
+        });
+    }
+
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    private async Task ConnectCloudAsync()
+    {
+        await RunBusyAsync("Connecting cloud...", async () =>
+        {
+            var result = await _cloudSyncService.ConnectAsync();
+
+            if (!result.IsSuccess)
+            {
+                StatusText = result.Message;
+                AddActivity("Warning", result.Message);
+                _toastService.Warning("Cloud not connected", result.Message);
+                return;
+            }
+
+            StatusText = result.Message;
+            AddActivity("Success", result.Message);
+            _toastService.Success("Cloud connected", result.Status.AccountEmail ?? result.Status.ProviderName);
+
+            if (SelectedWorld is not null)
+            {
+                await RefreshCloudStatusAsync(showToast: false);
+            }
+        });
+    }
+
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task CheckCloudAsync()
     {
         await RefreshCloudStatusAsync(showToast: true);

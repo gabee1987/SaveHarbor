@@ -44,6 +44,23 @@ public sealed class WpfDialogService : IDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
+    public string? ConfigureCloudFolder(
+        string currentFolderId,
+        Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync)
+    {
+        var owner = System.Windows.Application.Current.Windows
+            .OfType<Window>()
+            .FirstOrDefault(window => window.IsActive)
+            ?? System.Windows.Application.Current.MainWindow;
+
+        var window = new CloudFolderSetupWindow(currentFolderId, testAccessAsync)
+        {
+            Owner = owner
+        };
+
+        return window.ShowDialog() == true ? window.FolderInputValue : null;
+    }
+
     private static bool? ShowDialog(
         string title,
         string subtitle,

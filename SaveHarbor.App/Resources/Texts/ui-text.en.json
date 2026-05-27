@@ -55,8 +55,12 @@
   "Actions.RestoreTooltip": "Replace the selected local world from a SaveHarbor backup. A safety backup is created first.",
   "Actions.Import": "Import",
   "Actions.ImportTooltip": "Import a SaveHarbor backup as a world on this PC. Useful for a friend receiving the world for the first time.",
-  "Actions.CloudTooltip": "Cloud sync state and actions. Google Drive will be added behind this provider-independent sync layer.",
+  "Actions.CloudTooltip": "Cloud sync state and actions. Google Drive uses one configured shared folder as the source of truth for everyone.",
   "Actions.CloudSync": "Cloud sync",
+  "Actions.SetupCloud": "Setup",
+  "Actions.SetupCloudTooltip": "Paste, test, and save the Google Drive shared folder used by this group.",
+  "Actions.Connect": "Connect",
+  "Actions.ConnectTooltip": "Connect SaveHarbor to Google Drive. Sign in once with your own Google account; later starts reuse the saved token.",
   "Actions.Check": "Check",
   "Actions.CheckTooltip": "Check the cloud manifest, latest version, and active session state.",
   "Actions.Upload": "Upload",
@@ -77,5 +81,15 @@
   "Dialog.ConfirmAction": "Please confirm this action",
   "Dialog.Ok": "OK",
   "Dialog.Continue": "Continue",
-  "Dialog.Cancel": "Cancel"
+  "Dialog.Cancel": "Cancel",
+
+  "CloudSetup.Title": "Google Drive folder setup",
+  "CloudSetup.Subtitle": "Use one shared folder for your group. Everyone signs in with their own Google account, but reads and writes this same folder.",
+  "CloudSetup.FolderLink": "Shared folder link or ID",
+  "CloudSetup.FolderLinkTooltip": "Paste the Google Drive folder URL or the folder ID from the URL. The folder must be shared with edit access.",
+  "CloudSetup.Help": "Create a folder in Google Drive, share it with your friends as editors, then paste its folder link here. SaveHarbor stores this once on this PC.",
+  "CloudSetup.Ready": "Paste the shared folder link, then test access.",
+  "CloudSetup.Test": "Test access",
+  "CloudSetup.Save": "Save",
+  "CloudSetup.Cancel": "Cancel"
 }

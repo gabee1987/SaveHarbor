@@ -9,4 +9,10 @@ public interface IAppDataPathProvider
     string LocalTestCloudRoot { get; }
 
     string CloudLogsPath { get; }
+
+    string GoogleTokenStorePath { get; }
+
+    string GoogleClientSecretsPath { get; }
+
+    string CloudProviderSettingsPath { get; }
 }

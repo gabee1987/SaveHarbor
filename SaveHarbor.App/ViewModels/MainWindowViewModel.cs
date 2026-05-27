@@ -14,6 +14,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly IToastService _toastService;
     private readonly ICloudSyncService _cloudSyncService;
+    private readonly ICloudSetupService _cloudSetupService;
     private readonly IAppErrorHandler _errorHandler;
     private readonly IAppLogger _logger;
     private bool suppressSelectedWorldCloudRefresh;
@@ -59,6 +60,7 @@ public partial class MainWindowViewModel : ObservableObject
         IDialogService dialogService,
         IToastService toastService,
         ICloudSyncService cloudSyncService,
+        ICloudSetupService cloudSetupService,
         IAppErrorHandler errorHandler,
         IAppLogger logger)
     {
@@ -68,6 +70,7 @@ public partial class MainWindowViewModel : ObservableObject
         _dialogService = dialogService;
         _toastService = toastService;
         _cloudSyncService = cloudSyncService;
+        _cloudSetupService = cloudSetupService;
         _errorHandler = errorHandler;
         _logger = logger;
 
