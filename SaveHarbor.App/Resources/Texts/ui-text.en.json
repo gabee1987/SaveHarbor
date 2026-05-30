@@ -47,6 +47,10 @@
 
   "Actions.Title": "Actions",
   "Actions.TitleTooltip": "Commands for local backup/restore/import and cloud synchronization.",
+  "Actions.Play": "Play",
+  "Actions.PlayHint": "Starts a cloud session first, then launches Windrose through Steam.",
+  "Actions.StartGame": "Start game",
+  "Actions.StartGameTooltip": "Start a cloud session for the selected world and launch Windrose. If the cloud save is newer or someone else is playing, launch is blocked.",
   "Actions.LocalFilesTooltip": "Local save operations. These work without cloud sync.",
   "Actions.LocalFiles": "Local files",
   "Actions.Backup": "Backup",

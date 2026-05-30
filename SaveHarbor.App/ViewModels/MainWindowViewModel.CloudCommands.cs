@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using SaveHarbor.App.Domain;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -174,27 +175,48 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync("Starting cloud session...", async () =>
         {
-            var result = await _cloudSyncService.StartSessionAsync(SelectedWorld);
-            await RefreshCloudStatusAsync(showToast: false);
+            await TryStartCloudSessionAsync(SelectedWorld);
+        });
+    }
 
-            if (!result.IsSuccess)
+    [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
+    private async Task StartGameAsync()
+    {
+        if (SelectedWorld is null)
+        {
+            return;
+        }
+
+        UpdateGameStatus();
+        if (IsGameRunning)
+        {
+            _toastService.Info("Windrose already running", "The game is already open.");
+            StatusText = "Windrose is already running.";
+            AddActivity("Info", StatusText);
+            return;
+        }
+
+        await RunBusyAsync("Starting session and launching Windrose...", async () =>
+        {
+            var sessionStarted = await TryStartCloudSessionAsync(SelectedWorld);
+            if (!sessionStarted)
             {
-                StatusText = result.Message;
-                AddActivity("Warning", result.Message);
-                _toastService.Warning("Session not started", result.Message);
                 return;
             }
 
-            StatusText = result.Message;
-            AddActivity("Info", result.Message);
-            if (result.Message.Contains("already active", StringComparison.OrdinalIgnoreCase))
+            var launchResult = await _gameLauncherService.LaunchAsync();
+            StatusText = launchResult.Message;
+
+            if (!launchResult.IsSuccess)
             {
-                _toastService.Info("Session already active", result.Message);
+                AddActivity("Warning", launchResult.Message);
+                _toastService.Warning("Launch failed", launchResult.Message);
+                _dialogService.ShowError("Launch failed", launchResult.Message);
+                return;
             }
-            else
-            {
-                _toastService.Success("Session started", result.Message);
-            }
+
+            AddActivity("Success", "Session active. Windrose launch requested.");
+            _toastService.Success("Starting Windrose", "Session is active and Steam has been asked to launch Windrose.");
         });
     }
 
@@ -223,5 +245,32 @@ public partial class MainWindowViewModel
             AddActivity("Info", result.Message);
             _toastService.Success("Session ended", result.Message);
         });
+    }
+
+    private async Task<bool> TryStartCloudSessionAsync(WindroseWorld world)
+    {
+        var result = await _cloudSyncService.StartSessionAsync(world);
+        await RefreshCloudStatusAsync(showToast: false);
+
+        if (!result.IsSuccess)
+        {
+            StatusText = result.Message;
+            AddActivity("Warning", result.Message);
+            _toastService.Warning("Session not started", result.Message);
+            return false;
+        }
+
+        StatusText = result.Message;
+        AddActivity("Info", result.Message);
+        if (result.Message.Contains("already active", StringComparison.OrdinalIgnoreCase))
+        {
+            _toastService.Info("Session already active", result.Message);
+        }
+        else
+        {
+            _toastService.Success("Session started", result.Message);
+        }
+
+        return true;
     }
 }

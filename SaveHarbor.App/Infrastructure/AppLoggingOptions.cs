@@ -22,6 +22,7 @@ public sealed class AppLoggingOptions
         [AppLogKeyword.CloudUpload] = LogEventLevel.Information,
         [AppLogKeyword.CloudDownload] = LogEventLevel.Information,
         [AppLogKeyword.CloudSession] = LogEventLevel.Information,
+        [AppLogKeyword.GameLauncher] = LogEventLevel.Information,
         [AppLogKeyword.CloudSync] = LogEventLevel.Warning,
         [AppLogKeyword.CloudProvider] = LogEventLevel.Warning,
         [AppLogKeyword.Discovery] = LogEventLevel.Warning,

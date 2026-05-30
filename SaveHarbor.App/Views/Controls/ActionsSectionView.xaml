@@ -10,12 +10,47 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="10" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Text="{ui:UiText Actions.Title}" Style="{StaticResource SectionTitle}"
                        ToolTip="{ui:UiText Actions.TitleTooltip}" />
 
             <Border Grid.Row="1"
+                    Margin="0,10,0,0"
+                    Background="#10231F"
+                    BorderBrush="{StaticResource AccentBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="10"
+                    ToolTip="{ui:UiText Actions.StartGameTooltip}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="190" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{ui:UiText Actions.Play}" Style="{StaticResource MicroLabel}" />
+                        <TextBlock Text="{ui:UiText Actions.PlayHint}"
+                                   Style="{StaticResource MutedText}"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2"
+                            Content="{ui:UiText Actions.StartGame}"
+                            Command="{Binding StartGameCommand}"
+                            Style="{StaticResource PrimaryButton}"
+                            MinHeight="38"
+                            Padding="12,7"
+                            ToolTip="{ui:UiText Actions.StartGameTooltip}" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="3"
                     Margin="0,10,0,0"
                     Background="{StaticResource PanelAltBrush}"
                     BorderBrush="{StaticResource LineSoftBrush}"
@@ -66,7 +101,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="3"
+            <Border Grid.Row="5"
                     Background="{StaticResource PanelAltBrush}"
                     BorderBrush="{StaticResource LineSoftBrush}"
                     BorderThickness="1"

@@ -55,6 +55,7 @@ public partial class MainWindowViewModel
         DownloadCloudCommand.NotifyCanExecuteChanged();
         StartCloudSessionCommand.NotifyCanExecuteChanged();
         EndCloudSessionCommand.NotifyCanExecuteChanged();
+        StartGameCommand.NotifyCanExecuteChanged();
     }
 
     private void UpdateGameStatus()

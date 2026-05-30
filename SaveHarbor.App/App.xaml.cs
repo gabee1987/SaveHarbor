@@ -20,11 +20,13 @@ public partial class App : Application
     private readonly IAppDataPathProvider _pathProvider = new AppDataPathProvider();
     private readonly AppLoggingOptions _loggingOptions;
     private readonly CloudProviderOptions _cloudProviderOptions;
+    private readonly GameLauncherOptions _gameLauncherOptions;
 
     public App()
     {
         _loggingOptions = LoadLoggingOptions();
         _cloudProviderOptions = LoadCloudProviderOptions();
+        _gameLauncherOptions = LoadGameLauncherOptions();
         ConfigureLogging(_pathProvider, _loggingOptions);
 
         _host = Host.CreateDefaultBuilder()
@@ -33,11 +35,13 @@ public partial class App : Application
                 services.AddSingleton(_pathProvider);
                 services.AddSingleton(_loggingOptions);
                 services.AddSingleton(_cloudProviderOptions);
+                services.AddSingleton(_gameLauncherOptions);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
                 services.AddSingleton<IWindroseSaveDiscoveryService, WindroseSaveDiscoveryService>();
                 services.AddSingleton<IBackupService, ZipBackupService>();
                 services.AddSingleton<IProcessDetectionService, WindowsProcessDetectionService>();
+                services.AddSingleton<IGameLauncherService, WindroseGameLauncherService>();
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IToastService, ToastService>();
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
@@ -172,6 +176,29 @@ public partial class App : Application
         }
 
         return options;
+    }
+
+    private static GameLauncherOptions LoadGameLauncherOptions()
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
+
+        var defaults = new GameLauncherOptions();
+        var section = configuration.GetSection(GameLauncherOptions.SectionName);
+        if (!section.Exists())
+        {
+            return defaults;
+        }
+
+        return new GameLauncherOptions
+        {
+            LaunchUri = string.IsNullOrWhiteSpace(section[nameof(GameLauncherOptions.LaunchUri)])
+                ? defaults.LaunchUri
+                : section[nameof(GameLauncherOptions.LaunchUri)]!,
+            ExecutablePath = section[nameof(GameLauncherOptions.ExecutablePath)] ?? defaults.ExecutablePath
+        };
     }
 
     private static LogEventLevel ReadLevel(string? value, LogEventLevel fallback)

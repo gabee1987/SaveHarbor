@@ -15,6 +15,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IToastService _toastService;
     private readonly ICloudSyncService _cloudSyncService;
     private readonly ICloudSetupService _cloudSetupService;
+    private readonly IGameLauncherService _gameLauncherService;
     private readonly IAppErrorHandler _errorHandler;
     private readonly IAppLogger _logger;
     private bool suppressSelectedWorldCloudRefresh;
@@ -27,6 +28,7 @@ public partial class MainWindowViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(DownloadCloudCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartCloudSessionCommand))]
     [NotifyCanExecuteChangedFor(nameof(EndCloudSessionCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartGameCommand))]
     private WindroseWorld? selectedWorld;
 
     [ObservableProperty]
@@ -61,6 +63,7 @@ public partial class MainWindowViewModel : ObservableObject
         IToastService toastService,
         ICloudSyncService cloudSyncService,
         ICloudSetupService cloudSetupService,
+        IGameLauncherService gameLauncherService,
         IAppErrorHandler errorHandler,
         IAppLogger logger)
     {
@@ -71,6 +74,7 @@ public partial class MainWindowViewModel : ObservableObject
         _toastService = toastService;
         _cloudSyncService = cloudSyncService;
         _cloudSetupService = cloudSetupService;
+        _gameLauncherService = gameLauncherService;
         _errorHandler = errorHandler;
         _logger = logger;
 
