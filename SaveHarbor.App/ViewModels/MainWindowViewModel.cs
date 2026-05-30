@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
+using System.Windows.Threading;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -18,7 +19,10 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IGameLauncherService _gameLauncherService;
     private readonly IAppErrorHandler _errorHandler;
     private readonly IAppLogger _logger;
+    private readonly DispatcherTimer gameMonitorTimer;
     private bool suppressSelectedWorldCloudRefresh;
+    private bool hasObservedGameRunningDuringSession;
+    private bool isAutoEndingSession;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]
@@ -79,6 +83,12 @@ public partial class MainWindowViewModel : ObservableObject
         _logger = logger;
 
         _toastService.ToastRequested += OnToastRequested;
+
+        gameMonitorTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(5)
+        };
+        gameMonitorTimer.Tick += OnGameMonitorTick;
     }
 
     public ObservableCollection<WindroseWorld> Worlds { get; } = [];

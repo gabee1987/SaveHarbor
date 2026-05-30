@@ -190,9 +190,19 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            _toastService.Info("Windrose already running", "The game is already open.");
-            StatusText = "Windrose is already running.";
-            AddActivity("Info", StatusText);
+            await RunBusyAsync("Starting session for running Windrose...", async () =>
+            {
+                var sessionStarted = await TryStartCloudSessionAsync(SelectedWorld);
+                if (!sessionStarted)
+                {
+                    return;
+                }
+
+                hasObservedGameRunningDuringSession = true;
+                StatusText = "Windrose is running. Session is active.";
+                AddActivity("Info", StatusText);
+                _toastService.Success("Session active", "Windrose is already running, so SaveHarbor will end the session when the game closes.");
+            });
             return;
         }
 
@@ -262,6 +272,8 @@ public partial class MainWindowViewModel
 
         StatusText = result.Message;
         AddActivity("Info", result.Message);
+        hasObservedGameRunningDuringSession = IsGameRunning;
+
         if (result.Message.Contains("already active", StringComparison.OrdinalIgnoreCase))
         {
             _toastService.Info("Session already active", result.Message);

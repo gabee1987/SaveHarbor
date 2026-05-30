@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
     public async Task InitializeAsync()
     {
         await RefreshAsync();
+        StartGameMonitor();
         await PromptCloudFolderSetupIfNeededAsync();
     }
 
