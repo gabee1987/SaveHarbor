@@ -70,7 +70,7 @@
   "Actions.Upload": "Upload",
   "Actions.UploadTooltip": "Upload the selected local world to the cloud provider. Upload is blocked if cloud changed while you played.",
   "Actions.Download": "Download",
-  "Actions.DownloadTooltip": "Download and restore the latest cloud save. A local backup is created before restore.",
+  "Actions.DownloadTooltip": "Download the latest cloud save. If a local world is selected, SaveHarbor creates a safety backup before restore; if no local world exists, it imports the cloud save into your profile.",
   "Actions.StartSession": "Start session",
   "Actions.StartSessionTooltip": "Mark that you are starting to play from the current cloud version, so friends see an active session warning.",
   "Actions.EndSession": "End session",

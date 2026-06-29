@@ -28,6 +28,11 @@ public sealed class NotConfiguredCloudProvider : ICloudProvider
         return Task.FromResult<CloudWorldManifest?>(null);
     }
 
+    public Task<IReadOnlyList<CloudWorldManifest>> ListWorldManifestsAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<IReadOnlyList<CloudWorldManifest>>([]);
+    }
+
     public Task<CloudSessionLock?> GetSessionLockAsync(string worldId, CancellationToken cancellationToken = default)
     {
         return Task.FromResult<CloudSessionLock?>(null);

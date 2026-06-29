@@ -14,6 +14,8 @@ public interface ICloudProvider
 
     Task<CloudWorldManifest?> GetWorldManifestAsync(string worldId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<CloudWorldManifest>> ListWorldManifestsAsync(CancellationToken cancellationToken = default);
+
     Task<CloudSessionLock?> GetSessionLockAsync(string worldId, CancellationToken cancellationToken = default);
 
     Task<CloudUploadResult> UploadVersionAsync(CloudUploadRequest request, CancellationToken cancellationToken = default);

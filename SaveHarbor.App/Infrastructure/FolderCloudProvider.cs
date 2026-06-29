@@ -55,6 +55,29 @@ public sealed class FolderCloudProvider : ICloudProvider
         return await JsonSerializer.DeserializeAsync<CloudWorldManifest>(stream, JsonOptions, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<CloudWorldManifest>> ListWorldManifestsAsync(CancellationToken cancellationToken = default)
+    {
+        var worldsPath = Path.Combine(rootPath, "worlds");
+        if (!Directory.Exists(worldsPath))
+        {
+            return [];
+        }
+
+        var manifests = new List<CloudWorldManifest>();
+        foreach (var manifestPath in Directory.EnumerateFiles(worldsPath, "manifest.json", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await using var stream = File.OpenRead(manifestPath);
+            var manifest = await JsonSerializer.DeserializeAsync<CloudWorldManifest>(stream, JsonOptions, cancellationToken);
+            if (manifest?.LatestVersion is not null && !string.IsNullOrWhiteSpace(manifest.WorldId))
+            {
+                manifests.Add(manifest);
+            }
+        }
+
+        return manifests;
+    }
+
     public async Task<CloudSessionLock?> GetSessionLockAsync(string worldId, CancellationToken cancellationToken = default)
     {
         var lockPath = GetSessionLockPath(worldId);

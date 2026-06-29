@@ -118,14 +118,9 @@ public partial class MainWindowViewModel
         });
     }
 
-    [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task DownloadCloudAsync()
     {
-        if (SelectedWorld is null)
-        {
-            return;
-        }
-
         UpdateGameStatus();
         if (IsGameRunning)
         {
@@ -134,9 +129,11 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var confirmed = _dialogService.Confirm(
-            "Download latest cloud save",
-            $"Do you want to download the latest cloud version of {SelectedWorld.WorldName}?\n\nSaveHarbor will first create a local safety backup of your current world, then restore the latest cloud save over this local world.\n\nChoose Continue to download and restore.\nChoose Cancel to leave your local world unchanged.");
+        var confirmMessage = SelectedWorld is null
+            ? "Do you want to download the latest available cloud save into this computer's Windrose profile?\n\nUse this after local worlds were deleted or on a fresh PC. Windrose must be closed."
+            : $"Do you want to download the latest cloud version of {SelectedWorld.WorldName}?\n\nSaveHarbor will first create a local safety backup of your current world, then restore the latest cloud save over this local world.\n\nChoose Continue to download and restore.\nChoose Cancel to leave your local world unchanged.";
+
+        var confirmed = _dialogService.Confirm("Download latest cloud save", confirmMessage);
 
         if (!confirmed)
         {
@@ -145,9 +142,11 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync("Downloading latest cloud save...", async () =>
         {
-            var result = await _cloudSyncService.DownloadLatestAsync(SelectedWorld);
+            var result = SelectedWorld is null
+                ? await DownloadCloudWithoutLocalWorldAsync()
+                : await _cloudSyncService.DownloadLatestAsync(SelectedWorld);
+
             await RefreshBackupStatsAsync();
-            await RefreshCloudStatusAsync(showToast: false);
 
             if (!result.IsSuccess)
             {
@@ -157,12 +156,35 @@ public partial class MainWindowViewModel
                 return;
             }
 
-            await RefreshSelectedWorldFromDiskAsync();
+            if (SelectedWorld is null)
+            {
+                await RefreshAsync();
+            }
+            else
+            {
+                await RefreshSelectedWorldFromDiskAsync();
+                await RefreshCloudStatusAsync(showToast: false);
+            }
 
             StatusText = result.Message;
             AddActivity("Success", result.Message);
             _toastService.Success("Cloud download complete", result.Message);
         });
+    }
+
+    private async Task<CloudSyncResult> DownloadCloudWithoutLocalWorldAsync()
+    {
+        var profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+        var profile = profiles.FirstOrDefault();
+        if (profile is null)
+        {
+            return new CloudSyncResult(
+                false,
+                CloudSyncState.Error,
+                "No Windrose profile was found. Start Windrose once, close it, then download again.");
+        }
+
+        return await _cloudSyncService.DownloadLatestAvailableAsync(profile);
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedWorld))]

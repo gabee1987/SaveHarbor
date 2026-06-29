@@ -1,10 +1,22 @@
 using System.IO;
+using System.Reflection;
 using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    public string AppVersionText
+    {
+        get
+        {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            return version is null
+                ? "vunknown"
+                : $"v{version.Major}.{version.Minor}.{version.Build}";
+        }
+    }
+
     public string BackupRoot => _backupService.BackupRoot;
 
     public string LocalSaveRoot => Path.Combine(

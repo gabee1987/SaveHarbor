@@ -76,6 +76,98 @@ public sealed partial class CloudSyncService
         }
     }
 
+    public async Task<CloudSyncResult> DownloadLatestAvailableAsync(WindroseProfile profile, CancellationToken cancellationToken = default)
+    {
+        logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download into profile {ProfileId}", profile.ProfileId);
+
+        var connection = await cloudProvider.GetConnectionStatusAsync(cancellationToken);
+        if (!connection.IsConnected)
+        {
+            logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because provider is not connected for profile {ProfileId}", profile.ProfileId);
+            return new CloudSyncResult(false, CloudSyncState.NotConnected, "Cloud sync is not connected.");
+        }
+
+        var manifests = await cloudProvider.ListWorldManifestsAsync(cancellationToken);
+        var manifest = manifests
+            .Where(candidate => candidate.LatestVersion is not null)
+            .OrderByDescending(candidate => candidate.UpdatedAtUtc)
+            .ThenByDescending(candidate => candidate.LatestVersion!.UploadedAtUtc)
+            .FirstOrDefault();
+
+        if (manifest?.LatestVersion is null)
+        {
+            return new CloudSyncResult(false, CloudSyncState.ConnectedNoCloudSave, "No cloud save is available to download.");
+        }
+
+        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+        if (Directory.Exists(targetWorldPath))
+        {
+            return new CloudSyncResult(false, CloudSyncState.Conflict, $"A local folder already exists for {manifest.WorldName}. Refresh worlds and use normal Download.");
+        }
+
+        var tempPath = Path.Combine(
+            Path.GetTempPath(),
+            "SaveHarbor",
+            "cloud-downloads",
+            $"{Guid.NewGuid():N}_{manifest.LatestVersion.ArchiveFileName}");
+
+        var world = new WindroseWorld(
+            manifest.WorldId,
+            string.IsNullOrWhiteSpace(manifest.WorldName) ? manifest.WorldId : manifest.WorldName,
+            "Unknown",
+            targetWorldPath,
+            DateTimeOffset.MinValue,
+            DateTimeOffset.MinValue,
+            0,
+            0);
+
+        try
+        {
+            var download = await cloudProvider.DownloadVersionAsync(
+                new CloudDownloadRequest(world, manifest.LatestVersion, tempPath),
+                cancellationToken);
+
+            if (!download.IsSuccess || download.ArchivePath is null)
+            {
+                logger.Warning(AppLogKeyword.CloudDownload, "Cloud download failed for world {WorldId}: {Message}", manifest.WorldId, download.Message);
+                return new CloudSyncResult(false, CloudSyncState.Error, download.Message);
+            }
+
+            var archiveSha256 = await FileHashCalculator.ComputeSha256Async(download.ArchivePath, cancellationToken);
+            if (!string.Equals(archiveSha256, manifest.LatestVersion.ArchiveSha256, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.Warning(
+                    AppLogKeyword.CloudDownload,
+                    "Cloud download hash mismatch for world {WorldId}. Expected={ExpectedHash} Actual={ActualHash}",
+                    manifest.WorldId,
+                    manifest.LatestVersion.ArchiveSha256,
+                    archiveSha256);
+
+                return new CloudSyncResult(false, CloudSyncState.Error, "Downloaded archive hash did not match the cloud manifest. Local save was not changed.");
+            }
+
+            var importedPath = await backupService.ImportBackupAsNewWorldAsync(download.ArchivePath, profile, overwriteExisting: false, cancellationToken);
+            var importedWorld = world with { SavePath = importedPath };
+            var localState = await localSyncStateService.LoadAsync(importedWorld, cancellationToken);
+            localState.LastKnownCloudVersionNumber = manifest.LatestVersion.VersionNumber;
+            localState.LastKnownCloudVersionId = manifest.LatestVersion.VersionId;
+            localState.LocalBaseVersionNumber = manifest.LatestVersion.VersionNumber;
+            localState.LocalBaseVersionId = manifest.LatestVersion.VersionId;
+            localState.LastDownloadedAtUtc = DateTimeOffset.UtcNow;
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+
+            logger.Information(AppLogKeyword.CloudDownload, "Completed cloud download for world {WorldId} version {VersionNumber}", manifest.WorldId, manifest.LatestVersion.VersionNumber);
+            return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Downloaded {world.WorldName} v{manifest.LatestVersion.VersionNumber} into profile {profile.ProfileId}.");
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
+    }
+
     public async Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);

@@ -10,6 +10,8 @@ public interface ICloudSyncService
 
     Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default);
 
+    Task<CloudSyncResult> DownloadLatestAvailableAsync(WindroseProfile profile, CancellationToken cancellationToken = default);
+
     Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> StartSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default);

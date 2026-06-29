@@ -161,6 +161,30 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         return await DownloadJsonByNameAsync<CloudWorldManifest>(service, worldFolderId, "manifest.json", cancellationToken);
     }
 
+    public async Task<IReadOnlyList<CloudWorldManifest>> ListWorldManifestsAsync(CancellationToken cancellationToken = default)
+    {
+        var service = RequireConnectedService();
+        var worldsFolderId = await FindFolderPathAsync(service, ["worlds"], createMissing: false, cancellationToken);
+        if (worldsFolderId is null)
+        {
+            return [];
+        }
+
+        var worldFolders = await ListChildFoldersAsync(service, worldsFolderId, cancellationToken);
+        var manifests = new List<CloudWorldManifest>();
+        foreach (var worldFolder in worldFolders)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var manifest = await DownloadJsonByNameAsync<CloudWorldManifest>(service, worldFolder.Id, "manifest.json", cancellationToken);
+            if (manifest?.LatestVersion is not null && !string.IsNullOrWhiteSpace(manifest.WorldId))
+            {
+                manifests.Add(manifest);
+            }
+        }
+
+        return manifests;
+    }
+
     public async Task<CloudSessionLock?> GetSessionLockAsync(string worldId, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
@@ -529,6 +553,42 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
 
         var result = await request.ExecuteAsync(cancellationToken);
         return result.Files.FirstOrDefault()?.Id;
+    }
+
+    private static async Task<IReadOnlyList<DriveFile>> ListChildFoldersAsync(
+        DriveService service,
+        string parentId,
+        CancellationToken cancellationToken)
+    {
+        var query = new StringBuilder()
+            .Append('\'').Append(EscapeQueryValue(parentId)).Append("' in parents")
+            .Append(" and mimeType = '").Append(FolderMimeType).Append('\'')
+            .Append(" and trashed = false");
+
+        var folders = new List<DriveFile>();
+        string? pageToken = null;
+        do
+        {
+            var request = service.Files.List();
+            request.Q = query.ToString();
+            request.Fields = "nextPageToken,files(id,name)";
+            request.PageSize = 100;
+            request.Spaces = "drive";
+            request.SupportsAllDrives = true;
+            request.IncludeItemsFromAllDrives = true;
+            request.PageToken = pageToken;
+
+            var result = await request.ExecuteAsync(cancellationToken);
+            if (result.Files is not null)
+            {
+                folders.AddRange(result.Files);
+            }
+
+            pageToken = result.NextPageToken;
+        }
+        while (!string.IsNullOrWhiteSpace(pageToken));
+
+        return folders;
     }
 
     private static async Task<T?> DownloadJsonByNameAsync<T>(
