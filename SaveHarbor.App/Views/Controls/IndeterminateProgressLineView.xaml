@@ -3,12 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Height="3"
              Visibility="{Binding IsActive, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
-    <Border Background="#10161A"
+    <Border Background="{DynamicResource PanelAltBrush}"
             ClipToBounds="True">
         <Canvas Height="3">
             <Border Width="360"
                     Height="3"
-                    Background="{StaticResource AccentBrush}"
+                    Background="{DynamicResource AccentBrush}"
                     CornerRadius="2">
                 <Border.RenderTransform>
                     <TranslateTransform x:Name="ProgressSegmentPrimaryTransform" X="-420" />
@@ -17,7 +17,7 @@
 
             <Border Width="190"
                     Height="3"
-                    Background="{StaticResource AccentHoverBrush}"
+                    Background="{DynamicResource AccentHoverBrush}"
                     CornerRadius="2"
                     Opacity="0.82">
                 <Border.RenderTransform>

@@ -7,11 +7,11 @@
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource AppBackgroundBrush}"
+        Background="{DynamicResource AppBackgroundBrush}"
         FontFamily="Segoe UI"
         FontSize="13">
-    <Border Background="{StaticResource PanelBrush}"
-            BorderBrush="{StaticResource LineBrush}"
+    <Border Background="{DynamicResource PanelBrush}"
+            BorderBrush="{DynamicResource LineBrush}"
             BorderThickness="1"
             CornerRadius="8"
             Padding="18">
@@ -34,7 +34,7 @@
                 <Border Width="34"
                         Height="34"
                         CornerRadius="17"
-                        Background="{StaticResource InputBrush}"
+                        Background="{DynamicResource InputBrush}"
                         BorderBrush="{Binding AccentBrush, RelativeSource={RelativeSource AncestorType=Window}}"
                         BorderThickness="1">
                     <TextBlock Text="{Binding IconText, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -57,7 +57,7 @@
 
             <TextBlock Grid.Row="2"
                        Text="{Binding Message, RelativeSource={RelativeSource AncestorType=Window}}"
-                       Foreground="{StaticResource InkBrush}"
+                       Foreground="{DynamicResource InkBrush}"
                        TextWrapping="Wrap"
                        LineHeight="19" />
 

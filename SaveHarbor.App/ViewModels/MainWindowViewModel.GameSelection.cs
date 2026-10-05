@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
@@ -8,7 +9,7 @@ public partial class MainWindowViewModel
 {
     public string ActiveGameName => _activeGame.Current.DisplayName;
 
-    public IReadOnlyList<IGameDefinition> AvailableGames => _gameRegistry.All;
+    public ObservableCollection<GameOptionViewModel> GameOptions { get; } = [];
 
     public bool CanSwitchGame => !IsBusy && !IsGameRunning && !HasOwnCloudSession();
 
@@ -34,6 +35,11 @@ public partial class MainWindowViewModel
             SelectedWorld = null;
             CloudStatus = null;
             hasObservedGameRunningDuringSession = false;
+
+            foreach (var option in GameOptions)
+            {
+                option.IsActive = option.Id == game.Id;
+            }
 
             OnPropertyChanged(nameof(ActiveGameName));
             OnPropertyChanged(nameof(SafetyHint));

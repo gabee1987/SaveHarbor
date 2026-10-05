@@ -1,0 +1,17 @@
+<UserControl x:Class="SaveHarbor.App.Views.Controls.SectionTitleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <StackPanel Orientation="Horizontal">
+        <Path Data="M3,0 L6,3 L3,6 L0,3 Z"
+              Width="6"
+              Height="6"
+              Fill="{DynamicResource OrnamentBrush}"
+              Margin="0,0,7,0"
+              VerticalAlignment="Center"
+              Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+        <TextBlock Text="{Binding Text, ElementName=Root}"
+                   Style="{StaticResource SectionTitle}"
+                   FontFamily="{DynamicResource AppDisplayFontFamily}" />
+    </StackPanel>
+</UserControl>

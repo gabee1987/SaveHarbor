@@ -21,7 +21,7 @@ public sealed class StubGameDefinition(GameId id, IGameSaveAdapter? saveAdapter 
 
     public TimeSpan SaveSettleDelay => TimeSpan.Zero;
 
-    public Uri ThemeDictionary { get; } = new("/Resources/Styles/DarkTheme.xaml", UriKind.Relative);
+    public Uri ThemeDictionary { get; } = new("/Resources/Themes/Windrose.Colors.xaml", UriKind.Relative);
 
     public string? PostRestoreHint => null;
 

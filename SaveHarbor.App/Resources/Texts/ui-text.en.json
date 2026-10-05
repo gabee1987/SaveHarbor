@@ -1,6 +1,5 @@
 {
   "App.Title": "SaveHarbor",
-  "App.Subtitle": "Co-op world sharing helper",
 
   "Header.AppTooltip": "SaveHarbor helps you back up, import, restore, and later sync co-op worlds.",
   "Header.Status": "Status",

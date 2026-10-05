@@ -9,6 +9,7 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
 {
     private const string WorldExtension = ".sav";
     private static readonly string[] BackupMarkers = [".bak", ".backup"];
+    private static readonly string[] NonWorldFileStems = ["EnhancedInputUserSettings"];
 
     public WorldPayloadKind PayloadKind => WorldPayloadKind.FileSet;
 
@@ -103,7 +104,8 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
     {
         var name = Path.GetFileName(path);
         return string.Equals(Path.GetExtension(name), WorldExtension, StringComparison.OrdinalIgnoreCase)
-            && !BackupMarkers.Any(marker => name.Contains(marker, StringComparison.OrdinalIgnoreCase));
+            && !BackupMarkers.Any(marker => name.Contains(marker, StringComparison.OrdinalIgnoreCase))
+            && !NonWorldFileStems.Contains(Path.GetFileNameWithoutExtension(name), StringComparer.OrdinalIgnoreCase);
     }
 
     private string ResolveRoot()

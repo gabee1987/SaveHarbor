@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#0D1114" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#151B20" />
+    <SolidColorBrush x:Key="PanelAltBrush" Color="#10161A" />
+    <SolidColorBrush x:Key="InputBrush" Color="#0F1519" />
+    <SolidColorBrush x:Key="LineBrush" Color="#26313A" />
+    <SolidColorBrush x:Key="LineSoftBrush" Color="#1F2931" />
+    <SolidColorBrush x:Key="InkBrush" Color="#F3F6F8" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#93A1AD" />
+    <SolidColorBrush x:Key="SubtleBrush" Color="#65727E" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#19A38C" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#22BCA3" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#128873" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#FF6B66" />
+    <SolidColorBrush x:Key="WarnBrush" Color="#FFB454" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#42D392" />
+    <SolidColorBrush x:Key="InfoBrush" Color="#6CB6FF" />
+
+    <SolidColorBrush x:Key="OrnamentBrush" Color="#1F2931" />
+    <SolidColorBrush x:Key="PrimaryButtonForegroundBrush" Color="#06100E" />
+    <SolidColorBrush x:Key="PlayCardBackgroundBrush" Color="#10231F" />
+
+    <SolidColorBrush x:Key="ToneAccentBackgroundBrush" Color="#173D42" />
+    <SolidColorBrush x:Key="ToneAccentBorderBrush" Color="#19B8AA" />
+    <SolidColorBrush x:Key="ToneInfoBackgroundBrush" Color="#1E2E44" />
+    <SolidColorBrush x:Key="ToneInfoBorderBrush" Color="#36577D" />
+    <SolidColorBrush x:Key="ToneSuccessBackgroundBrush" Color="#1E332D" />
+    <SolidColorBrush x:Key="ToneSuccessBorderBrush" Color="#357866" />
+    <SolidColorBrush x:Key="ToneWarnBackgroundBrush" Color="#352A1E" />
+    <SolidColorBrush x:Key="ToneWarnBorderBrush" Color="#8A6634" />
+    <SolidColorBrush x:Key="ToneNeutralBackgroundBrush" Color="#1A2229" />
+
+    <SolidColorBrush x:Key="HoverSurfaceBrush" Color="#222C35" />
+    <SolidColorBrush x:Key="HoverLineBrush" Color="#35424D" />
+    <SolidColorBrush x:Key="PressedSurfaceBrush" Color="#11181D" />
+    <SolidColorBrush x:Key="InputHoverBrush" Color="#131B20" />
+    <SolidColorBrush x:Key="ItemHoverBrush" Color="#1F2B33" />
+    <SolidColorBrush x:Key="ItemSelectedBrush" Color="#17352F" />
+
+    <SolidColorBrush x:Key="PlayCardBorderBrush" Color="#19A38C" />
+    <SolidColorBrush x:Key="HeaderDividerBrush" Color="#1F2931" />
+    <Color x:Key="PlayGlowColor">#19A38C</Color>
+    <sys:Double x:Key="PlayGlowOpacity">0</sys:Double>
+
+    <FontFamily x:Key="AppDisplayFontFamily">Segoe UI</FontFamily>
+    <Visibility x:Key="ShowOrnamentGlyphs">Collapsed</Visibility>
+    <PathGeometry x:Key="GameIconGeometry" Figures="M12,2 L14,10 L22,12 L14,14 L12,22 L10,14 L2,12 L10,10 Z" />
+</ResourceDictionary>

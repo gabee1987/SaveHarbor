@@ -19,8 +19,8 @@ Each assumption lives in exactly one place in the code so that it can change eas
 
 | ID | Assumption | Code location |
 |----|------------|---------------|
-| A1 | Worlds are top-level files with the extension exactly `.sav` in `SaveGames`, with no subfolders. | `DragonwildsSaveAdapter` (`WorldExtension`, `DiscoverWorldsAsync`) |
-| A2 | Game backup files contain `.bak` or `.backup` in the name and are ignored. | `DragonwildsSaveAdapter` (`BackupMarkers`) |
+| A1 | Worlds are top-level files with the extension exactly `.sav` in `SaveGames`, with no subfolders, except known non-world files. Observed on the owner's install: `EnhancedInputUserSettings.sav` (key bindings) is not a world and is excluded. | `DragonwildsSaveAdapter` (`WorldExtension`, `NonWorldFileStems`) |
+| A2 | Game backup files contain `.bak` or `.backup` in the name and are ignored. Observed: `<World>.sav.backup`. | `DragonwildsSaveAdapter` (`BackupMarkers`) |
 | A3 | No `GVAS` header validation is performed. It is added only after V2 confirms the header. | not implemented |
 | A4 | Process names are `RSDragonwilds-Win64-Shipping`, `RSDragonwilds` and `RSDragonwildsServer`. | `DragonwildsGameDefinition.ProcessNames` |
 

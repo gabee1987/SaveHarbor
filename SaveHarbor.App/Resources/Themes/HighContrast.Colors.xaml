@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <x:Static x:Key="AppBackgroundBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="PanelBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="PanelAltBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="InputBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="LineBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="LineSoftBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="InkBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="MutedBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="SubtleBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="AccentBrush" Member="SystemColors.HotTrackBrush" />
+    <x:Static x:Key="AccentHoverBrush" Member="SystemColors.HotTrackBrush" />
+    <x:Static x:Key="AccentPressedBrush" Member="SystemColors.HotTrackBrush" />
+    <x:Static x:Key="DangerBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="WarnBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="SuccessBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="InfoBrush" Member="SystemColors.WindowTextBrush" />
+
+    <x:Static x:Key="OrnamentBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="PrimaryButtonForegroundBrush" Member="SystemColors.HighlightTextBrush" />
+    <x:Static x:Key="PlayCardBackgroundBrush" Member="SystemColors.WindowBrush" />
+
+    <x:Static x:Key="ToneAccentBackgroundBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="ToneAccentBorderBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="ToneInfoBackgroundBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="ToneInfoBorderBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="ToneSuccessBackgroundBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="ToneSuccessBorderBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="ToneWarnBackgroundBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="ToneWarnBorderBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="ToneNeutralBackgroundBrush" Member="SystemColors.WindowBrush" />
+
+    <x:Static x:Key="HoverSurfaceBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="HoverLineBrush" Member="SystemColors.HotTrackBrush" />
+    <x:Static x:Key="PressedSurfaceBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="InputHoverBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="ItemHoverBrush" Member="SystemColors.WindowBrush" />
+    <x:Static x:Key="ItemSelectedBrush" Member="SystemColors.HighlightBrush" />
+
+    <x:Static x:Key="PlayCardBorderBrush" Member="SystemColors.WindowTextBrush" />
+    <x:Static x:Key="HeaderDividerBrush" Member="SystemColors.WindowTextBrush" />
+    <Color x:Key="PlayGlowColor">#000000</Color>
+    <sys:Double x:Key="PlayGlowOpacity">0</sys:Double>
+
+    <FontFamily x:Key="AppDisplayFontFamily">Segoe UI</FontFamily>
+    <Visibility x:Key="ShowOrnamentGlyphs">Collapsed</Visibility>
+    <PathGeometry x:Key="GameIconGeometry" Figures="M12,2 L14,10 L22,12 L14,14 L12,22 L10,14 L2,12 L10,10 Z" />
+</ResourceDictionary>

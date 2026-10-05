@@ -22,6 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\Fonts\*.ttf" />
+    <Content Include="Resources\Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Resources\Fonts\OFL.txt')" />
     <Content Include="Resources\Texts\ui-text.en.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

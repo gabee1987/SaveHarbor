@@ -21,7 +21,7 @@ public sealed class WindroseGameDefinition(GameOptionsProvider optionsProvider, 
 
     public TimeSpan SaveSettleDelay => TimeSpan.FromSeconds(10);
 
-    public Uri ThemeDictionary { get; } = new("/Resources/Styles/DarkTheme.xaml", UriKind.Relative);
+    public Uri ThemeDictionary { get; } = new("/Resources/Themes/Windrose.Colors.xaml", UriKind.Relative);
 
     public string? PostRestoreHint => null;
 

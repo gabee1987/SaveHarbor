@@ -11,17 +11,22 @@
         Width="1120"
         MinHeight="660"
         MinWidth="1040"
-        Background="#0D1114"
+        Background="{DynamicResource AppBackgroundBrush}"
         FontFamily="Segoe UI"
         FontSize="13"
         WindowStartupLocation="CenterScreen">
-    <Grid Background="{StaticResource AppBackgroundBrush}">
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <controls:HeaderStatusView />
+
+        <Border Height="1"
+                Background="{DynamicResource HeaderDividerBrush}"
+                Margin="20,0"
+                VerticalAlignment="Bottom" />
 
         <Grid Grid.Row="1" Margin="20,0,20,16">
             <Grid.ColumnDefinitions>

@@ -50,6 +50,7 @@ public partial class App : Application
                 services.AddSingleton<IBackupService, ZipBackupService>();
                 services.AddSingleton<IProcessDetectionService, WindowsProcessDetectionService>();
                 services.AddSingleton<IGameLauncherService, SteamGameLauncherService>();
+                services.AddSingleton<IThemeService, ThemeService>();
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IToastService, ToastService>();
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
@@ -81,6 +82,8 @@ public partial class App : Application
         await _host.StartAsync();
         var migrationReport = _host.Services.GetRequiredService<LegacyLayoutMigrator>().Run();
         LogAppInformation(_loggingOptions, "SaveHarbor started");
+
+        _host.Services.GetRequiredService<IThemeService>();
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();

@@ -32,6 +32,7 @@ public sealed class DragonwildsSaveAdapterTests : IDisposable
         Touch("World Two.backup.sav");
         Touch("Settings.json");
         Touch("Archive.save");
+        Touch("EnhancedInputUserSettings.sav");
         Touch("SaveCharacters", "Hero.sav");
 
         var worlds = await CreateAdapter().DiscoverWorldsAsync(TestContext.Current.CancellationToken);

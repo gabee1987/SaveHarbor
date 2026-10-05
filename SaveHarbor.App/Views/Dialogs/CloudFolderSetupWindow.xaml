@@ -8,12 +8,12 @@
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource AppBackgroundBrush}"
+        Background="{DynamicResource AppBackgroundBrush}"
         FontFamily="Segoe UI"
         FontSize="13">
     <Grid>
-        <Border Background="{StaticResource PanelBrush}"
-                BorderBrush="{StaticResource LineBrush}"
+        <Border Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource LineBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="18">
@@ -40,8 +40,8 @@
                 </StackPanel>
 
                 <Border Grid.Row="2"
-                        Background="{StaticResource PanelAltBrush}"
-                        BorderBrush="{StaticResource LineSoftBrush}"
+                        Background="{DynamicResource PanelAltBrush}"
+                        BorderBrush="{DynamicResource LineSoftBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="12">
@@ -52,10 +52,10 @@
                                  Margin="0,7,0,0"
                                  MinHeight="36"
                                  Padding="9,7"
-                                 Background="{StaticResource InputBrush}"
-                                 BorderBrush="{StaticResource LineBrush}"
-                                 Foreground="{StaticResource InkBrush}"
-                                 CaretBrush="{StaticResource InkBrush}"
+                                 Background="{DynamicResource InputBrush}"
+                                 BorderBrush="{DynamicResource LineBrush}"
+                                 Foreground="{DynamicResource InkBrush}"
+                                 CaretBrush="{DynamicResource InkBrush}"
                                  TextWrapping="NoWrap"
                                  ToolTip="{ui:UiText CloudSetup.FolderLinkTooltip}" />
                         <TextBlock Text="{ui:UiText CloudSetup.Help}"
@@ -67,7 +67,7 @@
 
                 <TextBlock x:Name="StatusText"
                            Grid.Row="4"
-                           Foreground="{StaticResource MutedBrush}"
+                           Foreground="{DynamicResource MutedBrush}"
                            Text="{ui:UiText CloudSetup.Ready}"
                            TextWrapping="Wrap"
                            LineHeight="18" />

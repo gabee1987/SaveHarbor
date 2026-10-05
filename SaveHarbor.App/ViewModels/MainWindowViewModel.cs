@@ -88,6 +88,11 @@ public partial class MainWindowViewModel : ObservableObject
         _toastService.ToastRequested += OnToastRequested;
         _activeGame.ActiveGameChanged += OnActiveGameChanged;
 
+        foreach (var definition in _gameRegistry.All)
+        {
+            GameOptions.Add(new GameOptionViewModel(definition.Id, definition.DisplayName) { IsActive = definition.Id == _activeGame.Current.Id });
+        }
+
         gameMonitorTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(5)

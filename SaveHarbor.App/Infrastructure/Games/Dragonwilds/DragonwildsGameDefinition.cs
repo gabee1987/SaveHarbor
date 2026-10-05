@@ -21,7 +21,7 @@ public sealed class DragonwildsGameDefinition(GameOptionsProvider optionsProvide
 
     public TimeSpan SaveSettleDelay => TimeSpan.FromSeconds(15);
 
-    public Uri ThemeDictionary { get; } = new("/Resources/Styles/DarkTheme.xaml", UriKind.Relative);
+    public Uri ThemeDictionary { get; } = new("/Resources/Themes/Dragonwilds.Colors.xaml", UriKind.Relative);
 
     public string? PostRestoreHint => "If Steam asks about a cloud conflict, choose Local files.";
 
