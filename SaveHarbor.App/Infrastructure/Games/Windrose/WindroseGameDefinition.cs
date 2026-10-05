@@ -25,5 +25,7 @@ public sealed class WindroseGameDefinition(GameOptionsProvider optionsProvider, 
 
     public string? PostRestoreHint => null;
 
+    public string PlayHint => "Starts a cloud session first, then launches Windrose through Steam.";
+
     public IGameSaveAdapter SaveAdapter => saveAdapter;
 }

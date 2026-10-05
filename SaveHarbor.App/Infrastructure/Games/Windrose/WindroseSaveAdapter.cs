@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure.Games.Windrose;
 
@@ -113,6 +114,9 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
             .Where(file => !string.Equals(Path.GetFileName(file), "LOCK", StringComparison.OrdinalIgnoreCase))
             .ToArray();
     }
+
+    public string GetExpectedWorldPath(GameSaveRoot root, string worldId) =>
+        SafePath.CombineUnderRoot(root.WorldsPath, worldId);
 
     private static DateTimeOffset ConvertUnrealTimestamp(double creationTime)
     {

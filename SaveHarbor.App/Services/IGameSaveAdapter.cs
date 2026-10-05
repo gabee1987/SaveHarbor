@@ -15,4 +15,6 @@ public interface IGameSaveAdapter
     Task<GameWorld?> ReadWorldAsync(string savePath, CancellationToken cancellationToken = default);
 
     IReadOnlyList<string> GetPayloadFiles(GameWorld world);
+
+    string GetExpectedWorldPath(GameSaveRoot root, string worldId);
 }

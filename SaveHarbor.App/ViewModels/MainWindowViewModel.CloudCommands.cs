@@ -171,6 +171,11 @@ public partial class MainWindowViewModel
             StatusText = result.Message;
             AddActivity("Success", result.Message);
             _toastService.Success("Cloud download complete", result.Message);
+
+            if (_activeGame.Current.PostRestoreHint is { } hint)
+            {
+                AddActivity("Info", hint);
+            }
         });
     }
 

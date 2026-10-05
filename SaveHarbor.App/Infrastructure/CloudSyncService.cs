@@ -8,17 +8,20 @@ public sealed partial class CloudSyncService : ICloudSyncService
     private readonly ICloudProvider cloudProvider;
     private readonly ILocalSyncStateService localSyncStateService;
     private readonly IBackupService backupService;
+    private readonly IGameRegistry gameRegistry;
     private readonly IAppLogger logger;
 
     public CloudSyncService(
         ICloudProvider cloudProvider,
         ILocalSyncStateService localSyncStateService,
         IBackupService backupService,
+        IGameRegistry gameRegistry,
         IAppLogger logger)
     {
         this.cloudProvider = cloudProvider;
         this.localSyncStateService = localSyncStateService;
         this.backupService = backupService;
+        this.gameRegistry = gameRegistry;
         this.logger = logger;
     }
 

@@ -3,7 +3,7 @@ using SaveHarbor.App.Services;
 
 namespace SaveHarbor.Tests.Support;
 
-public sealed class StubGameDefinition(GameId id) : IGameDefinition
+public sealed class StubGameDefinition(GameId id, IGameSaveAdapter? saveAdapter = null) : IGameDefinition
 {
     public GameId Id => id;
 
@@ -25,7 +25,9 @@ public sealed class StubGameDefinition(GameId id) : IGameDefinition
 
     public string? PostRestoreHint => null;
 
-    public IGameSaveAdapter SaveAdapter => throw new NotSupportedException();
+    public string PlayHint => string.Empty;
+
+    public IGameSaveAdapter SaveAdapter => saveAdapter ?? throw new NotSupportedException();
 }
 
 public sealed class StubGameRegistry(params IGameDefinition[] definitions) : IGameRegistry

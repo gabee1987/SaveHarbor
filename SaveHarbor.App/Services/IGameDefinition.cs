@@ -20,5 +20,6 @@ public interface IGameDefinition
     TimeSpan SaveSettleDelay { get; }
     Uri ThemeDictionary { get; }
     string? PostRestoreHint { get; }
+    string PlayHint { get; }
     IGameSaveAdapter SaveAdapter { get; }
 }

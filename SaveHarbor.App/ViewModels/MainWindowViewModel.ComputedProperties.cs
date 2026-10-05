@@ -20,6 +20,8 @@ public partial class MainWindowViewModel
 
     public string LocalSaveRoot => _activeGame.Current.SaveAdapter.SaveRootPath;
 
+    public string PlayHintText => _activeGame.Current.PlayHint;
+
     public string SelectedWorldSize => SelectedWorld is null ? "Unknown" : DisplayFormatter.FormatBytes(SelectedWorld.SizeBytes);
 
     public string SelectedWorldFileCount => SelectedWorld is null ? "0 files" : $"{SelectedWorld.FileCount:N0} files";

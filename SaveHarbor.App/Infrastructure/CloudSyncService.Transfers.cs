@@ -107,7 +107,7 @@ public sealed partial class CloudSyncService
         string targetWorldPath;
         try
         {
-            targetWorldPath = SafePath.CombineUnderRoot(profile.WorldsPath, manifest.WorldId);
+            targetWorldPath = gameRegistry.Get(profile.Game).SaveAdapter.GetExpectedWorldPath(profile, manifest.WorldId);
         }
         catch (InvalidDataException)
         {
@@ -119,9 +119,9 @@ public sealed partial class CloudSyncService
             return new CloudSyncResult(false, CloudSyncState.Error, "The cloud version has an invalid archive name. Nothing was changed.");
         }
 
-        if (Directory.Exists(targetWorldPath))
+        if (File.Exists(targetWorldPath) || Directory.Exists(targetWorldPath))
         {
-            return new CloudSyncResult(false, CloudSyncState.Conflict, $"A local folder already exists for {manifest.WorldName}. Refresh worlds and use normal Download.");
+            return new CloudSyncResult(false, CloudSyncState.Conflict, $"A local world file or folder already exists for {manifest.WorldName}. Refresh worlds and use normal Download.");
         }
 
         var tempPath = Path.Combine(

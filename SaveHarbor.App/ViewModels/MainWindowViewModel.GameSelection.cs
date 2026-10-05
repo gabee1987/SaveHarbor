@@ -38,6 +38,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(ActiveGameName));
             OnPropertyChanged(nameof(SafetyHint));
             OnPropertyChanged(nameof(LocalSaveRoot));
+            OnPropertyChanged(nameof(PlayHintText));
             OnPropertyChanged(nameof(SwitchGameDisabledReason));
 
             AddActivity("Info", $"Switched to {game.DisplayName}.");

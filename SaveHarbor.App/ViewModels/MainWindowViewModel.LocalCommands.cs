@@ -171,10 +171,10 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var targetWorldPath = SafePath.CombineUnderRoot(profile.WorldsPath, manifest.WorldId);
-        var worldExists = Directory.Exists(targetWorldPath);
+        var targetWorldPath = _activeGame.Current.SaveAdapter.GetExpectedWorldPath(profile, manifest.WorldId);
+        var worldExists = File.Exists(targetWorldPath) || Directory.Exists(targetWorldPath);
         var actionText = worldExists
-            ? "This world already exists on this computer. Importing will replace that local world folder."
+            ? "This world already exists on this computer. Importing will replace that local world."
             : "This will add the world to this computer.";
 
         var confirmed = _dialogService.Confirm(
@@ -212,7 +212,9 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorld is not null)
         {
-            OpenFolder(SelectedWorld.SavePath);
+            OpenFolder(File.Exists(SelectedWorld.SavePath)
+                ? Path.GetDirectoryName(SelectedWorld.SavePath)!
+                : SelectedWorld.SavePath);
         }
     }
 

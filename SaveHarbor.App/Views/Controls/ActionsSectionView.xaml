@@ -34,7 +34,7 @@
 
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{ui:UiText Actions.Play}" Style="{StaticResource MicroLabel}" />
-                        <TextBlock Text="{ui:UiText Actions.PlayHint}"
+                        <TextBlock Text="{Binding PlayHintText}"
                                    Style="{StaticResource MutedText}"
                                    TextTrimming="CharacterEllipsis"
                                    Margin="0,3,0,0" />

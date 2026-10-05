@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
 using SaveHarbor.App.Infrastructure.Games;
+using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
 using SaveHarbor.App.Infrastructure.Migrations;
 using SaveHarbor.App.Services;
@@ -39,6 +40,8 @@ public partial class App : Application
                 services.AddSingleton(AppOptionsLoader.LoadGameOptions());
                 services.AddSingleton<WindroseSaveAdapter>();
                 services.AddSingleton<IGameDefinition, WindroseGameDefinition>();
+                services.AddSingleton<DragonwildsSaveAdapter>();
+                services.AddSingleton<IGameDefinition, DragonwildsGameDefinition>();
                 services.AddSingleton<IGameRegistry, GameRegistry>();
                 services.AddSingleton<IActiveGameContext>(serviceProvider => new ActiveGameContext(
                     serviceProvider.GetRequiredService<IGameRegistry>(),
