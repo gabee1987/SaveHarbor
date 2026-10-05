@@ -49,6 +49,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         new("Keep the newest 50", 50)
     ];
 
+    public IReadOnlyList<RetentionOption> CloudRetentionOptions { get; } =
+    [
+        new("Keep every version", 0),
+        new("Keep the newest 5", 5),
+        new("Keep the newest 10", 10),
+        new("Keep the newest 20", 20)
+    ];
+
     public string GameName => _activeGame.Current.DisplayName;
 
     public string PlayerName
@@ -82,6 +90,21 @@ public sealed partial class SettingsViewModel : ObservableObject
             }
 
             _settings.Update(settings => settings.BackupRetentionCount = value.Count);
+            OnPropertyChanged();
+        }
+    }
+
+    public RetentionOption SelectedCloudRetention
+    {
+        get => CloudRetentionOptions.FirstOrDefault(option => option.Count == _settings.Current.CloudVersionRetentionCount) ?? CloudRetentionOptions[0];
+        set
+        {
+            if (value is null || value.Count == _settings.Current.CloudVersionRetentionCount)
+            {
+                return;
+            }
+
+            _settings.Update(settings => settings.CloudVersionRetentionCount = value.Count);
             OnPropertyChanged();
         }
     }

@@ -14,6 +14,9 @@ public sealed class FakeCloudProvider : ICloudProvider
 
     public List<string> Calls { get; } = [];
 
+    // Version archive names in the fake cloud, oldest first. Uploads add to it.
+    public List<string> StoredVersions { get; } = [];
+
     // Runs after a lock is stored and before the write returns; simulates another client writing before our verify-read.
     public Func<Task>? AfterLockWrite { get; set; }
 
@@ -93,6 +96,7 @@ public sealed class FakeCloudProvider : ICloudProvider
         };
         manifest.LatestVersion = request.VersionMetadata;
         manifests[(request.World.Game, request.World.WorldId)] = manifest;
+        StoredVersions.Add(request.VersionMetadata.ArchiveFileName);
         return Task.FromResult(new CloudUploadResult(true, manifest, "Uploaded."));
     }
 
@@ -100,6 +104,19 @@ public sealed class FakeCloudProvider : ICloudProvider
     {
         Calls.Add($"Download:{request.World.Game}:{request.World.WorldId}");
         return Task.FromResult(new CloudDownloadResult(false, null, "Not supported by the fake provider."));
+    }
+
+    public Task<IReadOnlyList<CloudStoredVersion>> ListStoredVersionsAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<CloudStoredVersion> result = StoredVersions.Select(name => new CloudStoredVersion(name)).ToArray();
+        return Task.FromResult(result);
+    }
+
+    public Task RemoveVersionAsync(GameId game, string worldId, string archiveFileName, CancellationToken cancellationToken = default)
+    {
+        Calls.Add($"RemoveVersion:{archiveFileName}");
+        StoredVersions.Remove(archiveFileName);
+        return Task.CompletedTask;
     }
 
     public async Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)

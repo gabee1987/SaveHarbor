@@ -114,6 +114,21 @@
                                         Style="{DynamicResource DwButton}" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
+                        <Border Style="{DynamicResource DwSettingRow}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="{ui:UiText Settings.KeepSharedVersions}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
+                                    <TextBlock Text="{ui:UiText Settings.KeepSharedVersionsHint}" Style="{DynamicResource DwMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                          ItemsSource="{Binding Settings.CloudRetentionOptions}"
+                                          SelectedItem="{Binding Settings.SelectedCloudRetention}" />
+                            </Grid>
+                        </Border>
 
                         <ContentControl Style="{DynamicResource DwPanelHeading}" Content="{ui:SpacedText Settings.Appearance}" Margin="0,12,0,14" />
                         <Border Style="{DynamicResource DwSettingRow}">

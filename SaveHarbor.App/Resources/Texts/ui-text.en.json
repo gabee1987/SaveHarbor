@@ -155,6 +155,8 @@
   "Settings.SharedFolder": "Shared Google Drive folder",
   "Settings.SharedFolderHint": "The folder your group uses for this game.",
   "Settings.Change": "CHANGE",
+  "Settings.KeepSharedVersions": "Keep shared versions",
+  "Settings.KeepSharedVersionsHint": "Older versions of a world in the shared folder are removed after your uploads. The latest version and any version a session is based on are always kept. On Google Drive, removed versions go to the Drive trash for 30 days.",
   "Settings.Appearance": "APPEARANCE",
   "Settings.AmbientEffects": "Ambient effects",
   "Settings.AmbientEffectsHint": "Slowly drifting embers in the background.",

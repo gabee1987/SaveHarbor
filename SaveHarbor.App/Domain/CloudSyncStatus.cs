@@ -11,4 +11,7 @@ public sealed record CloudSyncStatus(
     string Detail)
 {
     public bool IsConnected => Connection.IsConnected;
+
+    // The local world changed since it last matched its base cloud version (played without uploading).
+    public bool HasLocalChanges { get; init; }
 }

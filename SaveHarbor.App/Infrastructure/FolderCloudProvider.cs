@@ -171,6 +171,27 @@ public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvide
         return Task.FromResult(new CloudDownloadResult(true, request.TargetArchivePath, $"Downloaded {request.World.WorldName} v{request.Version.VersionNumber}."));
     }
 
+    public Task<IReadOnlyList<CloudStoredVersion>> ListStoredVersionsAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
+    {
+        var versionsPath = Path.Combine(GetWorldPath(game, worldId), "versions");
+        IReadOnlyList<CloudStoredVersion> versions = Directory.Exists(versionsPath)
+            ? Directory.EnumerateFiles(versionsPath, "*", SearchOption.TopDirectoryOnly)
+                .Where(path => path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                .Select(path => new CloudStoredVersion(Path.GetFileName(path)))
+                .ToArray()
+            : [];
+        return Task.FromResult(versions);
+    }
+
+    public Task RemoveVersionAsync(GameId game, string worldId, string archiveFileName, CancellationToken cancellationToken = default)
+    {
+        var versionsPath = Path.Combine(GetWorldPath(game, worldId), "versions");
+        var archivePath = SafePath.CombineUnderRoot(versionsPath, archiveFileName);
+        File.Delete(Path.ChangeExtension(archivePath, ".json"));
+        File.Delete(archivePath);
+        return Task.CompletedTask;
+    }
+
     public Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
     {
         EnsureGameFolder(game);

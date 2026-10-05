@@ -11,6 +11,10 @@ public sealed class LocalSyncState
     public string LastKnownCloudVersionId { get; set; } = string.Empty;
     public int? LocalBaseVersionNumber { get; set; }
     public string LocalBaseVersionId { get; set; } = string.Empty;
+    // Fingerprint of the local world files when they last matched the base version (see LocalChangeDetector).
+    // Empty in states saved by older versions.
+    public string LocalBaseSignature { get; set; } = string.Empty;
+    public string LocalBaseContentHash { get; set; } = string.Empty;
     public DateTimeOffset? LastDownloadedAtUtc { get; set; }
     public DateTimeOffset? LastUploadedAtUtc { get; set; }
     public string LastLocalBackupPath { get; set; } = string.Empty;

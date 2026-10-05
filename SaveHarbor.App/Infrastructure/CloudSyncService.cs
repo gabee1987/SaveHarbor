@@ -1,3 +1,4 @@
+using System.IO;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 
@@ -10,6 +11,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
     private readonly IBackupService backupService;
     private readonly IGameRegistry gameRegistry;
     private readonly IPlayerIdentity playerIdentity;
+    private readonly IAppSettingsStore settings;
     private readonly IAppLogger logger;
 
     public CloudSyncService(
@@ -18,6 +20,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
         IBackupService backupService,
         IGameRegistry gameRegistry,
         IPlayerIdentity playerIdentity,
+        IAppSettingsStore settings,
         IAppLogger logger)
     {
         this.cloudProvider = cloudProvider;
@@ -25,6 +28,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
         this.backupService = backupService;
         this.gameRegistry = gameRegistry;
         this.playerIdentity = playerIdentity;
+        this.settings = settings;
         this.logger = logger;
     }
 
@@ -116,24 +120,38 @@ public sealed partial class CloudSyncService : ICloudSyncService
                 $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. This local world has no cloud base version yet.");
         }
 
+        var hasLocalChanges = await DetectLocalChangesAsync(localState, world, cancellationToken) == true;
+
         if (localState.LocalBaseVersionNumber < latestVersion.VersionNumber)
         {
             logger.Debug(
                 AppLogKeyword.CloudSync,
-                "Cloud is newer for world {WorldId}. LocalBase={LocalBaseVersion} Latest={LatestVersion}",
+                "Cloud is newer for world {WorldId}. LocalBase={LocalBaseVersion} Latest={LatestVersion} LocalChanges={LocalChanges}",
                 world.WorldId,
                 localState.LocalBaseVersionNumber,
-                latestVersion.VersionNumber);
+                latestVersion.VersionNumber,
+                hasLocalChanges);
 
-            return new CloudSyncStatus(
-                CloudSyncState.CloudNewer,
-                connection,
-                manifest,
-                latestVersion,
-                sessionLock,
-                localState,
-                "Cloud is newer",
-                $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. Local is based on v{localState.LocalBaseVersionNumber}.");
+            return hasLocalChanges
+                ? new CloudSyncStatus(
+                    CloudSyncState.Conflict,
+                    connection,
+                    manifest,
+                    latestVersion,
+                    sessionLock,
+                    localState,
+                    "Both changed",
+                    $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}, and you have played since v{localState.LocalBaseVersionNumber}. Downloading replaces your local progress (it is backed up first).")
+                { HasLocalChanges = true }
+                : new CloudSyncStatus(
+                    CloudSyncState.CloudNewer,
+                    connection,
+                    manifest,
+                    latestVersion,
+                    sessionLock,
+                    localState,
+                    "Cloud is newer",
+                    $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. Local is based on v{localState.LocalBaseVersionNumber}.");
         }
 
         if (localState.LocalBaseVersionNumber > latestVersion.VersionNumber)
@@ -153,7 +171,23 @@ public sealed partial class CloudSyncService : ICloudSyncService
                 sessionLock,
                 localState,
                 "Sync conflict",
-                $"Local is based on v{localState.LocalBaseVersionNumber}, but cloud latest is v{latestVersion.VersionNumber}. Review before syncing.");
+                $"Local is based on v{localState.LocalBaseVersionNumber}, but cloud latest is v{latestVersion.VersionNumber}. Review before syncing.")
+            { HasLocalChanges = hasLocalChanges };
+        }
+
+        if (hasLocalChanges)
+        {
+            logger.Debug(AppLogKeyword.CloudSync, "World {WorldId} has local progress since version {VersionNumber}", world.WorldId, latestVersion.VersionNumber);
+            return new CloudSyncStatus(
+                CloudSyncState.LocalNewerUploadSafe,
+                connection,
+                manifest,
+                latestVersion,
+                sessionLock,
+                localState,
+                "Not shared yet",
+                $"You have played since v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. Upload to share your progress with the group.")
+            { HasLocalChanges = true };
         }
 
         logger.Debug(AppLogKeyword.CloudSync, "World {WorldId} is in sync at version {VersionNumber}", world.WorldId, latestVersion.VersionNumber);
@@ -165,6 +199,26 @@ public sealed partial class CloudSyncService : ICloudSyncService
             sessionLock,
             localState,
             "In sync",
-            $"Local world is based on the latest cloud version: v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}.");
+            $"Your world matches the latest cloud version: v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}.");
+    }
+
+    // A state saved before fingerprints existed gets one the first time its world is found unchanged, so later checks
+    // compare file contents instead of write times.
+    private async Task<bool?> DetectLocalChangesAsync(LocalSyncState localState, GameWorld world, CancellationToken cancellationToken)
+    {
+        if (!File.Exists(world.SavePath) && !Directory.Exists(world.SavePath))
+        {
+            return null;
+        }
+
+        var adapter = gameRegistry.Get(world.Game).SaveAdapter;
+        var changed = await LocalChangeDetector.HasChangedAsync(localState, world, adapter, cancellationToken);
+        if (changed == false && string.IsNullOrEmpty(localState.LocalBaseContentHash))
+        {
+            await LocalChangeDetector.CaptureAsync(localState, world, adapter, cancellationToken);
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+        }
+
+        return changed;
     }
 }

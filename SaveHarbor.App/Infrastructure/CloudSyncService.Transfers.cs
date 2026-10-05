@@ -67,6 +67,7 @@ public sealed partial class CloudSyncService
             localState.LocalBaseVersionNumber = status.LatestVersion.VersionNumber;
             localState.LocalBaseVersionId = status.LatestVersion.VersionId;
             localState.LastDownloadedAtUtc = DateTimeOffset.UtcNow;
+            await LocalChangeDetector.CaptureAsync(localState, world, gameRegistry.Get(world.Game).SaveAdapter, cancellationToken);
             await localSyncStateService.SaveAsync(localState, cancellationToken);
 
             logger.Information(AppLogKeyword.CloudDownload, "Completed cloud download for world {WorldId} version {VersionNumber}", world.WorldId, status.LatestVersion.VersionNumber);
@@ -174,6 +175,7 @@ public sealed partial class CloudSyncService
             localState.LocalBaseVersionNumber = manifest.LatestVersion.VersionNumber;
             localState.LocalBaseVersionId = manifest.LatestVersion.VersionId;
             localState.LastDownloadedAtUtc = DateTimeOffset.UtcNow;
+            await LocalChangeDetector.CaptureAsync(localState, importedWorld, gameRegistry.Get(profile.Game).SaveAdapter, cancellationToken);
             await localSyncStateService.SaveAsync(localState, cancellationToken);
 
             logger.Information(AppLogKeyword.CloudDownload, "Completed cloud download for world {WorldId} version {VersionNumber}", manifest.WorldId, manifest.LatestVersion.VersionNumber);
@@ -215,6 +217,9 @@ public sealed partial class CloudSyncService
                 $"Upload blocked. Cloud is v{status.LatestVersion.VersionNumber}, but this local save is based on {(status.LocalState.LocalBaseVersionNumber is null ? "no cloud version" : $"v{status.LocalState.LocalBaseVersionNumber}")}.");
         }
 
+        // Fingerprinted before the backup is taken: if the save changes in between, it shows up as unshared progress.
+        var uploadedState = LocalSyncState.CreateNew(world);
+        await LocalChangeDetector.CaptureAsync(uploadedState, world, gameRegistry.Get(world.Game).SaveAdapter, cancellationToken);
         var backup = await backupService.CreateBackupAsync(world, BackupReasons.CloudUpload, cancellationToken);
         var archiveSha256 = await FileHashCalculator.ComputeSha256Async(backup.FilePath, cancellationToken);
         var nextVersionNumber = (status.LatestVersion?.VersionNumber ?? 0) + 1;
@@ -252,6 +257,8 @@ public sealed partial class CloudSyncService
         localState.LocalBaseVersionNumber = version.VersionNumber;
         localState.LocalBaseVersionId = version.VersionId;
         localState.LastUploadedAtUtc = DateTimeOffset.UtcNow;
+        localState.LocalBaseSignature = uploadedState.LocalBaseSignature;
+        localState.LocalBaseContentHash = uploadedState.LocalBaseContentHash;
         localState.LastLocalBackupPath = backup.FilePath;
         await localSyncStateService.SaveAsync(localState, cancellationToken);
 
@@ -259,6 +266,8 @@ public sealed partial class CloudSyncService
         {
             await cloudProvider.ClearSessionLockAsync(world.Game, world.WorldId, status.SessionLock!.LockId, cancellationToken);
         }
+
+        await PruneCloudVersionsAsync(world, version.VersionNumber, IsOwnLock(status.SessionLock) ? null : status.SessionLock, cancellationToken);
 
         logger.Information(AppLogKeyword.CloudUpload, "Completed cloud upload for world {WorldId} version {VersionNumber}", world.WorldId, version.VersionNumber);
         return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Uploaded {world.WorldName} v{version.VersionNumber}.");

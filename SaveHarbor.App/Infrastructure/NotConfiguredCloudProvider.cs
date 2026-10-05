@@ -48,6 +48,16 @@ public sealed class NotConfiguredCloudProvider : ICloudProvider
         return Task.FromResult(new CloudDownloadResult(false, null, "Cloud provider is not configured."));
     }
 
+    public Task<IReadOnlyList<CloudStoredVersion>> ListStoredVersionsAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<IReadOnlyList<CloudStoredVersion>>([]);
+    }
+
+    public Task RemoveVersionAsync(GameId game, string worldId, string archiveFileName, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
     public Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;

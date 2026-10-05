@@ -135,6 +135,11 @@ public partial class MainWindowViewModel
             ? $"Do you want to download the latest available cloud save into this computer's {ActiveGameName} profile?\n\nUse this after local worlds were deleted or on a fresh PC. {ActiveGameName} must be closed."
             : $"Do you want to download the latest cloud version of {SelectedWorld.WorldName}?\n\nSaveHarbor will first create a local safety backup of your current world, then restore the latest cloud save over this local world.\n\nChoose Continue to download and restore.\nChoose Cancel to leave your local world unchanged.";
 
+        if (SelectedWorld is not null && CloudStatus?.HasLocalChanges == true)
+        {
+            confirmMessage = $"WARNING: You have played {SelectedWorld.WorldName} since the last upload or download, and that progress is not in the cloud. Downloading replaces it. It is kept as a \"Before restore\" backup.\n\n{confirmMessage}";
+        }
+
         var confirmed = _dialogService.Confirm("Download latest cloud save", confirmMessage);
 
         if (!confirmed)

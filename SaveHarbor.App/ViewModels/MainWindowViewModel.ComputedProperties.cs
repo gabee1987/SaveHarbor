@@ -70,7 +70,9 @@ public partial class MainWindowViewModel
 
     public string CloudLocalBaseText => CloudStatus?.LocalState.LocalBaseVersionNumber is null
         ? "No local base version"
-        : $"Local base v{CloudStatus.LocalState.LocalBaseVersionNumber}";
+        : CloudStatus.HasLocalChanges
+            ? $"v{CloudStatus.LocalState.LocalBaseVersionNumber} + new progress"
+            : $"Local base v{CloudStatus.LocalState.LocalBaseVersionNumber}";
 
     public string CloudSessionText => CloudStatus?.SessionLock is null
         ? "None"
