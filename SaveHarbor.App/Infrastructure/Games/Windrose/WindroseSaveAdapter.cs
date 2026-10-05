@@ -9,6 +9,7 @@ namespace SaveHarbor.App.Infrastructure.Games.Windrose;
 
 public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : IGameSaveAdapter
 {
+    private const string DescriptionFileName = "WorldDescription.json";
     private const string DefaultRocksDbVersion = "0.10.0";
     private static readonly string[] RocksDbRootNames = ["RocksDB_v2", "RocksDB"];
 
@@ -72,7 +73,7 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
 
     public async Task<GameWorld?> ReadWorldAsync(string savePath, CancellationToken cancellationToken = default)
     {
-        var descriptionPath = Path.Combine(savePath, "WorldDescription.json");
+        var descriptionPath = Path.Combine(savePath, DescriptionFileName);
         if (!Directory.Exists(savePath) || !File.Exists(descriptionPath))
         {
             return null;
@@ -111,6 +112,60 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
     // The Windrose view does not show extra world facts yet; its reskin can add them here.
     public Task<IReadOnlyList<WorldFact>> ReadWorldFactsAsync(GameWorld world, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<WorldFact>>([]);
+
+    public Task<IReadOnlyList<InspectionSection>> InspectWorldAsync(GameWorld world, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<InspectionSection> sections =
+        [
+            new("World", [new("World name", world.WorldName), new("World ID", world.WorldId), new("Preset", world.Subtitle)]),
+            new("Save folder",
+            [
+                new("Folder", world.SavePath),
+                new("Files", world.FileCount.ToString(CultureInfo.InvariantCulture)),
+                new("Size", DisplayFormatter.FormatBytes(world.SizeBytes)),
+                new("Modified", world.LastModifiedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))
+            ])
+        ];
+        return Task.FromResult(sections);
+    }
+
+    // A Windrose world is a folder; it is picked through the WorldDescription.json file inside it (or given as the folder).
+    public string ImportFileFilter => $"Windrose world folder ({DescriptionFileName})|{DescriptionFileName}";
+
+    public async Task<ImportCandidate?> ReadImportCandidateAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var folder = Directory.Exists(path) ? path : Path.GetDirectoryName(Path.GetFullPath(path))!;
+        if (!Directory.Exists(path) && !string.Equals(Path.GetFileName(path), DescriptionFileName, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        GameWorld? world;
+        try
+        {
+            world = await ReadWorldAsync(folder, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (world is null || !SafePath.IsSafeSegment(world.WorldId))
+        {
+            return null;
+        }
+
+        IReadOnlyList<InspectionItem> summary =
+        [
+            new("World", world.WorldName),
+            new("Preset", world.Subtitle),
+            new("Files", world.FileCount.ToString(CultureInfo.InvariantCulture)),
+            new("Size", DisplayFormatter.FormatBytes(world.SizeBytes))
+        ];
+        return new ImportCandidate(world, world.WorldId, null, world.LastModifiedAt, summary);
+    }
+
+    public string? GetGameBackupCopyPath(GameWorld world) => null;
 
     public IReadOnlyList<string> GetPayloadFiles(GameWorld world)
     {

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.IO;
+using System.Globalization;
+using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Utilities;
 
@@ -46,7 +47,13 @@ public partial class MainWindowViewModel
         }
     }
 
-    // Backup file names are "<timestamp>_<safe world name>_<reason>.zip" (ZipBackupService).
+    private IEnumerable<BackupInfo> BackupsOf(GameWorld world)
+    {
+        var safeName = FileNameSanitizer.MakeSafeFileName(world.WorldName);
+        return gameBackups.Where(backup =>
+            BackupFileName.TryParse(backup.FileName, out var name, out _) && string.Equals(name, safeName, StringComparison.OrdinalIgnoreCase));
+    }
+
     private void RefreshSelectedWorldBackups()
     {
         SelectedWorldBackups.Clear();
@@ -55,22 +62,55 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var marker = $"_{FileNameSanitizer.MakeSafeFileName(SelectedWorld.WorldName)}_";
-        foreach (var backup in gameBackups
-                     .Where(backup => backup.FileName.Contains(marker, StringComparison.OrdinalIgnoreCase))
-                     .Take(RecentWorldBackupLimit))
+        foreach (var backup in BackupsOf(SelectedWorld).Take(RecentWorldBackupLimit))
         {
-            var stem = Path.GetFileNameWithoutExtension(backup.FileName);
-            var reason = stem[(stem.IndexOf(marker, StringComparison.OrdinalIgnoreCase) + marker.Length)..];
+            BackupFileName.TryParse(backup.FileName, out _, out var reason);
             SelectedWorldBackups.Add(new WorldBackupItem(backup.FilePath, backup.CreatedAt, DescribeBackupReason(reason), backup.SizeBytes));
         }
     }
 
+    [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
+    private void OpenWorldInspector()
+    {
+        if (SelectedWorld is null)
+        {
+            return;
+        }
+
+        var world = SelectedWorld;
+        var inspector = new WorldInspectorViewModel(
+            world,
+            _activeGame.Current.SaveAdapter,
+            _backupService.GetBackupRoot(_activeGame.Current.Id),
+            () => DescribeBackupsOf(world),
+            ImportSaveFileAsync);
+        _ = inspector.LoadAsync();
+        _dialogService.ShowWorldInspector(inspector);
+    }
+
+    private IReadOnlyList<InspectionItem> DescribeBackupsOf(GameWorld world)
+    {
+        var backups = BackupsOf(world).ToArray();
+        List<InspectionItem> items = [new("Backups of this world", backups.Length.ToString(CultureInfo.InvariantCulture))];
+        if (backups.Length > 0)
+        {
+            BackupFileName.TryParse(backups[0].FileName, out _, out var reason);
+            items.Add(new InspectionItem("Newest backup", $"{backups[0].CreatedAt.ToLocalTime():yyyy-MM-dd HH:mm} ({DescribeBackupReason(reason)})"));
+            items.Add(new InspectionItem("Oldest backup", $"{backups[^1].CreatedAt.ToLocalTime():yyyy-MM-dd HH:mm}"));
+            items.Add(new InspectionItem("Space used", DisplayFormatter.FormatBytes(backups.Sum(backup => backup.SizeBytes))));
+        }
+
+        items.Add(new InspectionItem("Backup folder", _backupService.GetBackupRoot(_activeGame.Current.Id)));
+        return items;
+    }
+
     private static string DescribeBackupReason(string reason) => reason switch
     {
-        "manual" => "Manual backup",
-        "pre-restore" => "Before restore",
-        "cloud-upload" => "Shared to cloud",
+        BackupReasons.Manual => "Manual backup",
+        BackupReasons.PreRestore => "Before restore",
+        BackupReasons.PreImport => "Before import",
+        BackupReasons.Imported => "Imported file",
+        BackupReasons.CloudUpload => "Shared to cloud",
         _ => reason
     };
 }

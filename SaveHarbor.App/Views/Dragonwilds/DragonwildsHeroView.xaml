@@ -66,6 +66,13 @@
                             ToolTip="{Binding CloudSessionTooltip}">
                         <TextBlock Text="{ui:UiText Dragonwilds.YouAreHosting}" Foreground="{DynamicResource InfoBrush}" FontSize="12" FontWeight="SemiBold" />
                     </Border>
+                    <Button Content="{ui:SpacedText Dragonwilds.AllWorldInfo}"
+                            Command="{Binding OpenWorldInspectorCommand}"
+                            Style="{DynamicResource DwButton}"
+                            Padding="14,5"
+                            FontSize="11"
+                            VerticalAlignment="Center"
+                            ToolTip="{ui:UiText Dragonwilds.AllWorldInfoTooltip}" />
                 </WrapPanel>
             </StackPanel>
 

@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.Utilities;
@@ -8,6 +10,7 @@ namespace SaveHarbor.App.Infrastructure.Games.Dragonwilds;
 public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) : IGameSaveAdapter
 {
     private const string WorldExtension = ".sav";
+    private const long MaxImportBytes = 1024L * 1024 * 1024;
     private static readonly string[] BackupMarkers = [".bak", ".backup"];
     private static readonly string[] NonWorldFileStems = ["EnhancedInputUserSettings"];
 
@@ -86,6 +89,81 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
     {
         var info = await DragonwildsSaveInfoReader.TryReadAsync(world.SavePath, cancellationToken);
         return info is null ? [] : DragonwildsWorldFacts.From(info);
+    }
+
+    public Task<IReadOnlyList<InspectionSection>> InspectWorldAsync(GameWorld world, CancellationToken cancellationToken = default) =>
+        DragonwildsWorldInspector.InspectAsync(world.SavePath, cancellationToken);
+
+    public string ImportFileFilter => "Dragonwilds world save (*.sav, *.sav.backup)|*.sav;*.sav.backup";
+
+    public async Task<ImportCandidate?> ReadImportCandidateAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var file = new FileInfo(path);
+        var name = file.Name;
+        if (name.EndsWith(DragonwildsWorldInspector.GameBackupSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            name = name[..^DragonwildsWorldInspector.GameBackupSuffix.Length];
+        }
+
+        var stem = Path.GetFileNameWithoutExtension(name);
+        if (!file.Exists
+            || file.Length > MaxImportBytes
+            || !string.Equals(Path.GetExtension(name), WorldExtension, StringComparison.OrdinalIgnoreCase)
+            || NonWorldFileStems.Contains(stem, StringComparer.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var info = await DragonwildsSaveInfoReader.TryReadAsync(file.FullName, cancellationToken);
+        var worldId = ChooseImportWorldId(stem, info?.WorldName);
+        if (info is null || worldId is null)
+        {
+            return null;
+        }
+
+        GameWorld world = new(
+            GameId.Dragonwilds,
+            worldId,
+            string.IsNullOrWhiteSpace(info.WorldName) ? worldId : info.WorldName,
+            string.Empty,
+            file.FullName,
+            file.CreationTime,
+            new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero).ToLocalTime(),
+            file.Length,
+            1);
+
+        List<InspectionItem> summary = [new("World", world.WorldName), new("File", file.Name)];
+        summary.AddRange(DragonwildsWorldFacts.From(info)
+            .Where(fact => fact.Label is "Created by" or "Last saved" or "Game build")
+            .Select(fact => new InspectionItem(fact.Label, fact.Value)));
+        if (info.SaveRevision is { } revision)
+        {
+            summary.Add(new InspectionItem("Save revision", revision.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        return new ImportCandidate(world, info.WorldGuid, info.SaveRevision, info.SavedAtUtc, summary);
+    }
+
+    // Browsers and Explorer rename duplicates ("Crystalwind (1).sav", "Crystalwind - Copy.sav"). When the name stored
+    // inside the save shows that happened, the world is imported under its own name; otherwise the file name is kept.
+    private static string? ChooseImportWorldId(string stem, string? storedName)
+    {
+        if (!string.IsNullOrWhiteSpace(storedName)
+            && SafePath.IsSafeSegment(storedName)
+            && FileNameSanitizer.MakeSafeFileName(storedName) == storedName
+            && Regex.IsMatch(stem, $@"^{Regex.Escape(storedName)}( \(\d+\)| - Copy( \(\d+\))?)$", RegexOptions.IgnoreCase))
+        {
+            return storedName;
+        }
+
+        var worldId = FileNameSanitizer.MakeSafeFileName(stem);
+        return SafePath.IsSafeSegment(worldId) && worldId == stem ? worldId : null;
+    }
+
+    public string? GetGameBackupCopyPath(GameWorld world)
+    {
+        var path = world.SavePath + DragonwildsWorldInspector.GameBackupSuffix;
+        return File.Exists(path) ? path : null;
     }
 
     public IReadOnlyList<string> GetPayloadFiles(GameWorld world) => [world.SavePath];

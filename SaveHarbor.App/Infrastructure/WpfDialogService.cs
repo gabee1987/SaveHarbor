@@ -4,6 +4,8 @@ using System.Windows.Media;
 using Microsoft.Win32;
 using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.ViewModels;
+using SaveHarbor.App.Views.Dragonwilds;
 using SaveHarbor.App.Views.Dialogs;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -44,6 +46,25 @@ public sealed class WpfDialogService : IDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
+    // Backups and world saves in one list first, so the user does not have to know which kind they were sent.
+    public string? SelectImportFile(string initialDirectory, string saveFileFilter)
+    {
+        var saveFilePatterns = saveFileFilter[(saveFileFilter.IndexOf('|') + 1)..];
+        var dialog = new OpenFileDialog
+        {
+            Title = "Import a world",
+            Filter = $"World backups and saves|*.zip;{saveFilePatterns}|SaveHarbor backup (*.zip)|*.zip|{saveFileFilter}",
+            InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public void ShowWorldInspector(WorldInspectorViewModel viewModel)
+    {
+        new DragonwildsWorldInspectorWindow { Owner = FindOwner(), DataContext = viewModel }.ShowDialog();
+    }
+
     public string? SelectFolder(string title, string initialDirectory)
     {
         var dialog = new OpenFolderDialog
@@ -60,10 +81,7 @@ public sealed class WpfDialogService : IDialogService
         string currentFolderId,
         Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync)
     {
-        var owner = System.Windows.Application.Current.Windows
-            .OfType<Window>()
-            .FirstOrDefault(window => window.IsActive)
-            ?? System.Windows.Application.Current.MainWindow;
+        var owner = FindOwner();
 
         var window = new CloudFolderSetupWindow(gameDisplayName, currentFolderId, testAccessAsync)
         {
@@ -82,10 +100,7 @@ public sealed class WpfDialogService : IDialogService
         string? cancelText,
         string accentResourceKey)
     {
-        var owner = System.Windows.Application.Current.Windows
-            .OfType<Window>()
-            .FirstOrDefault(window => window.IsActive)
-            ?? System.Windows.Application.Current.MainWindow;
+        var owner = FindOwner();
 
         var accentBrush = System.Windows.Application.Current.TryFindResource(accentResourceKey) as Brush
             ?? Brushes.White;
@@ -105,4 +120,10 @@ public sealed class WpfDialogService : IDialogService
 
         return window.ShowDialog();
     }
+
+    private static Window FindOwner() =>
+        System.Windows.Application.Current.Windows
+            .OfType<Window>()
+            .FirstOrDefault(window => window.IsActive)
+        ?? System.Windows.Application.Current.MainWindow;
 }

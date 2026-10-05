@@ -4,27 +4,17 @@ using System.Text;
 
 namespace SaveHarbor.App.Infrastructure.Games.Dragonwilds;
 
-public sealed record DragonwildsSaveInfo(
-    string? WorldName,
-    string? CreatedBy,
-    int? Difficulty,
-    bool? FriendlyFire,
-    bool? Crossplay,
-    bool? PasswordProtected,
-    DateTimeOffset? SavedAtUtc,
-    string? GameBuild,
-    IReadOnlyDictionary<string, float> RuleScales);
-
 // Reads the metadata table ("INFO" chunk, "CINF" block) at the start of a Dragonwilds world save.
 // The layout was observed on a real save (owner's install, game build 247068); it is not documented by the game.
 // Saves arrive from other players through the cloud, so every length and offset is bounds-checked, and only
 // allow-listed keys are decoded. The world password and owner id are never read: for the password only the
-// length prefix is inspected to tell whether one is set.
+// length prefix is inspected to tell whether one is set. Other unknown keys are listed by name and size only.
 public static class DragonwildsSaveInfoReader
 {
     public const int MaxHeaderBytes = 64 * 1024;
     private const int MaxStringLength = 512;
     private const int MaxKeys = 256;
+    private const int MaxBuildHistory = 20;
 
     public static readonly IReadOnlyList<string> RuleKeys =
     [
@@ -35,6 +25,15 @@ public static class DragonwildsSaveInfoReader
         "Difficulty.Player.InventoryCarryCapacityScale",
         "Difficulty.Player.TeleportationCostScale"
     ];
+
+    private static readonly HashSet<string> PrivateKeys = new(StringComparer.Ordinal) { "SessionPasswd", "WorldOwnerId" };
+
+    private static readonly HashSet<string> DecodedKeys = new(RuleKeys, StringComparer.Ordinal)
+    {
+        "VERSION", "GUID_A", "GUID_B", "GUID_C", "GUID_D", "WorldName", "WorldMapName", "FriendlyFire",
+        "SurvivalDifficulty", "HardcoreState", "TimeOfSave", "SessionPrivacy", "CrossplayEnabled",
+        "WorldNameOwner", "LastSavedBy", "Meta_SaveFileRevision"
+    };
 
     public static async Task<DragonwildsSaveInfo?> TryReadAsync(string path, CancellationToken cancellationToken = default)
     {
@@ -80,7 +79,7 @@ public static class DragonwildsSaveInfoReader
         var position = marker + 8;
         var keyCount = ReadInt(info, position);
         position += 4;
-        if (keyCount > MaxKeys)
+        if (keyCount is < 0 or > MaxKeys)
         {
             return null;
         }
@@ -107,6 +106,7 @@ public static class DragonwildsSaveInfoReader
 
         var blob = Slice(info, position + 4, ReadInt(info, position)).ToArray();
         var values = new Dictionary<string, (int Start, int Length)>(StringComparer.Ordinal);
+        var fields = new List<DragonwildsSaveField>(keyCount);
         for (var index = 0; index < keyCount; index++)
         {
             var end = index + 1 < valueCount ? offsets[index + 1] : blob.Length;
@@ -116,10 +116,13 @@ public static class DragonwildsSaveInfoReader
             }
 
             values[keys[index]] = (offsets[index], end - offsets[index]);
+            fields.Add(new DragonwildsSaveField(keys[index], end - offsets[index], Classify(keys[index])));
         }
 
         ReadOnlySpan<byte> Value(string key) =>
             values.TryGetValue(key, out var range) ? blob.AsSpan(range.Start, range.Length) : [];
+
+        int? Int32Value(string key) => Value(key).Length == 4 ? ReadInt(Value(key), 0) : null;
 
         var rules = new Dictionary<string, float>(StringComparer.Ordinal);
         foreach (var key in RuleKeys)
@@ -135,17 +138,33 @@ public static class DragonwildsSaveInfoReader
             }
         }
 
+        var history = ReadBuildHistory(ReadStringValue(Value("LastSavedBy")));
         return new DragonwildsSaveInfo(
             ReadStringValue(Value("WorldName")),
             ReadStringValue(Value("WorldNameOwner")),
-            Value("SurvivalDifficulty").Length == 4 ? ReadInt(Value("SurvivalDifficulty"), 0) : null,
+            Int32Value("SurvivalDifficulty"),
             ReadFlag(Value("FriendlyFire")),
             ReadFlag(Value("CrossplayEnabled")),
             Value("SessionPasswd").Length >= 4 ? ReadInt(Value("SessionPasswd"), 0) is not (0 or 1) : null,
             ReadTicks(Value("TimeOfSave")),
-            ReadBuild(ReadStringValue(Value("LastSavedBy"))),
-            rules);
+            history.Count > 0 ? history[0].Split(' ')[0] : null,
+            rules)
+        {
+            FormatVersion = Int32Value("VERSION"),
+            WorldGuid = ReadGuid(Int32Value("GUID_A"), Int32Value("GUID_B"), Int32Value("GUID_C"), Int32Value("GUID_D")),
+            MapName = ReadStringValue(Value("WorldMapName")),
+            HardcoreState = Int32Value("HardcoreState"),
+            SessionPrivacy = Int32Value("SessionPrivacy"),
+            SaveRevision = Int32Value("Meta_SaveFileRevision"),
+            BuildHistory = history,
+            Fields = fields
+        };
     }
+
+    private static DragonwildsFieldVisibility Classify(string key) =>
+        PrivateKeys.Contains(key) ? DragonwildsFieldVisibility.Private
+        : DecodedKeys.Contains(key) ? DragonwildsFieldVisibility.Shown
+        : DragonwildsFieldVisibility.NotDecoded;
 
     private static string? ReadStringValue(ReadOnlySpan<byte> raw)
     {
@@ -197,18 +216,38 @@ public static class DragonwildsSaveInfoReader
         return ticks > 0 && ticks < DateTime.MaxValue.Ticks ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
     }
 
-    // "++dominion+hotfix:247068, ++dominion+hotfix:245400, ..." -> "247068" (the newest build is listed first).
-    private static string? ReadBuild(string? history)
+    private static string? ReadGuid(int? a, int? b, int? c, int? d) =>
+        a is null || b is null || c is null || d is null
+            ? null
+            : $"{(uint)a.Value:X8}-{(uint)b.Value:X8}-{(uint)c.Value:X8}-{(uint)d.Value:X8}";
+
+    // "++dominion+hotfix:247068, ++dominion+hotfix:245400, ..." -> ["247068 hotfix", "245400 hotfix", ...], newest first.
+    private static IReadOnlyList<string> ReadBuildHistory(string? history)
     {
-        var newest = history?.Split(',')[0];
-        var separator = newest?.LastIndexOf(':') ?? -1;
-        if (newest is null || separator < 0)
+        if (string.IsNullOrWhiteSpace(history))
         {
-            return null;
+            return [];
         }
 
-        var build = new string(newest[(separator + 1)..].TakeWhile(char.IsAsciiDigit).ToArray());
-        return build.Length > 0 ? build : null;
+        var builds = new List<string>();
+        foreach (var entry in history.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Take(MaxBuildHistory))
+        {
+            var separator = entry.LastIndexOf(':');
+            if (separator < 0)
+            {
+                continue;
+            }
+
+            var build = new string(entry[(separator + 1)..].TakeWhile(char.IsAsciiDigit).ToArray());
+            var branch = new string(entry[..separator].Split('+', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                .Where(char.IsAsciiLetterOrDigit).ToArray() ?? []);
+            if (build.Length > 0)
+            {
+                builds.Add(branch.Length > 0 ? $"{build} {branch}" : build);
+            }
+        }
+
+        return builds;
     }
 
     private static int ReadInt(ReadOnlySpan<byte> data, int position) =>

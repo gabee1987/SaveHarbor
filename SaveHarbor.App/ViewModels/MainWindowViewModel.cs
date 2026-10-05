@@ -32,6 +32,7 @@ public partial class MainWindowViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]
     [NotifyCanExecuteChangedFor(nameof(RestoreBackupCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenWorldFolderCommand))]
+    [NotifyCanExecuteChangedFor(nameof(OpenWorldInspectorCommand))]
     [NotifyCanExecuteChangedFor(nameof(UploadCloudCommand))]
     [NotifyCanExecuteChangedFor(nameof(DownloadCloudCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartCloudSessionCommand))]

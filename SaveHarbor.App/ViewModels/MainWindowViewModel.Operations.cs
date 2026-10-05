@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Utilities;
 
@@ -48,6 +47,7 @@ public partial class MainWindowViewModel
         CreateBackupCommand.NotifyCanExecuteChanged();
         RestoreBackupCommand.NotifyCanExecuteChanged();
         OpenWorldFolderCommand.NotifyCanExecuteChanged();
+        OpenWorldInspectorCommand.NotifyCanExecuteChanged();
         SetupCloudFolderCommand.NotifyCanExecuteChanged();
         ConnectCloudCommand.NotifyCanExecuteChanged();
         CheckCloudCommand.NotifyCanExecuteChanged();
@@ -157,14 +157,5 @@ public partial class MainWindowViewModel
     private static string FormatDialogError(AppError error)
     {
         return $"{error.UserMessage}\n\nError ID: {error.ErrorId}\nCode: {error.Code}\nDetails: {error.TechnicalMessage}";
-    }
-
-    private static void OpenFolder(string path)
-    {
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = path,
-            UseShellExecute = true
-        });
     }
 }

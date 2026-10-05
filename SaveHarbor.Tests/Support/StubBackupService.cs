@@ -19,6 +19,9 @@ public sealed class StubBackupService : IBackupService
     public Task<string> ImportBackupAsNewWorldAsync(string backupPath, GameSaveRoot profile, bool overwriteExisting, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 
+    public Task<BackupInfo> CreateImportSnapshotAsync(ImportCandidate candidate, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
     public Task RestoreBackupAsync(string backupPath, GameWorld targetWorld, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 }

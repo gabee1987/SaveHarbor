@@ -9,5 +9,6 @@ public interface IBackupService
     Task<BackupManifest> ReadManifestAsync(string backupPath, GameId expectedGame, CancellationToken cancellationToken = default);
     Task<BackupInfo> CreateBackupAsync(GameWorld world, string reason, CancellationToken cancellationToken = default);
     Task<string> ImportBackupAsNewWorldAsync(string backupPath, GameSaveRoot profile, bool overwriteExisting, CancellationToken cancellationToken = default);
+    Task<BackupInfo> CreateImportSnapshotAsync(ImportCandidate candidate, CancellationToken cancellationToken = default);
     Task RestoreBackupAsync(string backupPath, GameWorld targetWorld, CancellationToken cancellationToken = default);
 }

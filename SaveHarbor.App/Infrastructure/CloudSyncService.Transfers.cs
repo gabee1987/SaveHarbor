@@ -215,7 +215,7 @@ public sealed partial class CloudSyncService
                 $"Upload blocked. Cloud is v{status.LatestVersion.VersionNumber}, but this local save is based on {(status.LocalState.LocalBaseVersionNumber is null ? "no cloud version" : $"v{status.LocalState.LocalBaseVersionNumber}")}.");
         }
 
-        var backup = await backupService.CreateBackupAsync(world, "cloud-upload", cancellationToken);
+        var backup = await backupService.CreateBackupAsync(world, BackupReasons.CloudUpload, cancellationToken);
         var archiveSha256 = await FileHashCalculator.ComputeSha256Async(backup.FilePath, cancellationToken);
         var nextVersionNumber = (status.LatestVersion?.VersionNumber ?? 0) + 1;
         var safePlayer = FileNameSanitizer.MakeSafeFileName(playerIdentity.DisplayName);

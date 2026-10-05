@@ -249,5 +249,6 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="10,3" />
         <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 </ResourceDictionary>

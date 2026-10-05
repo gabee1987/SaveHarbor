@@ -1,9 +1,8 @@
-using System.Diagnostics;
-using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Infrastructure;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -105,12 +104,15 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string SaveFolder => _activeGame.Current.SaveAdapter.SaveRootPath;
 
+    public string BackupFolder => _paths.GetBackupRoot(_activeGame.Current.Id);
+
     public bool HasCustomSaveFolder => _settings.Current.SaveRootOverrides.ContainsKey(_activeGame.Current.StorageKey);
 
     public void Refresh()
     {
         OnPropertyChanged(nameof(GameName));
         OnPropertyChanged(nameof(SaveFolder));
+        OnPropertyChanged(nameof(BackupFolder));
         OnPropertyChanged(nameof(HasCustomSaveFolder));
         OnPropertyChanged(nameof(EffectivePlayerName));
     }
@@ -143,14 +145,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenDataFolder() => OpenFolder(_paths.AppDataRoot);
+    private void OpenSaveFolder() => ExplorerLauncher.OpenExistingFolder(SaveFolder);
 
     [RelayCommand]
-    private void OpenLogsFolder() => OpenFolder(_paths.LocalLogsPath);
+    private void OpenBackupFolder() => ExplorerLauncher.OpenFolder(BackupFolder);
 
-    private static void OpenFolder(string path)
-    {
-        Directory.CreateDirectory(path);
-        Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
-    }
+    [RelayCommand]
+    private void OpenDataFolder() => ExplorerLauncher.OpenFolder(_paths.AppDataRoot);
+
+    [RelayCommand]
+    private void OpenLogsFolder() => ExplorerLauncher.OpenFolder(_paths.LocalLogsPath);
 }

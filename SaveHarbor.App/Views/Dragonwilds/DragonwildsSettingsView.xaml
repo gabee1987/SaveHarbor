@@ -65,8 +65,24 @@
                                     <Button Content="{ui:SpacedText Settings.Reset}" Command="{Binding Settings.ResetSaveFolderCommand}" Style="{DynamicResource DwButton}"
                                             Margin="0,0,8,0" ToolTip="{ui:UiText Settings.ResetTooltip}"
                                             Visibility="{Binding Settings.HasCustomSaveFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <Button Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenSaveFolderCommand}" Style="{DynamicResource DwButton}"
+                                            Margin="0,0,8,0" ToolTip="{ui:UiText Settings.OpenSaveFolderTooltip}" />
                                     <Button Content="{ui:SpacedText Settings.Browse}" Command="{Binding Settings.BrowseSaveFolderCommand}" Style="{DynamicResource DwButton}" />
                                 </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Style="{DynamicResource DwSettingRow}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="{ui:UiText Settings.BackupFolder}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
+                                    <TextBlock Text="{Binding Settings.BackupFolder}" Style="{DynamicResource DwMuted}" Margin="0,3,0,0" ToolTip="{Binding Settings.BackupFolder}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenBackupFolderCommand}"
+                                        Style="{DynamicResource DwButton}" VerticalAlignment="Center" ToolTip="{ui:UiText Settings.BackupFolderTooltip}" />
                             </Grid>
                         </Border>
                         <Border Style="{DynamicResource DwSettingRow}">

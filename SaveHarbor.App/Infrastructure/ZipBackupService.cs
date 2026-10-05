@@ -8,8 +8,9 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameRegistry gameRegistry, IAppSettingsStore settings) : IBackupService
+public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, IGameRegistry gameRegistry, IAppSettingsStore settings) : IBackupService
 {
+    private const int MaxNameAttempts = 100;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private static readonly DirectoryPayloadStrategy DirectoryStrategy = new();
     private static readonly FileSetPayloadStrategy FileSetStrategy = new();
@@ -26,7 +27,8 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
 
         return Task.Run<IReadOnlyList<BackupInfo>>(() =>
         {
-            return Directory.EnumerateFiles(backupRoot, "*.zip", SearchOption.TopDirectoryOnly)
+            return Directory.EnumerateFiles(backupRoot, "*", SearchOption.TopDirectoryOnly)
+                .Where(path => path.EndsWith(BackupFileName.Extension, StringComparison.OrdinalIgnoreCase))
                 .Select(path =>
                 {
                     var fileInfo = new FileInfo(path);
@@ -78,10 +80,11 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
         var backupRoot = GetBackupRoot(world.Game);
         Directory.CreateDirectory(backupRoot);
 
-        var safeWorldName = FileNameSanitizer.MakeSafeFileName(world.WorldName);
-        var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss");
-        var fileName = $"{timestamp}_{safeWorldName}_{reason}.zip";
-        var targetPath = Path.Combine(backupRoot, fileName);
+        var createdAt = DateTimeOffset.UtcNow;
+        var targetPath = Enumerable.Range(1, MaxNameAttempts)
+            .Select(attempt => Path.Combine(backupRoot, BackupFileName.Create(createdAt, world.WorldName, reason, attempt)))
+            .FirstOrDefault(path => !File.Exists(path))
+            ?? throw new IOException("Could not find a free backup file name.");
 
         await Task.Run(() => CreateArchive(world, targetPath, reason, cancellationToken), cancellationToken);
         await PruneOldBackupsAsync(world.Game, targetPath, cancellationToken);
@@ -100,45 +103,18 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
         var manifest = await ReadManifestAsync(backupPath, targetWorld.Game, cancellationToken);
         var strategy = SelectStrategyForManifest(manifest, gameRegistry.Get(targetWorld.Game).SaveAdapter);
 
-        await CreateBackupAsync(targetWorld, "pre-restore", cancellationToken);
+        await CreateBackupAsync(targetWorld, BackupReasons.PreRestore, cancellationToken);
 
         await RunWithExtractedPayloadAsync(backupPath, payloadRoot =>
             strategy.Restore(payloadRoot, targetWorld, manifest, cancellationToken), cancellationToken);
     }
 
-    public async Task<string> ImportBackupAsNewWorldAsync(
-        string backupPath,
-        GameSaveRoot profile,
-        bool overwriteExisting,
-        CancellationToken cancellationToken = default)
+    private async Task PruneOldBackupsAsync(GameId game, string justCreatedPath, CancellationToken cancellationToken)
     {
-        var manifest = await ReadManifestAsync(backupPath, profile.Game, cancellationToken);
-        var adapter = gameRegistry.Get(profile.Game).SaveAdapter;
-        var strategy = SelectStrategyForManifest(manifest, adapter);
-
-        var importedPath = string.Empty;
-        await RunWithExtractedPayloadAsync(backupPath, payloadRoot =>
-            importedPath = strategy.Import(payloadRoot, manifest, profile, adapter, overwriteExisting, cancellationToken), cancellationToken);
-
-        return importedPath;
-    }
-
-    // Keeps the newest N backups of the game (Settings); 0 keeps everything. The backup just created is never removed.
-    private async Task PruneOldBackupsAsync(GameId game, string keepPath, CancellationToken cancellationToken)
-    {
-        var keep = settings.Current.BackupRetentionCount;
-        if (keep <= 0)
-        {
-            return;
-        }
-
         var backups = await ListBackupsAsync(game, cancellationToken);
-        foreach (var backup in backups.Skip(keep))
+        foreach (var backup in BackupRetention.SelectForDeletion(backups, settings.Current.BackupRetentionCount, justCreatedPath, DateTimeOffset.Now))
         {
-            if (!string.Equals(backup.FilePath, Path.GetFullPath(keepPath), StringComparison.OrdinalIgnoreCase))
-            {
-                File.Delete(backup.FilePath);
-            }
+            File.Delete(backup.FilePath);
         }
     }
 
@@ -157,9 +133,7 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
 
     private static async Task RunWithExtractedPayloadAsync(string backupPath, Action<string> apply, CancellationToken cancellationToken)
     {
-        var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
-
+        var tempPath = CreateTempFolder();
         try
         {
             ZipFile.ExtractToDirectory(backupPath, tempPath);
@@ -173,10 +147,22 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
         }
         finally
         {
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
+            DeleteTempFolder(tempPath);
+        }
+    }
+
+    private static string CreateTempFolder()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        return path;
+    }
+
+    private static void DeleteTempFolder(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, true);
         }
     }
 
@@ -185,8 +171,9 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
         var adapter = gameRegistry.Get(world.Game).SaveAdapter;
         var strategy = SelectStrategy(adapter.PayloadKind);
 
-        var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
+        var tempPath = CreateTempFolder();
         var payloadRoot = Path.Combine(tempPath, "world");
+        var partialPath = targetPath + ".partial";
         Directory.CreateDirectory(payloadRoot);
 
         try
@@ -211,19 +198,15 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
             var manifestPath = Path.Combine(tempPath, "saveharbor-manifest.json");
             File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifest, JsonOptions));
 
-            if (File.Exists(targetPath))
-            {
-                File.Delete(targetPath);
-            }
-
-            ZipFile.CreateFromDirectory(tempPath, targetPath, CompressionLevel.Optimal, includeBaseDirectory: false);
+            // Written next to the target first, so a failed or interrupted backup never leaves a broken archive.
+            File.Delete(partialPath);
+            ZipFile.CreateFromDirectory(tempPath, partialPath, CompressionLevel.Optimal, includeBaseDirectory: false);
+            File.Move(partialPath, targetPath);
         }
         finally
         {
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
+            File.Delete(partialPath);
+            DeleteTempFolder(tempPath);
         }
     }
 }

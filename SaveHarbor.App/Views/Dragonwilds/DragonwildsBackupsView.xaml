@@ -54,6 +54,12 @@
                     Margin="6,0,0,8"
                     VerticalAlignment="Center"
                     ToolTip="{Binding BackupRoot}" />
+            <Button Content="{ui:UiText Dragonwilds.OpenSaveFolder}"
+                    Command="{Binding OpenWorldFolderCommand}"
+                    Style="{DynamicResource DwLinkButton}"
+                    Margin="14,0,0,8"
+                    VerticalAlignment="Center"
+                    ToolTip="{Binding LocalSaveRoot}" />
         </WrapPanel>
 
         <StackPanel Grid.Row="3" Margin="0,14,0,0">
@@ -72,10 +78,18 @@
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding CreatedAt, Converter={x:Static converters:RelativeAgeConverter.Instance}}" Style="{DynamicResource DwMuted}" />
                                 <TextBlock Grid.Column="1" Text="{Binding Reason}" Foreground="{DynamicResource InkBrush}" FontSize="12.5" />
                                 <TextBlock Grid.Column="2" Text="{Binding SizeBytes, Converter={x:Static converters:ByteSizeConverter.Instance}}" Style="{DynamicResource DwMuted}" />
+                                <Button Grid.Column="3"
+                                        Content="{ui:UiText Dragonwilds.RestoreThis}"
+                                        Command="{Binding DataContext.RestoreListedBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{DynamicResource DwLinkButton}"
+                                        Margin="16,0,0,0"
+                                        ToolTip="{ui:UiText Dragonwilds.RestoreThisTooltip}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

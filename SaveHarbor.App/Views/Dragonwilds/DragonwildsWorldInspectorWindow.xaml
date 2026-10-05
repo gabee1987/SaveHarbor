@@ -1,0 +1,160 @@
+<Window x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsWorldInspectorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+        xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+        xmlns:ui="clr-namespace:SaveHarbor.App.Localization"
+        Title="{Binding WorldName, StringFormat=All world info · {0}}"
+        Width="980"
+        Height="780"
+        MinWidth="720"
+        MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}"
+        FontFamily="Segoe UI"
+        FontSize="13">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SaveHarbor.App;component/Resources/Themes/Dragonwilds/Dragonwilds.Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Values are selectable, so a path or hash can be copied. -->
+            <Style x:Key="InspectorValue" TargetType="TextBox">
+                <Setter Property="IsReadOnly" Value="True" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                <Setter Property="CaretBrush" Value="{DynamicResource InkBrush}" />
+                <Setter Property="SelectionBrush" Value="{DynamicResource DwGoldBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource DwSmokeTemplate}" />
+
+        <Grid Margin="28,22,28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{ui:SpacedText Inspector.Title}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
+                    <TextBlock Text="{Binding WorldName}"
+                               FontFamily="{DynamicResource AppDisplayFontFamily}"
+                               FontSize="30"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource DwGoldTextBrush}"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,2,0,0" />
+                    <TextBlock Text="{ui:UiText Inspector.PrivacyNote}" Style="{DynamicResource DwMuted}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Content="{ui:SpacedText Inspector.ShowFile}" Command="{Binding ShowWorldFileCommand}" Style="{DynamicResource DwButton}"
+                            Margin="0,0,8,0" ToolTip="{ui:UiText Inspector.ShowFileTooltip}" />
+                    <Button Content="{ui:SpacedText Inspector.SaveFolder}" Command="{Binding OpenSaveFolderCommand}" Style="{DynamicResource DwButton}"
+                            Margin="0,0,8,0" ToolTip="{ui:UiText Dragonwilds.OpenSaveFolder}" />
+                    <Button Content="{ui:SpacedText Inspector.Backups}" Command="{Binding OpenBackupFolderCommand}" Style="{DynamicResource DwButton}"
+                            ToolTip="{ui:UiText Dragonwilds.OpenBackups}" />
+                </StackPanel>
+            </Grid>
+
+            <ContentControl Grid.Row="1" Style="{DynamicResource DwOrnamentDivider}" Margin="0,16,0,14" />
+
+            <!-- Offered only when the game has written its own backup copy of this world. -->
+            <Border Grid.Row="2"
+                    Margin="0,0,0,14"
+                    Padding="16,12"
+                    CornerRadius="3"
+                    BorderThickness="1"
+                    Background="{DynamicResource DwCardBrush}"
+                    BorderBrush="{DynamicResource DwFrameBrush}"
+                    Visibility="{Binding GameBackupCopyPath, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="{ui:UiText Inspector.GameCopyTitle}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" FontWeight="SemiBold" />
+                        <TextBlock Text="{ui:UiText Inspector.GameCopyHint}" Style="{DynamicResource DwMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="{ui:UiText Inspector.ShowGameCopy}" Command="{Binding ShowGameBackupCopyCommand}" Style="{DynamicResource DwLinkButton}"
+                                Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="{Binding GameBackupCopyPath}" />
+                        <Button Content="{ui:SpacedText Inspector.UseGameCopy}" Command="{Binding UseGameBackupCopyCommand}" Style="{DynamicResource DwButton}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ContentControl Grid.Row="3" Style="{DynamicResource DwFrame}" Padding="22,16">
+                <Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0">
+                        <ItemsControl ItemsSource="{Binding Sections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type domain:InspectionSection}">
+                                    <StackPanel Margin="0,0,0,10">
+                                        <ContentControl Style="{DynamicResource DwPanelHeading}" Content="{Binding Title, Converter={x:Static converters:SpacedCapsConverter.Instance}}" />
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type domain:InspectionItem}">
+                                                    <Border BorderBrush="{DynamicResource DwFrameInnerBrush}" BorderThickness="0,0,0,1" Padding="0,6">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="240" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Label}" Style="{DynamicResource DwMuted}" TextTrimming="CharacterEllipsis"
+                                                                       ToolTip="{Binding Label}" Margin="0,0,12,0" />
+                                                            <TextBox Grid.Column="1" Text="{Binding Value, Mode=OneWay}" Style="{StaticResource InspectorValue}" />
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource DwArcaneLoaderTemplate}" />
+                        <TextBlock Text="{ui:UiText Inspector.Loading}" Style="{DynamicResource DwMuted}" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Grid>
+            </ContentControl>
+
+            <Button Grid.Row="4"
+                    Content="{ui:SpacedText Inspector.Close}"
+                    Style="{DynamicResource DwButton}"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0"
+                    IsCancel="True"
+                    Click="OnCloseClick" />
+        </Grid>
+    </Grid>
+</Window>

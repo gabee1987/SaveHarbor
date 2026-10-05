@@ -1,6 +1,7 @@
 using System.IO;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure.Backup;
 
@@ -14,6 +15,7 @@ internal sealed class DirectoryPayloadStrategy : IPayloadStrategy
 
     public void Restore(string payloadRoot, GameWorld target, BackupManifest manifest, CancellationToken cancellationToken)
     {
+        VerifyPayload(payloadRoot, manifest);
         ReplaceDirectory(payloadRoot, target.SavePath, cancellationToken);
     }
 
@@ -25,15 +27,21 @@ internal sealed class DirectoryPayloadStrategy : IPayloadStrategy
             throw new InvalidOperationException("This world already exists on this computer. Use restore instead, or confirm overwrite.");
         }
 
+        VerifyPayload(payloadRoot, manifest);
         Directory.CreateDirectory(root.WorldsPath);
-
-        if (Directory.Exists(targetWorldPath))
-        {
-            Directory.Delete(targetWorldPath, true);
-        }
-
-        CopyDirectory(payloadRoot, targetWorldPath, cancellationToken);
+        ReplaceDirectory(payloadRoot, targetWorldPath, cancellationToken);
         return targetWorldPath;
+    }
+
+    // Schema 2 manifests record the payload hash at backup time; older manifests are accepted as before.
+    private static void VerifyPayload(string payloadRoot, BackupManifest manifest)
+    {
+        if (manifest.SchemaVersion >= 2
+            && !string.IsNullOrWhiteSpace(manifest.PayloadSha256)
+            && !string.Equals(DirectoryHashCalculator.ComputeSha256(payloadRoot), manifest.PayloadSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("The world files in the backup do not match their recorded hash. Nothing was changed.");
+        }
     }
 
     private static void CopyDirectory(string source, string target, CancellationToken cancellationToken)
@@ -62,16 +70,52 @@ internal sealed class DirectoryPayloadStrategy : IPayloadStrategy
         }
     }
 
+    // The new folder is fully copied before the old one is touched. The old folder is moved aside, not deleted, until
+    // the new one is in place, and is moved back if that fails.
     private static void ReplaceDirectory(string source, string target, CancellationToken cancellationToken)
     {
-        var stagingPath = $"{target}.saveharbor-staging-{Guid.NewGuid():N}";
-        CopyDirectory(source, stagingPath, cancellationToken);
-
-        if (Directory.Exists(target))
+        var suffix = Guid.NewGuid().ToString("N");
+        var stagingPath = $"{target}.saveharbor-staging-{suffix}";
+        var previousPath = $"{target}.saveharbor-prev-{suffix}";
+        try
         {
-            Directory.Delete(target, true);
+            CopyDirectory(source, stagingPath, cancellationToken);
+        }
+        catch
+        {
+            DeleteIfExists(stagingPath);
+            throw;
         }
 
-        Directory.Move(stagingPath, target);
+        var hadTarget = Directory.Exists(target);
+        if (hadTarget)
+        {
+            Directory.Move(target, previousPath);
+        }
+
+        try
+        {
+            Directory.Move(stagingPath, target);
+        }
+        catch
+        {
+            if (hadTarget)
+            {
+                Directory.Move(previousPath, target);
+            }
+
+            DeleteIfExists(stagingPath);
+            throw;
+        }
+
+        DeleteIfExists(previousPath);
+    }
+
+    private static void DeleteIfExists(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, true);
+        }
     }
 }
