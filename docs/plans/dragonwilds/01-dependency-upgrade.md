@@ -52,7 +52,7 @@ Create `global.json` at the repo root:
 ### 4.3 Project file (`SaveHarbor.App/SaveHarbor.App.csproj`)
 - `<TargetFramework>net10.0-windows</TargetFramework>`.
 - Update the `PackageReference` versions per §2.
-- Leave `<Version>1.0.2</Version>` unchanged here. The version bump to `1.1.0` belongs to the release that ships Dragonwilds.
+- Leave `<Version>1.0.2</Version>` unchanged here. The version bump to `2.0.0` (a major release) belongs to the release that ships Dragonwilds.
 - No other property changes in this step (no `LangVersion`, no analyzers). Keep the diff minimal.
 
 ### 4.4 Bootstrap script
