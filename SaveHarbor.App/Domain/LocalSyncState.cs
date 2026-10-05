@@ -15,7 +15,7 @@ public sealed class LocalSyncState
     public string LastLocalBackupPath { get; set; } = string.Empty;
     public DateTimeOffset? LastCloudCheckAtUtc { get; set; }
 
-    public static LocalSyncState CreateNew(WindroseWorld world)
+    public static LocalSyncState CreateNew(GameWorld world)
     {
         return new LocalSyncState
         {

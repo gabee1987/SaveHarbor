@@ -18,7 +18,7 @@ public sealed class LocalJsonSyncStateService : ILocalSyncStateService
         "sync-state");
     private readonly SemaphoreSlim fileLock = new(1, 1);
 
-    public async Task<LocalSyncState> LoadAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<LocalSyncState> LoadAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         await fileLock.WaitAsync(cancellationToken);
         try

@@ -4,9 +4,9 @@ using System.Text.Json;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 
-namespace SaveHarbor.App.Infrastructure;
+namespace SaveHarbor.App.Infrastructure.Games.Windrose;
 
-public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
+public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : IGameSaveAdapter
 {
     private const string DefaultRocksDbVersion = "0.10.0";
     private static readonly string[] RocksDbRootNames = ["RocksDB_v2", "RocksDB"];
@@ -16,7 +16,11 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
         PropertyNameCaseInsensitive = true
     };
 
-    public async Task<IReadOnlyList<WindroseWorld>> DiscoverWorldsAsync(CancellationToken cancellationToken = default)
+    public WorldPayloadKind PayloadKind => WorldPayloadKind.Directory;
+
+    public string SaveRootPath => GetProfilesRoot();
+
+    public async Task<IReadOnlyList<GameWorld>> DiscoverWorldsAsync(CancellationToken cancellationToken = default)
     {
         var profilesRoot = GetProfilesRoot();
 
@@ -26,12 +30,12 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
         }
 
         var worldFolders = Directory.EnumerateDirectories(profilesRoot)
-            .Select(CreateProfile)
+            .Select(CreateSaveRoot)
             .Where(profile => Directory.Exists(profile.WorldsPath))
             .SelectMany(profile => Directory.EnumerateDirectories(profile.WorldsPath))
             .ToArray();
 
-        var worlds = new List<WindroseWorld>();
+        var worlds = new List<GameWorld>();
         foreach (var worldFolder in worldFolders)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -48,27 +52,27 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
             .ToArray();
     }
 
-    public Task<IReadOnlyList<WindroseProfile>> DiscoverProfilesAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<GameSaveRoot>> DiscoverSaveRootsAsync(CancellationToken cancellationToken = default)
     {
         var profilesRoot = GetProfilesRoot();
 
         if (!Directory.Exists(profilesRoot))
         {
-            return Task.FromResult<IReadOnlyList<WindroseProfile>>([]);
+            return Task.FromResult<IReadOnlyList<GameSaveRoot>>([]);
         }
 
         var profiles = Directory.EnumerateDirectories(profilesRoot)
-            .Select(CreateProfile)
+            .Select(CreateSaveRoot)
             .OrderByDescending(profile => profile.LastModifiedAt)
             .ToArray();
 
-        return Task.FromResult<IReadOnlyList<WindroseProfile>>(profiles);
+        return Task.FromResult<IReadOnlyList<GameSaveRoot>>(profiles);
     }
 
-    public async Task<WindroseWorld?> ReadWorldAsync(string worldPath, CancellationToken cancellationToken = default)
+    public async Task<GameWorld?> ReadWorldAsync(string savePath, CancellationToken cancellationToken = default)
     {
-        var descriptionPath = Path.Combine(worldPath, "WorldDescription.json");
-        if (!Directory.Exists(worldPath) || !File.Exists(descriptionPath))
+        var descriptionPath = Path.Combine(savePath, "WorldDescription.json");
+        if (!Directory.Exists(savePath) || !File.Exists(descriptionPath))
         {
             return null;
         }
@@ -81,7 +85,7 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
             return null;
         }
 
-        var directory = new DirectoryInfo(worldPath);
+        var directory = new DirectoryInfo(savePath);
         var files = directory.EnumerateFiles("*", SearchOption.AllDirectories).ToArray();
         var lastModified = files.Length > 0
             ? files.Max(file => file.LastWriteTimeUtc)
@@ -91,7 +95,8 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
             ? description.IslandId
             : directory.Name;
 
-        return new WindroseWorld(
+        return new GameWorld(
+            GameId.Windrose,
             worldId,
             string.IsNullOrWhiteSpace(description.WorldName) ? directory.Name : description.WorldName,
             string.IsNullOrWhiteSpace(description.WorldPresetType) ? "Unknown" : description.WorldPresetType,
@@ -100,6 +105,13 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
             new DateTimeOffset(lastModified, TimeSpan.Zero).ToLocalTime(),
             files.Sum(file => file.Length),
             files.Length);
+    }
+
+    public IReadOnlyList<string> GetPayloadFiles(GameWorld world)
+    {
+        return Directory.EnumerateFiles(world.SavePath, "*", SearchOption.AllDirectories)
+            .Where(file => !string.Equals(Path.GetFileName(file), "LOCK", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
     }
 
     private static DateTimeOffset ConvertUnrealTimestamp(double creationTime)
@@ -120,13 +132,19 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
         }
     }
 
-    private static string GetProfilesRoot()
+    private string GetProfilesRoot()
     {
+        var overrideRoot = optionsProvider.Get(GameId.Windrose).SaveRoot;
+        if (!string.IsNullOrWhiteSpace(overrideRoot))
+        {
+            return Environment.ExpandEnvironmentVariables(overrideRoot);
+        }
+
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return Path.Combine(localAppData, "R5", "Saved", "SaveProfiles");
     }
 
-    private static WindroseProfile CreateProfile(string profilePath)
+    private static GameSaveRoot CreateSaveRoot(string profilePath)
     {
         var profileDirectory = new DirectoryInfo(profilePath);
         var activeRoot = GetActiveRocksDbRoot(profilePath);
@@ -141,11 +159,12 @@ public sealed class WindroseSaveDiscoveryService : IWindroseSaveDiscoveryService
             ? profileDirectory.LastWriteTimeUtc
             : DateTime.UtcNow;
 
-        return new WindroseProfile(
+        return new GameSaveRoot(
+            GameId.Windrose,
             profileDirectory.Name,
             profileDirectory.FullName,
-            rocksDbVersion,
             worldsPath,
+            $"RocksDB {rocksDbVersion}",
             new DateTimeOffset(lastModified, TimeSpan.Zero).ToLocalTime());
     }
 

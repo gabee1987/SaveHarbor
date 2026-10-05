@@ -4,7 +4,7 @@ namespace SaveHarbor.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    partial void OnSelectedWorldChanged(WindroseWorld? value)
+    partial void OnSelectedWorldChanged(GameWorld? value)
     {
         OnPropertyChanged(nameof(SelectedWorldSize));
         OnPropertyChanged(nameof(SelectedWorldFileCount));
@@ -18,6 +18,7 @@ public partial class MainWindowViewModel
 
     partial void OnCloudStatusChanged(CloudSyncStatus? value)
     {
+        NotifySwitchGameState();
         OnPropertyChanged(nameof(CloudStateText));
         OnPropertyChanged(nameof(CloudDetailText));
         OnPropertyChanged(nameof(CloudProviderText));
@@ -48,8 +49,14 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(BackupStorageSummary));
     }
 
+    partial void OnIsBusyChanged(bool value)
+    {
+        NotifySwitchGameState();
+    }
+
     partial void OnIsGameRunningChanged(bool value)
     {
         OnPropertyChanged(nameof(SafetyHint));
+        NotifySwitchGameState();
     }
 }

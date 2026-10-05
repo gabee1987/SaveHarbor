@@ -1,4 +1,3 @@
-using System.IO;
 using System.Reflection;
 using SaveHarbor.App.Utilities;
 
@@ -19,11 +18,7 @@ public partial class MainWindowViewModel
 
     public string BackupRoot => _backupService.BackupRoot;
 
-    public string LocalSaveRoot => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "R5",
-        "Saved",
-        "SaveProfiles");
+    public string LocalSaveRoot => _activeGame.Current.SaveAdapter.SaveRootPath;
 
     public string SelectedWorldSize => SelectedWorld is null ? "Unknown" : DisplayFormatter.FormatBytes(SelectedWorld.SizeBytes);
 
@@ -56,8 +51,8 @@ public partial class MainWindowViewModel
         : $"Modified {DisplayFormatter.FormatAge(SelectedWorld.LastModifiedAt)}";
 
     public string SafetyHint => IsGameRunning
-        ? "Close Windrose before backup, restore, upload, or download."
-        : "Safe for backup and restore. Keep Windrose closed during save operations.";
+        ? $"Close {ActiveGameName} before backup, restore, upload, or download."
+        : $"Safe for backup and restore. Keep {ActiveGameName} closed during save operations.";
 
     public string CloudStateText => CloudStatus?.Title ?? "Cloud not checked";
 

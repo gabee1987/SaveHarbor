@@ -4,7 +4,7 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed partial class CloudSyncService
 {
-    public async Task<CloudSyncResult> StartSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudSession, "Starting cloud session for world {WorldId}", world.WorldId);
 
@@ -58,7 +58,7 @@ public sealed partial class CloudSyncService
         return new CloudSyncResult(true, CloudSyncState.SomeonePlaying, $"Session started for {world.WorldName} from v{status.LatestVersion.VersionNumber}.");
     }
 
-    public async Task<CloudSyncResult> EndSessionAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> EndSessionAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudSession, "Ending cloud session for world {WorldId}", world.WorldId);
 

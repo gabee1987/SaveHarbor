@@ -1,7 +1,7 @@
 namespace SaveHarbor.App.Domain;
 
 public sealed record CloudUploadRequest(
-    WindroseWorld World,
+    GameWorld World,
     string ArchivePath,
     CloudVersionMetadata VersionMetadata,
     CloudWorldManifest? PreviousManifest);

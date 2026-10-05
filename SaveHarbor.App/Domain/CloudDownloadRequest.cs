@@ -1,6 +1,6 @@
 namespace SaveHarbor.App.Domain;
 
 public sealed record CloudDownloadRequest(
-    WindroseWorld World,
+    GameWorld World,
     CloudVersionMetadata Version,
     string TargetArchivePath);

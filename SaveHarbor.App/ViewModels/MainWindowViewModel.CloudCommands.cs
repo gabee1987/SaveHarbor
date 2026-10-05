@@ -93,8 +93,8 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            _toastService.Warning("Windrose is running", "Close the game before uploading the world.");
-            _dialogService.ShowError("Windrose is running", "Close Windrose before uploading so the RocksDB save files are not copied while they are changing.");
+            _toastService.Warning($"{ActiveGameName} is running", "Close the game before uploading the world.");
+            _dialogService.ShowError($"{ActiveGameName} is running", $"Close {ActiveGameName} before uploading so the save files are not copied while they are changing.");
             return;
         }
 
@@ -124,13 +124,13 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            _toastService.Warning("Windrose is running", "Close the game before downloading a cloud save.");
-            _dialogService.ShowError("Windrose is running", "Close Windrose before downloading and restoring a cloud save.");
+            _toastService.Warning($"{ActiveGameName} is running", "Close the game before downloading a cloud save.");
+            _dialogService.ShowError($"{ActiveGameName} is running", $"Close {ActiveGameName} before downloading and restoring a cloud save.");
             return;
         }
 
         var confirmMessage = SelectedWorld is null
-            ? "Do you want to download the latest available cloud save into this computer's Windrose profile?\n\nUse this after local worlds were deleted or on a fresh PC. Windrose must be closed."
+            ? $"Do you want to download the latest available cloud save into this computer's {ActiveGameName} profile?\n\nUse this after local worlds were deleted or on a fresh PC. {ActiveGameName} must be closed."
             : $"Do you want to download the latest cloud version of {SelectedWorld.WorldName}?\n\nSaveHarbor will first create a local safety backup of your current world, then restore the latest cloud save over this local world.\n\nChoose Continue to download and restore.\nChoose Cancel to leave your local world unchanged.";
 
         var confirmed = _dialogService.Confirm("Download latest cloud save", confirmMessage);
@@ -174,14 +174,14 @@ public partial class MainWindowViewModel
 
     private async Task<CloudSyncResult> DownloadCloudWithoutLocalWorldAsync()
     {
-        var profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+        var profiles = await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync();
         var profile = profiles.FirstOrDefault();
         if (profile is null)
         {
             return new CloudSyncResult(
                 false,
                 CloudSyncState.Error,
-                "No Windrose profile was found. Start Windrose once, close it, then download again.");
+                $"No {ActiveGameName} profile was found. Start {ActiveGameName} once, close it, then download again.");
         }
 
         return await _cloudSyncService.DownloadLatestAvailableAsync(profile);
@@ -212,7 +212,7 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            await RunBusyAsync("Starting session for running Windrose...", async () =>
+            await RunBusyAsync($"Starting session for running {ActiveGameName}...", async () =>
             {
                 var sessionStarted = await TryStartCloudSessionAsync(SelectedWorld);
                 if (!sessionStarted)
@@ -221,14 +221,14 @@ public partial class MainWindowViewModel
                 }
 
                 hasObservedGameRunningDuringSession = true;
-                StatusText = "Windrose is running. Session is active.";
+                StatusText = $"{ActiveGameName} is running. Session is active.";
                 AddActivity("Info", StatusText);
-                _toastService.Success("Session active", "Windrose is already running, so SaveHarbor will end the session when the game closes.");
+                _toastService.Success("Session active", $"{ActiveGameName} is already running, so SaveHarbor will end the session when the game closes.");
             });
             return;
         }
 
-        await RunBusyAsync("Starting session and launching Windrose...", async () =>
+        await RunBusyAsync($"Starting session and launching {ActiveGameName}...", async () =>
         {
             var sessionStarted = await TryStartCloudSessionAsync(SelectedWorld);
             if (!sessionStarted)
@@ -236,7 +236,7 @@ public partial class MainWindowViewModel
                 return;
             }
 
-            var launchResult = await _gameLauncherService.LaunchAsync();
+            var launchResult = await _gameLauncherService.LaunchAsync(_activeGame.Current);
             StatusText = launchResult.Message;
 
             if (!launchResult.IsSuccess)
@@ -247,8 +247,8 @@ public partial class MainWindowViewModel
                 return;
             }
 
-            AddActivity("Success", "Session active. Windrose launch requested.");
-            _toastService.Success("Starting Windrose", "Session is active and Steam has been asked to launch Windrose.");
+            AddActivity("Success", $"Session active. {ActiveGameName} launch requested.");
+            _toastService.Success($"Starting {ActiveGameName}", $"Session is active and Steam has been asked to launch {ActiveGameName}.");
         });
     }
 
@@ -279,7 +279,7 @@ public partial class MainWindowViewModel
         });
     }
 
-    private async Task<bool> TryStartCloudSessionAsync(WindroseWorld world)
+    private async Task<bool> TryStartCloudSessionAsync(GameWorld world)
     {
         var result = await _cloudSyncService.StartSessionAsync(world);
         await RefreshCloudStatusAsync(showToast: false);

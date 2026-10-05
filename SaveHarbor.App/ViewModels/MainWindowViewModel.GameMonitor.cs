@@ -40,12 +40,12 @@ public partial class MainWindowViewModel
         await AutoEndCloudSessionAfterGameClosedAsync(SelectedWorld);
     }
 
-    private async Task AutoEndCloudSessionAfterGameClosedAsync(WindroseWorld world)
+    private async Task AutoEndCloudSessionAfterGameClosedAsync(GameWorld world)
     {
         isAutoEndingSession = true;
         try
         {
-            StatusText = "Windrose closed. Ending cloud session...";
+            StatusText = $"{ActiveGameName} closed. Ending cloud session...";
             AddActivity("Info", StatusText);
 
             var result = await _cloudSyncService.EndSessionAsync(world);
@@ -61,8 +61,8 @@ public partial class MainWindowViewModel
                 return;
             }
 
-            AddActivity("Success", "Windrose closed. Session ended automatically.");
-            _toastService.Success("Session ended", "Windrose closed, so SaveHarbor cleared your active session.");
+            AddActivity("Success", $"{ActiveGameName} closed. Session ended automatically.");
+            _toastService.Success("Session ended", $"{ActiveGameName} closed, so SaveHarbor cleared your active session.");
         }
         catch (Exception ex)
         {

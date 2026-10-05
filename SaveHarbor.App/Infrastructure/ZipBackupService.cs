@@ -40,7 +40,7 @@ public sealed class ZipBackupService : IBackupService
         }, cancellationToken);
     }
 
-    public async Task<BackupManifest> ReadManifestAsync(string backupPath, CancellationToken cancellationToken = default)
+    public async Task<BackupManifest> ReadManifestAsync(string backupPath, GameId expectedGame, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(backupPath))
         {
@@ -54,9 +54,9 @@ public sealed class ZipBackupService : IBackupService
 
         await using var manifestStream = entry.Open();
         var manifest = await JsonSerializer.DeserializeAsync<BackupManifest>(manifestStream, JsonOptions, cancellationToken);
-        if (manifest is null || !string.Equals(manifest.Game, "Windrose", StringComparison.OrdinalIgnoreCase))
+        if (manifest is null || !string.Equals(manifest.Game, expectedGame.ToStorageKey(), StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("This backup does not look like a Windrose SaveHarbor backup.");
+            throw new InvalidOperationException($"This backup does not look like a {expectedGame} SaveHarbor backup.");
         }
 
         if (string.IsNullOrWhiteSpace(manifest.WorldId))
@@ -67,7 +67,7 @@ public sealed class ZipBackupService : IBackupService
         return manifest;
     }
 
-    public async Task<BackupInfo> CreateBackupAsync(WindroseWorld world, string reason, CancellationToken cancellationToken = default)
+    public async Task<BackupInfo> CreateBackupAsync(GameWorld world, string reason, CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(BackupRoot);
 
@@ -82,7 +82,7 @@ public sealed class ZipBackupService : IBackupService
         return new BackupInfo(fileInfo.FullName, fileInfo.Name, fileInfo.CreationTime, fileInfo.Length);
     }
 
-    public async Task RestoreBackupAsync(string backupPath, WindroseWorld targetWorld, CancellationToken cancellationToken = default)
+    public async Task RestoreBackupAsync(string backupPath, GameWorld targetWorld, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(backupPath))
         {
@@ -120,11 +120,11 @@ public sealed class ZipBackupService : IBackupService
 
     public async Task<string> ImportBackupAsNewWorldAsync(
         string backupPath,
-        WindroseProfile profile,
+        GameSaveRoot profile,
         bool overwriteExisting,
         CancellationToken cancellationToken = default)
     {
-        var manifest = await ReadManifestAsync(backupPath, cancellationToken);
+        var manifest = await ReadManifestAsync(backupPath, profile.Game, cancellationToken);
         var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
 
         if (Directory.Exists(targetWorldPath) && !overwriteExisting)
@@ -167,7 +167,7 @@ public sealed class ZipBackupService : IBackupService
         }
     }
 
-    private static void CreateArchive(WindroseWorld world, string targetPath, string reason, CancellationToken cancellationToken)
+    private static void CreateArchive(GameWorld world, string targetPath, string reason, CancellationToken cancellationToken)
     {
         var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
         var payloadRoot = Path.Combine(tempPath, "world");
@@ -180,7 +180,7 @@ public sealed class ZipBackupService : IBackupService
             var manifest = new
             {
                 SchemaVersion = 1,
-                Game = "Windrose",
+                Game = world.Game.ToStorageKey(),
                 world.WorldId,
                 world.WorldName,
                 SourcePath = world.SavePath,

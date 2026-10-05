@@ -324,7 +324,7 @@
         </Setter>
     </Style>
 
-    <DataTemplate DataType="{x:Type domain:WindroseWorld}">
+    <DataTemplate DataType="{x:Type domain:GameWorld}">
         <StackPanel>
             <TextBlock Text="{Binding WorldName}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
             <TextBlock Text="{Binding WorldId}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" />

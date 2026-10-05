@@ -1,12 +1,12 @@
 using System.IO;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
+using SaveHarbor.App.Infrastructure.Games;
+using SaveHarbor.App.Infrastructure.Games.Windrose;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
 using Serilog;
@@ -20,13 +20,11 @@ public partial class App : Application
     private readonly IAppDataPathProvider _pathProvider = new AppDataPathProvider();
     private readonly AppLoggingOptions _loggingOptions;
     private readonly CloudProviderOptions _cloudProviderOptions;
-    private readonly GameLauncherOptions _gameLauncherOptions;
 
     public App()
     {
-        _loggingOptions = LoadLoggingOptions();
-        _cloudProviderOptions = LoadCloudProviderOptions();
-        _gameLauncherOptions = LoadGameLauncherOptions();
+        _loggingOptions = AppOptionsLoader.LoadLoggingOptions();
+        _cloudProviderOptions = AppOptionsLoader.LoadCloudProviderOptions();
         ConfigureLogging(_pathProvider, _loggingOptions);
 
         _host = Host.CreateDefaultBuilder()
@@ -35,13 +33,19 @@ public partial class App : Application
                 services.AddSingleton(_pathProvider);
                 services.AddSingleton(_loggingOptions);
                 services.AddSingleton(_cloudProviderOptions);
-                services.AddSingleton(_gameLauncherOptions);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
-                services.AddSingleton<IWindroseSaveDiscoveryService, WindroseSaveDiscoveryService>();
+                services.AddSingleton(AppOptionsLoader.LoadGameOptions());
+                services.AddSingleton<WindroseSaveAdapter>();
+                services.AddSingleton<IGameDefinition, WindroseGameDefinition>();
+                services.AddSingleton<IGameRegistry, GameRegistry>();
+                services.AddSingleton<IActiveGameContext>(serviceProvider => new ActiveGameContext(
+                    serviceProvider.GetRequiredService<IGameRegistry>(),
+                    serviceProvider.GetRequiredService<IAppDataPathProvider>(),
+                    AppOptionsLoader.ReadGameArgument(Environment.GetCommandLineArgs())));
                 services.AddSingleton<IBackupService, ZipBackupService>();
                 services.AddSingleton<IProcessDetectionService, WindowsProcessDetectionService>();
-                services.AddSingleton<IGameLauncherService, WindroseGameLauncherService>();
+                services.AddSingleton<IGameLauncherService, SteamGameLauncherService>();
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IToastService, ToastService>();
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
@@ -88,134 +92,6 @@ public partial class App : Application
         _host.Dispose();
         Log.CloseAndFlush();
         base.OnExit(e);
-    }
-
-    private static AppLoggingOptions LoadLoggingOptions()
-    {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
-
-        var defaults = new AppLoggingOptions();
-        var section = configuration.GetSection(AppLoggingOptions.SectionName);
-        if (!section.Exists())
-        {
-            return defaults;
-        }
-
-        var options = new AppLoggingOptions
-        {
-            Enabled = ReadBool(section[nameof(AppLoggingOptions.Enabled)], defaults.Enabled),
-            DefaultMinimumLevel = ReadLevel(
-                section[nameof(AppLoggingOptions.DefaultMinimumLevel)],
-                defaults.DefaultMinimumLevel),
-            RetainedFileCountLimit = ReadInt(
-                section[nameof(AppLoggingOptions.RetainedFileCountLimit)],
-                defaults.RetainedFileCountLimit),
-            KeywordMinimumLevels = new Dictionary<AppLogKeyword, LogEventLevel>(defaults.KeywordMinimumLevels)
-        };
-
-        foreach (var keywordSection in section.GetSection(nameof(AppLoggingOptions.KeywordMinimumLevels)).GetChildren())
-        {
-            if (Enum.TryParse<AppLogKeyword>(keywordSection.Key, ignoreCase: true, out var keyword))
-            {
-                options.KeywordMinimumLevels[keyword] = ReadLevel(
-                    keywordSection.Value,
-                    options.KeywordMinimumLevels.GetValueOrDefault(keyword, options.DefaultMinimumLevel));
-            }
-        }
-
-        return options;
-    }
-
-    private static CloudProviderOptions LoadCloudProviderOptions()
-    {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
-
-        var defaults = new CloudProviderOptions();
-        var section = configuration.GetSection(CloudProviderOptions.SectionName);
-        if (!section.Exists())
-        {
-            return defaults;
-        }
-
-        var options = new CloudProviderOptions
-        {
-            Provider = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.Provider)])
-                ? defaults.Provider
-                : section[nameof(CloudProviderOptions.Provider)]!,
-            GoogleAppFolderName = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.GoogleAppFolderName)])
-                ? defaults.GoogleAppFolderName
-                : section[nameof(CloudProviderOptions.GoogleAppFolderName)]!,
-            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath,
-            GoogleSharedFolderId = section[nameof(CloudProviderOptions.GoogleSharedFolderId)] ?? defaults.GoogleSharedFolderId
-        };
-
-        var pathProvider = new AppDataPathProvider();
-        var localSettingsPath = pathProvider.CloudProviderSettingsPath;
-        if (!File.Exists(localSettingsPath))
-        {
-            return options;
-        }
-
-        try
-        {
-            var localSettings = JsonSerializer.Deserialize<LocalCloudProviderSettings>(File.ReadAllText(localSettingsPath));
-            if (!string.IsNullOrWhiteSpace(localSettings?.GoogleSharedFolderId))
-            {
-                options.GoogleSharedFolderId = localSettings.GoogleSharedFolderId;
-            }
-        }
-        catch
-        {
-            // A broken local setup file should not stop the app from starting.
-        }
-
-        return options;
-    }
-
-    private static GameLauncherOptions LoadGameLauncherOptions()
-    {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
-
-        var defaults = new GameLauncherOptions();
-        var section = configuration.GetSection(GameLauncherOptions.SectionName);
-        if (!section.Exists())
-        {
-            return defaults;
-        }
-
-        return new GameLauncherOptions
-        {
-            LaunchUri = string.IsNullOrWhiteSpace(section[nameof(GameLauncherOptions.LaunchUri)])
-                ? defaults.LaunchUri
-                : section[nameof(GameLauncherOptions.LaunchUri)]!,
-            ExecutablePath = section[nameof(GameLauncherOptions.ExecutablePath)] ?? defaults.ExecutablePath
-        };
-    }
-
-    private static LogEventLevel ReadLevel(string? value, LogEventLevel fallback)
-    {
-        return Enum.TryParse<LogEventLevel>(value, ignoreCase: true, out var level)
-            ? level
-            : fallback;
-    }
-
-    private static bool ReadBool(string? value, bool fallback)
-    {
-        return bool.TryParse(value, out var result) ? result : fallback;
-    }
-
-    private static int ReadInt(string? value, int fallback)
-    {
-        return int.TryParse(value, out var result) && result > 0 ? result : fallback;
     }
 
     private static void ConfigureLogging(IAppDataPathProvider pathProvider, AppLoggingOptions options)

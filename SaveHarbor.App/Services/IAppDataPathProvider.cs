@@ -15,4 +15,6 @@ public interface IAppDataPathProvider
     string GoogleClientSecretsPath { get; }
 
     string CloudProviderSettingsPath { get; }
+
+    string AppSettingsPath { get; }
 }

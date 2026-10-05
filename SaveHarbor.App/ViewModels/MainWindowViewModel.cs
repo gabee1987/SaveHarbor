@@ -9,7 +9,8 @@ namespace SaveHarbor.App.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly IWindroseSaveDiscoveryService _saveDiscoveryService;
+    private readonly IActiveGameContext _activeGame;
+    private readonly IGameRegistry _gameRegistry;
     private readonly IBackupService _backupService;
     private readonly IProcessDetectionService _processDetectionService;
     private readonly IDialogService _dialogService;
@@ -33,7 +34,7 @@ public partial class MainWindowViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(StartCloudSessionCommand))]
     [NotifyCanExecuteChangedFor(nameof(EndCloudSessionCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartGameCommand))]
-    private WindroseWorld? selectedWorld;
+    private GameWorld? selectedWorld;
 
     [ObservableProperty]
     private bool isBusy;
@@ -54,13 +55,14 @@ public partial class MainWindowViewModel : ObservableObject
     private string totalBackupSize = "0 B";
 
     [ObservableProperty]
-    private string profileStatus = "Checking Windrose profile...";
+    private string profileStatus = "Checking save profile...";
 
     [ObservableProperty]
     private CloudSyncStatus? cloudStatus;
 
     public MainWindowViewModel(
-        IWindroseSaveDiscoveryService saveDiscoveryService,
+        IActiveGameContext activeGame,
+        IGameRegistry gameRegistry,
         IBackupService backupService,
         IProcessDetectionService processDetectionService,
         IDialogService dialogService,
@@ -71,7 +73,8 @@ public partial class MainWindowViewModel : ObservableObject
         IAppErrorHandler errorHandler,
         IAppLogger logger)
     {
-        _saveDiscoveryService = saveDiscoveryService;
+        _activeGame = activeGame;
+        _gameRegistry = gameRegistry;
         _backupService = backupService;
         _processDetectionService = processDetectionService;
         _dialogService = dialogService;
@@ -83,6 +86,7 @@ public partial class MainWindowViewModel : ObservableObject
         _logger = logger;
 
         _toastService.ToastRequested += OnToastRequested;
+        _activeGame.ActiveGameChanged += OnActiveGameChanged;
 
         gameMonitorTimer = new DispatcherTimer
         {
@@ -91,7 +95,7 @@ public partial class MainWindowViewModel : ObservableObject
         gameMonitorTimer.Tick += OnGameMonitorTick;
     }
 
-    public ObservableCollection<WindroseWorld> Worlds { get; } = [];
+    public ObservableCollection<GameWorld> Worlds { get; } = [];
 
     public ObservableCollection<ActivityLogItem> Activity { get; } = [];
 

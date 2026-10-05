@@ -17,12 +17,12 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        await RunBusyAsync("Scanning for Windrose worlds...", async () =>
+        await RunBusyAsync($"Scanning for {ActiveGameName} worlds...", async () =>
         {
             UpdateGameStatus();
             Worlds.Clear();
 
-            var worlds = await _saveDiscoveryService.DiscoverWorldsAsync();
+            var worlds = await _activeGame.Current.SaveAdapter.DiscoverWorldsAsync();
             foreach (var world in worlds)
             {
                 Worlds.Add(world);
@@ -42,7 +42,7 @@ public partial class MainWindowViewModel
             await RefreshBackupStatsAsync();
             await RefreshCloudStatusAsync(showToast: false);
             StatusText = Worlds.Count == 0
-                ? "No Windrose worlds found."
+                ? $"No {ActiveGameName} worlds found."
                 : $"Found {Worlds.Count} world{(Worlds.Count == 1 ? string.Empty : "s")}.";
 
             AddActivity("Info", StatusText);
@@ -60,8 +60,8 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            _toastService.Warning("Windrose is running", "Close the game before creating a backup.");
-            _dialogService.ShowError("Windrose is running", "Close Windrose before creating a backup so the RocksDB save files are not copied while they are changing.");
+            _toastService.Warning($"{ActiveGameName} is running", "Close the game before creating a backup.");
+            _dialogService.ShowError($"{ActiveGameName} is running", $"Close {ActiveGameName} before creating a backup so the save files are not copied while they are changing.");
             return;
         }
 
@@ -87,8 +87,8 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            _toastService.Warning("Windrose is running", "Close the game before restoring a backup.");
-            _dialogService.ShowError("Windrose is running", "Close Windrose before restoring a backup.");
+            _toastService.Warning($"{ActiveGameName} is running", "Close the game before restoring a backup.");
+            _dialogService.ShowError($"{ActiveGameName} is running", $"Close {ActiveGameName} before restoring a backup.");
             return;
         }
 
@@ -126,8 +126,8 @@ public partial class MainWindowViewModel
         UpdateGameStatus();
         if (IsGameRunning)
         {
-            _toastService.Warning("Windrose is running", "Close the game before importing a backup.");
-            _dialogService.ShowError("Windrose is running", "Close Windrose before importing a world backup.");
+            _toastService.Warning($"{ActiveGameName} is running", "Close the game before importing a backup.");
+            _dialogService.ShowError($"{ActiveGameName} is running", $"Close {ActiveGameName} before importing a world backup.");
             return;
         }
 
@@ -138,12 +138,12 @@ public partial class MainWindowViewModel
         }
 
         BackupManifest manifest;
-        IReadOnlyList<WindroseProfile> profiles;
+        IReadOnlyList<GameSaveRoot> profiles;
 
         try
         {
-            manifest = await _backupService.ReadManifestAsync(backupPath);
-            profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+            manifest = await _backupService.ReadManifestAsync(backupPath, _activeGame.Current.Id);
+            profiles = await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync();
         }
         catch (Exception ex)
         {
@@ -157,11 +157,11 @@ public partial class MainWindowViewModel
         var profile = profiles.FirstOrDefault();
         if (profile is null)
         {
-            _toastService.Warning("Profile not found", "Start Windrose once, close it, then import again.");
+            _toastService.Warning("Profile not found", $"Start {ActiveGameName} once, close it, then import again.");
             _dialogService.ShowError(
-                "Windrose profile not found",
-                "Start Windrose once on this computer, let it reach the main menu or create its local profile, then close it and try importing again.");
-            AddActivity("Error", "Import blocked: Windrose profile not found.");
+                $"{ActiveGameName} profile not found",
+                $"Start {ActiveGameName} once on this computer, let it reach the main menu or create its local profile, then close it and try importing again.");
+            AddActivity("Error", $"Import blocked: {ActiveGameName} profile not found.");
             return;
         }
 
@@ -173,7 +173,7 @@ public partial class MainWindowViewModel
 
         var confirmed = _dialogService.Confirm(
             "Import world backup",
-            $"World: {manifest.WorldName}\nWorld ID: {manifest.WorldId}\nProfile: {profile.ProfileId}\n\n{actionText}\n\nKeep Windrose closed while importing.");
+            $"World: {manifest.WorldName}\nWorld ID: {manifest.WorldId}\nProfile: {profile.RootId}\n\n{actionText}\n\nKeep {ActiveGameName} closed while importing.");
 
         if (!confirmed)
         {
@@ -186,7 +186,7 @@ public partial class MainWindowViewModel
             await RefreshBackupStatsAsync();
             await RefreshProfileStatusAsync();
 
-            var importedWorld = await _saveDiscoveryService.ReadWorldAsync(importedPath);
+            var importedWorld = await _activeGame.Current.SaveAdapter.ReadWorldAsync(importedPath);
             await RefreshAsync();
             if (importedWorld is not null)
             {
@@ -197,7 +197,7 @@ public partial class MainWindowViewModel
             StatusText = $"Imported world backup: {manifest.WorldName}";
             AddActivity("Success", StatusText);
             _toastService.Success("Import complete", manifest.WorldName);
-            _dialogService.ShowInfo("Import complete", $"Imported {manifest.WorldName}.\n\nStart Windrose and check that the world appears.");
+            _dialogService.ShowInfo("Import complete", $"Imported {manifest.WorldName}.\n\nStart {ActiveGameName} and check that the world appears.");
         });
     }
 

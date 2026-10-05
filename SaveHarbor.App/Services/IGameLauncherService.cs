@@ -4,5 +4,5 @@ namespace SaveHarbor.App.Services;
 
 public interface IGameLauncherService
 {
-    Task<GameLaunchResult> LaunchAsync(CancellationToken cancellationToken = default);
+    Task<GameLaunchResult> LaunchAsync(IGameDefinition game, CancellationToken cancellationToken = default);
 }

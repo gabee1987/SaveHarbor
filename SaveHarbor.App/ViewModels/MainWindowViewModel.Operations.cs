@@ -56,11 +56,12 @@ public partial class MainWindowViewModel
         StartCloudSessionCommand.NotifyCanExecuteChanged();
         EndCloudSessionCommand.NotifyCanExecuteChanged();
         StartGameCommand.NotifyCanExecuteChanged();
+        NotifySwitchGameState();
     }
 
     private void UpdateGameStatus()
     {
-        IsGameRunning = _processDetectionService.IsWindroseRunning();
+        IsGameRunning = _processDetectionService.IsGameRunning(_activeGame.Current);
     }
 
     private async Task RefreshBackupStatsAsync()
@@ -73,12 +74,12 @@ public partial class MainWindowViewModel
 
     private async Task RefreshProfileStatusAsync()
     {
-        var profiles = await _saveDiscoveryService.DiscoverProfilesAsync();
+        var profiles = await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync();
         var profile = profiles.FirstOrDefault();
 
         ProfileStatus = profile is null
-            ? "No Windrose profile found. Start Windrose once before importing a backup."
-            : $"Profile {profile.ProfileId} • RocksDB {profile.RocksDbVersion}";
+            ? $"No {ActiveGameName} profile found. Start {ActiveGameName} once before importing a backup."
+            : $"Profile {profile.RootId} • {profile.Detail}";
     }
 
     private async Task RefreshCloudStatusAsync(bool showToast)
@@ -113,7 +114,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var refreshed = await _saveDiscoveryService.ReadWorldAsync(SelectedWorld.SavePath);
+        var refreshed = await _activeGame.Current.SaveAdapter.ReadWorldAsync(SelectedWorld.SavePath);
         if (refreshed is null)
         {
             return;

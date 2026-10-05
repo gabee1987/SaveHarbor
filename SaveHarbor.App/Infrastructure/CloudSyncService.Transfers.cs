@@ -6,7 +6,7 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed partial class CloudSyncService
 {
-    public async Task<CloudSyncResult> DownloadLatestAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> DownloadLatestAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download for world {WorldId}", world.WorldId);
 
@@ -76,14 +76,14 @@ public sealed partial class CloudSyncService
         }
     }
 
-    public async Task<CloudSyncResult> DownloadLatestAvailableAsync(WindroseProfile profile, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> DownloadLatestAvailableAsync(GameSaveRoot profile, CancellationToken cancellationToken = default)
     {
-        logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download into profile {ProfileId}", profile.ProfileId);
+        logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download into profile {ProfileId}", profile.RootId);
 
         var connection = await cloudProvider.GetConnectionStatusAsync(cancellationToken);
         if (!connection.IsConnected)
         {
-            logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because provider is not connected for profile {ProfileId}", profile.ProfileId);
+            logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because provider is not connected for profile {ProfileId}", profile.RootId);
             return new CloudSyncResult(false, CloudSyncState.NotConnected, "Cloud sync is not connected.");
         }
 
@@ -111,7 +111,8 @@ public sealed partial class CloudSyncService
             "cloud-downloads",
             $"{Guid.NewGuid():N}_{manifest.LatestVersion.ArchiveFileName}");
 
-        var world = new WindroseWorld(
+        var world = new GameWorld(
+            profile.Game,
             manifest.WorldId,
             string.IsNullOrWhiteSpace(manifest.WorldName) ? manifest.WorldId : manifest.WorldName,
             "Unknown",
@@ -157,7 +158,7 @@ public sealed partial class CloudSyncService
             await localSyncStateService.SaveAsync(localState, cancellationToken);
 
             logger.Information(AppLogKeyword.CloudDownload, "Completed cloud download for world {WorldId} version {VersionNumber}", manifest.WorldId, manifest.LatestVersion.VersionNumber);
-            return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Downloaded {world.WorldName} v{manifest.LatestVersion.VersionNumber} into profile {profile.ProfileId}.");
+            return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Downloaded {world.WorldName} v{manifest.LatestVersion.VersionNumber} into profile {profile.RootId}.");
         }
         finally
         {
@@ -168,7 +169,7 @@ public sealed partial class CloudSyncService
         }
     }
 
-    public async Task<CloudSyncResult> UploadCurrentAsync(WindroseWorld world, CancellationToken cancellationToken = default)
+    public async Task<CloudSyncResult> UploadCurrentAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);
 

@@ -224,7 +224,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         var manifest = request.PreviousManifest ?? new CloudWorldManifest
         {
             Provider = ProviderName,
-            Game = "Windrose",
+            Game = request.World.Game.ToStorageKey(),
             WorldId = request.World.WorldId,
             WorldName = request.World.WorldName
         };

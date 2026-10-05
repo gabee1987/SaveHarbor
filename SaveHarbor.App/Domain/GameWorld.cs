@@ -1,9 +1,10 @@
 namespace SaveHarbor.App.Domain;
 
-public sealed record WindroseWorld(
+public sealed record GameWorld(
+    GameId Game,
     string WorldId,
     string WorldName,
-    string WorldPresetType,
+    string Subtitle,
     string SavePath,
     DateTimeOffset CreatedAt,
     DateTimeOffset LastModifiedAt,

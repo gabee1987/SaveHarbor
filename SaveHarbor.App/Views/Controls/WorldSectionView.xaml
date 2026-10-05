@@ -60,11 +60,11 @@
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="{ui:UiText World.Preset}" Style="{StaticResource MicroLabel}" ToolTip="{ui:UiText World.PresetTooltip}" />
-                    <TextBlock Text="{Binding SelectedWorld.WorldPresetType, TargetNullValue=Unknown}"
+                    <TextBlock Text="{Binding SelectedWorld.Subtitle, TargetNullValue=Unknown}"
                                FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis"
                                Margin="0,3,8,0"
-                               ToolTip="{Binding SelectedWorld.WorldPresetType}" />
+                               ToolTip="{Binding SelectedWorld.Subtitle}" />
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="{ui:UiText World.Size}" Style="{StaticResource MicroLabel}" ToolTip="{ui:UiText World.SizeTooltip}" />
