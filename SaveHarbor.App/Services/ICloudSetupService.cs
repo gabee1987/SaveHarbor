@@ -1,16 +1,16 @@
+using SaveHarbor.App.Domain;
+
 namespace SaveHarbor.App.Services;
 
 public interface ICloudSetupService
 {
-    string CurrentSharedFolderId { get; }
+    string GetCurrentSharedFolderId(GameId game);
 
-    bool HasSharedFolderConfigured { get; }
+    bool HasSharedFolderConfigured(GameId game);
 
-    string NormalizeSharedFolderInput(string input);
+    Task<CloudSetupTestResult> TestSharedFolderAsync(GameId game, string input, CancellationToken cancellationToken = default);
 
-    Task<CloudSetupTestResult> TestSharedFolderAsync(string input, CancellationToken cancellationToken = default);
-
-    Task SaveSharedFolderAsync(string input, CancellationToken cancellationToken = default);
+    Task SaveSharedFolderAsync(GameId game, string input, CancellationToken cancellationToken = default);
 }
 
 public sealed record CloudSetupTestResult(bool IsSuccess, string Message);

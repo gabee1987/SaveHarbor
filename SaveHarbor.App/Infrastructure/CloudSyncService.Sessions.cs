@@ -53,7 +53,7 @@ public sealed partial class CloudSyncService
             Status = "Playing"
         };
 
-        await cloudProvider.WriteSessionLockAsync(sessionLock, cancellationToken);
+        await cloudProvider.WriteSessionLockAsync(world.Game, sessionLock, cancellationToken);
         logger.Information(AppLogKeyword.CloudSession, "Cloud session started for world {WorldId} from version {VersionNumber}", world.WorldId, status.LatestVersion.VersionNumber);
         return new CloudSyncResult(true, CloudSyncState.SomeonePlaying, $"Session started for {world.WorldName} from v{status.LatestVersion.VersionNumber}.");
     }
@@ -80,7 +80,7 @@ public sealed partial class CloudSyncService
             return new CloudSyncResult(false, CloudSyncState.SomeonePlaying, $"{status.SessionLock.PlayerName} owns the active session lock.");
         }
 
-        await cloudProvider.ClearSessionLockAsync(world.WorldId, status.SessionLock.LockId, cancellationToken);
+        await cloudProvider.ClearSessionLockAsync(world.Game, world.WorldId, status.SessionLock.LockId, cancellationToken);
         logger.Information(AppLogKeyword.CloudSession, "Cloud session ended for world {WorldId}", world.WorldId);
         return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Session ended for {world.WorldName}.");
     }

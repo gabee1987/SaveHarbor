@@ -3,6 +3,7 @@ namespace SaveHarbor.App.Domain;
 public sealed class LocalSyncState
 {
     public int SchemaVersion { get; set; } = 1;
+    public string Game { get; set; } = string.Empty;
     public string WorldId { get; set; } = string.Empty;
     public string WorldName { get; set; } = string.Empty;
     public string LocalWorldPath { get; set; } = string.Empty;
@@ -19,6 +20,7 @@ public sealed class LocalSyncState
     {
         return new LocalSyncState
         {
+            Game = world.Game.ToStorageKey(),
             WorldId = world.WorldId,
             WorldName = world.WorldName,
             LocalWorldPath = world.SavePath

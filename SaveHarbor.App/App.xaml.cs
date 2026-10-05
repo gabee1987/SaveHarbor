@@ -7,6 +7,7 @@ using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
 using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
+using SaveHarbor.App.Infrastructure.Migrations;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
 using Serilog;
@@ -60,6 +61,7 @@ public partial class App : Application
                 });
                 services.AddSingleton<ICloudSetupService, CloudProviderSettingsService>();
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
+                services.AddSingleton<LegacyLayoutMigrator>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
             })
@@ -74,10 +76,18 @@ public partial class App : Application
     {
         base.OnStartup(e);
         await _host.StartAsync();
+        var migrationReport = _host.Services.GetRequiredService<LegacyLayoutMigrator>().Run();
         LogAppInformation(_loggingOptions, "SaveHarbor started");
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
+
+        if (migrationReport.Errors.Count > 0)
+        {
+            _host.Services.GetRequiredService<IToastService>().Warning(
+                "Data migration incomplete",
+                "Some older files could not be moved. Nothing was deleted. See the log.");
+        }
 
         if (mainWindow.DataContext is MainWindowViewModel viewModel)
         {
@@ -99,11 +109,12 @@ public partial class App : Application
         Directory.CreateDirectory(pathProvider.LocalLogsPath);
         Directory.CreateDirectory(pathProvider.CloudLogsPath);
 
-        const string outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{Keyword}] {Message:lj}{NewLine}{Exception}";
+        const string outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{Game}] [{Keyword}] {Message:lj}{NewLine}{Exception}";
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(GetLowestConfiguredLevel(options))
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("Game", "-")
             .WriteTo.File(
                 Path.Combine(pathProvider.LocalLogsPath, "saveharbor-.log"),
                 rollingInterval: RollingInterval.Day,

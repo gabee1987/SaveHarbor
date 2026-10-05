@@ -26,27 +26,13 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
         this.logger = logger;
     }
 
-    public string CurrentSharedFolderId => options.ResolveGoogleSharedFolderId();
+    public string GetCurrentSharedFolderId(GameId game) => options.GetSharedFolderId(game);
 
-    public bool HasSharedFolderConfigured => options.HasGoogleSharedFolder;
+    public bool HasSharedFolderConfigured(GameId game) => options.HasSharedFolder(game);
 
-    public string NormalizeSharedFolderInput(string input)
+    public async Task<CloudSetupTestResult> TestSharedFolderAsync(GameId game, string input, CancellationToken cancellationToken = default)
     {
-        var previous = options.GoogleSharedFolderId;
-        try
-        {
-            options.GoogleSharedFolderId = input;
-            return options.ResolveGoogleSharedFolderId();
-        }
-        finally
-        {
-            options.GoogleSharedFolderId = previous;
-        }
-    }
-
-    public async Task<CloudSetupTestResult> TestSharedFolderAsync(string input, CancellationToken cancellationToken = default)
-    {
-        var folderId = NormalizeSharedFolderInput(input);
+        var folderId = CloudProviderOptions.NormalizeSharedFolderInput(input);
         if (string.IsNullOrWhiteSpace(folderId))
         {
             return new CloudSetupTestResult(false, "Paste a Google Drive shared folder link or folder ID first.");
@@ -59,7 +45,7 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
 
         try
         {
-            return await sharedFolderProvider.TestSharedFolderAsync(folderId, cancellationToken);
+            return await sharedFolderProvider.TestSharedFolderAsync(game, folderId, cancellationToken);
         }
         catch (Exception exception)
         {
@@ -68,32 +54,56 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
         }
     }
 
-    public async Task SaveSharedFolderAsync(string input, CancellationToken cancellationToken = default)
+    public async Task SaveSharedFolderAsync(GameId game, string input, CancellationToken cancellationToken = default)
     {
-        var folderId = NormalizeSharedFolderInput(input);
+        var folderId = CloudProviderOptions.NormalizeSharedFolderInput(input);
         if (string.IsNullOrWhiteSpace(folderId))
         {
             throw new InvalidOperationException("Shared folder ID cannot be empty.");
         }
 
-        options.GoogleSharedFolderId = folderId;
         Directory.CreateDirectory(pathProvider.AppDataRoot);
 
-        var settings = new LocalCloudProviderSettings
+        var settings = ReadExistingSettings();
+        settings.SchemaVersion = 2;
+        settings.SharedFolders[game.ToStorageKey()] = folderId;
+        if (game == GameId.Windrose)
         {
-            GoogleSharedFolderId = folderId
-        };
+            settings.GoogleSharedFolderId = string.Empty;
+        }
+        else if (!string.IsNullOrWhiteSpace(settings.GoogleSharedFolderId))
+        {
+            settings.SharedFolders.TryAdd(GameId.Windrose.ToStorageKey(), settings.GoogleSharedFolderId);
+            settings.GoogleSharedFolderId = string.Empty;
+        }
 
-        await File.WriteAllTextAsync(
-            pathProvider.CloudProviderSettingsPath,
-            JsonSerializer.Serialize(settings, JsonOptions),
-            cancellationToken);
+        var tempPath = pathProvider.CloudProviderSettingsPath + ".tmp";
+        await File.WriteAllTextAsync(tempPath, JsonSerializer.Serialize(settings, JsonOptions), cancellationToken);
+        File.Move(tempPath, pathProvider.CloudProviderSettingsPath, overwrite: true);
 
-        logger.Information(AppLogKeyword.CloudProvider, "Saved Google Drive shared folder setup");
+        options.SetSharedFolderId(game, folderId);
+        logger.Information(AppLogKeyword.CloudProvider, "Saved Google Drive shared folder setup for {Game}", game);
     }
-}
 
-public sealed class LocalCloudProviderSettings
-{
-    public string GoogleSharedFolderId { get; set; } = string.Empty;
+    private LocalCloudProviderSettings ReadExistingSettings()
+    {
+        try
+        {
+            if (File.Exists(pathProvider.CloudProviderSettingsPath))
+            {
+                var existing = JsonSerializer.Deserialize<LocalCloudProviderSettings>(File.ReadAllText(pathProvider.CloudProviderSettingsPath));
+                if (existing is not null)
+                {
+                    existing.SharedFolders = new Dictionary<string, string>(existing.SharedFolders, StringComparer.OrdinalIgnoreCase);
+                    return existing;
+                }
+            }
+        }
+        catch (Exception exception) when (exception is IOException or JsonException)
+        {
+            logger.Warning(AppLogKeyword.CloudProvider, "Existing cloud settings could not be read and will be replaced: {Message}", exception.Message);
+        }
+
+        return new LocalCloudProviderSettings();
+    }
 }

@@ -29,7 +29,8 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="{ui:UiText CloudSetup.Title}"
+                    <TextBlock x:Name="TitleText"
+                               Text="{ui:UiText CloudSetup.Title}"
                                FontSize="17"
                                FontWeight="SemiBold" />
                     <TextBlock Text="{ui:UiText CloudSetup.Subtitle}"

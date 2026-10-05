@@ -23,6 +23,11 @@ public sealed partial class CloudSyncService
             return new CloudSyncResult(false, status.State, "No cloud save is available for this world.");
         }
 
+        if (!SafePath.IsSafeSegment(status.LatestVersion.ArchiveFileName))
+        {
+            return new CloudSyncResult(false, CloudSyncState.Error, "The cloud version has an invalid archive name. Nothing was changed.");
+        }
+
         var tempPath = Path.Combine(
             Path.GetTempPath(),
             "SaveHarbor",
@@ -80,14 +85,14 @@ public sealed partial class CloudSyncService
     {
         logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download into profile {ProfileId}", profile.RootId);
 
-        var connection = await cloudProvider.GetConnectionStatusAsync(cancellationToken);
+        var connection = await cloudProvider.GetConnectionStatusAsync(profile.Game, cancellationToken);
         if (!connection.IsConnected)
         {
             logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because provider is not connected for profile {ProfileId}", profile.RootId);
             return new CloudSyncResult(false, CloudSyncState.NotConnected, "Cloud sync is not connected.");
         }
 
-        var manifests = await cloudProvider.ListWorldManifestsAsync(cancellationToken);
+        var manifests = await cloudProvider.ListWorldManifestsAsync(profile.Game, cancellationToken);
         var manifest = manifests
             .Where(candidate => candidate.LatestVersion is not null)
             .OrderByDescending(candidate => candidate.UpdatedAtUtc)
@@ -99,7 +104,21 @@ public sealed partial class CloudSyncService
             return new CloudSyncResult(false, CloudSyncState.ConnectedNoCloudSave, "No cloud save is available to download.");
         }
 
-        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+        string targetWorldPath;
+        try
+        {
+            targetWorldPath = SafePath.CombineUnderRoot(profile.WorldsPath, manifest.WorldId);
+        }
+        catch (InvalidDataException)
+        {
+            return new CloudSyncResult(false, CloudSyncState.Error, "The cloud manifest contains an invalid world id. Nothing was changed.");
+        }
+
+        if (!SafePath.IsSafeSegment(manifest.LatestVersion.ArchiveFileName))
+        {
+            return new CloudSyncResult(false, CloudSyncState.Error, "The cloud version has an invalid archive name. Nothing was changed.");
+        }
+
         if (Directory.Exists(targetWorldPath))
         {
             return new CloudSyncResult(false, CloudSyncState.Conflict, $"A local folder already exists for {manifest.WorldName}. Refresh worlds and use normal Download.");
@@ -238,7 +257,7 @@ public sealed partial class CloudSyncService
 
         if (IsOwnLock(status.SessionLock))
         {
-            await cloudProvider.ClearSessionLockAsync(world.WorldId, status.SessionLock!.LockId, cancellationToken);
+            await cloudProvider.ClearSessionLockAsync(world.Game, world.WorldId, status.SessionLock!.LockId, cancellationToken);
         }
 
         logger.Information(AppLogKeyword.CloudUpload, "Completed cloud upload for world {WorldId} version {VersionNumber}", world.WorldId, version.VersionNumber);

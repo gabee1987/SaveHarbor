@@ -4,7 +4,7 @@ namespace SaveHarbor.App.Services;
 
 public interface ICloudSyncService
 {
-    Task<CloudConnectionResult> ConnectAsync(CancellationToken cancellationToken = default);
+    Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default);
 
     Task<CloudSyncStatus> RefreshStatusAsync(GameWorld world, CancellationToken cancellationToken = default);
 

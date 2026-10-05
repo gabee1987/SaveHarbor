@@ -7,7 +7,7 @@ public partial class MainWindowViewModel
 {
     private async Task PromptCloudFolderSetupIfNeededAsync()
     {
-        if (_cloudSetupService.HasSharedFolderConfigured)
+        if (_cloudSetupService.HasSharedFolderConfigured(_activeGame.Current.Id))
         {
             return;
         }
@@ -27,9 +27,11 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task SetupCloudFolderAsync()
     {
+        var game = _activeGame.Current;
         var input = _dialogService.ConfigureCloudFolder(
-            _cloudSetupService.CurrentSharedFolderId,
-            _cloudSetupService.TestSharedFolderAsync);
+            game.DisplayName,
+            _cloudSetupService.GetCurrentSharedFolderId(game.Id),
+            (candidate, cancellationToken) => _cloudSetupService.TestSharedFolderAsync(game.Id, candidate, cancellationToken));
 
         if (input is null)
         {
@@ -38,7 +40,7 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync("Saving cloud folder setup...", async () =>
         {
-            await _cloudSetupService.SaveSharedFolderAsync(input);
+            await _cloudSetupService.SaveSharedFolderAsync(game.Id, input);
             await RefreshCloudStatusAsync(showToast: false);
 
             StatusText = "Cloud folder setup saved.";
@@ -52,7 +54,7 @@ public partial class MainWindowViewModel
     {
         await RunBusyAsync("Connecting cloud...", async () =>
         {
-            var result = await _cloudSyncService.ConnectAsync();
+            var result = await _cloudSyncService.ConnectAsync(_activeGame.Current.Id);
 
             if (!result.IsSuccess)
             {

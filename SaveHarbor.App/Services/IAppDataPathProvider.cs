@@ -1,3 +1,5 @@
+using SaveHarbor.App.Domain;
+
 namespace SaveHarbor.App.Services;
 
 public interface IAppDataPathProvider
@@ -6,7 +8,17 @@ public interface IAppDataPathProvider
 
     string LocalLogsPath { get; }
 
-    string LocalTestCloudRoot { get; }
+    string GetBackupRoot(GameId game);
+
+    string GetSyncStateRoot(GameId game);
+
+    string GetLocalTestCloudRoot(GameId game);
+
+    string LegacyBackupRoot { get; }
+
+    string LegacySyncStateRoot { get; }
+
+    string LegacyLocalTestCloudRoot { get; }
 
     string CloudLogsPath { get; }
 

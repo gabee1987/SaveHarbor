@@ -1,6 +1,7 @@
 using System.IO;
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -92,7 +93,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var backupPath = _dialogService.SelectZipFile(_backupService.BackupRoot);
+        var backupPath = _dialogService.SelectZipFile(_backupService.GetBackupRoot(_activeGame.Current.Id));
         if (backupPath is null)
         {
             return;
@@ -131,7 +132,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var backupPath = _dialogService.SelectZipFile(_backupService.BackupRoot);
+        var backupPath = _dialogService.SelectZipFile(_backupService.GetBackupRoot(_activeGame.Current.Id));
         if (backupPath is null)
         {
             return;
@@ -143,6 +144,11 @@ public partial class MainWindowViewModel
         try
         {
             manifest = await _backupService.ReadManifestAsync(backupPath, _activeGame.Current.Id);
+            if (!SafePath.IsSafeSegment(manifest.WorldId))
+            {
+                throw new InvalidDataException("The backup contains an invalid world id.");
+            }
+
             profiles = await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync();
         }
         catch (Exception ex)
@@ -165,7 +171,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+        var targetWorldPath = SafePath.CombineUnderRoot(profile.WorldsPath, manifest.WorldId);
         var worldExists = Directory.Exists(targetWorldPath);
         var actionText = worldExists
             ? "This world already exists on this computer. Importing will replace that local world folder."
@@ -213,7 +219,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void OpenBackupFolder()
     {
-        Directory.CreateDirectory(_backupService.BackupRoot);
-        OpenFolder(_backupService.BackupRoot);
+        Directory.CreateDirectory(_backupService.GetBackupRoot(_activeGame.Current.Id));
+        OpenFolder(_backupService.GetBackupRoot(_activeGame.Current.Id));
     }
 }

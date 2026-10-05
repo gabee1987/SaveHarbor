@@ -8,10 +8,12 @@ namespace SaveHarbor.App.Infrastructure;
 public sealed class SerilogAppLogger : IAppLogger
 {
     private readonly AppLoggingOptions options;
+    private readonly IActiveGameContext activeGame;
 
-    public SerilogAppLogger(AppLoggingOptions options)
+    public SerilogAppLogger(AppLoggingOptions options, IActiveGameContext activeGame)
     {
         this.options = options;
+        this.activeGame = activeGame;
     }
 
     public void Debug(AppLogKeyword keyword, string messageTemplate, params object?[] propertyValues)
@@ -46,8 +48,8 @@ public sealed class SerilogAppLogger : IAppLogger
         }
     }
 
-    private static ILogger LoggerFor(AppLogKeyword keyword)
+    private ILogger LoggerFor(AppLogKeyword keyword)
     {
-        return Log.ForContext("Keyword", keyword.ToString());
+        return Log.ForContext("Game", activeGame.Current.StorageKey).ForContext("Keyword", keyword.ToString());
     }
 }

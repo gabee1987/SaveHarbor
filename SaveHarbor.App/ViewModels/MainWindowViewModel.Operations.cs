@@ -66,7 +66,7 @@ public partial class MainWindowViewModel
 
     private async Task RefreshBackupStatsAsync()
     {
-        var backups = await _backupService.ListBackupsAsync();
+        var backups = await _backupService.ListBackupsAsync(_activeGame.Current.Id);
         BackupCount = backups.Count;
         TotalBackupSize = DisplayFormatter.FormatBytes(backups.Sum(backup => backup.SizeBytes));
         LastBackup = backups.FirstOrDefault();

@@ -7,25 +7,23 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class ZipBackupService : IBackupService
+public sealed class ZipBackupService(IAppDataPathProvider pathProvider) : IBackupService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    public string BackupRoot { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SaveHarbor",
-        "backups");
+    public string GetBackupRoot(GameId game) => pathProvider.GetBackupRoot(game);
 
-    public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(GameId game, CancellationToken cancellationToken = default)
     {
-        if (!Directory.Exists(BackupRoot))
+        var backupRoot = GetBackupRoot(game);
+        if (!Directory.Exists(backupRoot))
         {
             return Task.FromResult<IReadOnlyList<BackupInfo>>([]);
         }
 
         return Task.Run<IReadOnlyList<BackupInfo>>(() =>
         {
-            return Directory.EnumerateFiles(BackupRoot, "*.zip", SearchOption.TopDirectoryOnly)
+            return Directory.EnumerateFiles(backupRoot, "*.zip", SearchOption.TopDirectoryOnly)
                 .Select(path =>
                 {
                     var fileInfo = new FileInfo(path);
@@ -69,12 +67,13 @@ public sealed class ZipBackupService : IBackupService
 
     public async Task<BackupInfo> CreateBackupAsync(GameWorld world, string reason, CancellationToken cancellationToken = default)
     {
-        Directory.CreateDirectory(BackupRoot);
+        var backupRoot = GetBackupRoot(world.Game);
+        Directory.CreateDirectory(backupRoot);
 
         var safeWorldName = FileNameSanitizer.MakeSafeFileName(world.WorldName);
         var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss");
         var fileName = $"{timestamp}_{safeWorldName}_{reason}.zip";
-        var targetPath = Path.Combine(BackupRoot, fileName);
+        var targetPath = Path.Combine(backupRoot, fileName);
 
         await Task.Run(() => CreateArchive(world, targetPath, reason, cancellationToken), cancellationToken);
 
@@ -88,6 +87,8 @@ public sealed class ZipBackupService : IBackupService
         {
             throw new FileNotFoundException("Backup archive was not found.", backupPath);
         }
+
+        await ReadManifestAsync(backupPath, targetWorld.Game, cancellationToken);
 
         await CreateBackupAsync(targetWorld, "pre-restore", cancellationToken);
 
@@ -125,7 +126,7 @@ public sealed class ZipBackupService : IBackupService
         CancellationToken cancellationToken = default)
     {
         var manifest = await ReadManifestAsync(backupPath, profile.Game, cancellationToken);
-        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+        var targetWorldPath = SafePath.CombineUnderRoot(profile.WorldsPath, manifest.WorldId);
 
         if (Directory.Exists(targetWorldPath) && !overwriteExisting)
         {

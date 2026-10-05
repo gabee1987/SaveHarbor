@@ -1,4 +1,5 @@
 using System.IO;
+using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -13,13 +14,19 @@ public sealed class CloudProviderOptions
 
     public string GoogleClientSecretsPath { get; set; } = string.Empty;
 
-    public string GoogleSharedFolderId { get; set; } = string.Empty;
+    public Dictionary<GameId, string> SharedFolderIds { get; } = new();
 
-    public bool HasGoogleSharedFolder => !string.IsNullOrWhiteSpace(GoogleSharedFolderId);
+    public string GetSharedFolderId(GameId game) =>
+        NormalizeSharedFolderInput(SharedFolderIds.GetValueOrDefault(game, string.Empty));
 
-    public string ResolveGoogleSharedFolderId()
+    public bool HasSharedFolder(GameId game) => !string.IsNullOrWhiteSpace(GetSharedFolderId(game));
+
+    public void SetSharedFolderId(GameId game, string input) =>
+        SharedFolderIds[game] = NormalizeSharedFolderInput(input);
+
+    public static string NormalizeSharedFolderInput(string input)
     {
-        var value = GoogleSharedFolderId.Trim();
+        var value = input.Trim();
         if (string.IsNullOrWhiteSpace(value))
         {
             return string.Empty;

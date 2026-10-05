@@ -70,9 +70,15 @@ public static class AppOptionsLoader
             GoogleAppFolderName = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.GoogleAppFolderName)])
                 ? defaults.GoogleAppFolderName
                 : section[nameof(CloudProviderOptions.GoogleAppFolderName)]!,
-            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath,
-            GoogleSharedFolderId = section[nameof(CloudProviderOptions.GoogleSharedFolderId)] ?? defaults.GoogleSharedFolderId
+            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath
         };
+
+        // A shared folder in appsettings.json predates multi-game support and belongs to Windrose.
+        var configuredFolderId = section["GoogleSharedFolderId"];
+        if (!string.IsNullOrWhiteSpace(configuredFolderId))
+        {
+            options.SetSharedFolderId(GameId.Windrose, configuredFolderId);
+        }
 
         var pathProvider = new AppDataPathProvider();
         var localSettingsPath = pathProvider.CloudProviderSettingsPath;
@@ -84,9 +90,23 @@ public static class AppOptionsLoader
         try
         {
             var localSettings = JsonSerializer.Deserialize<LocalCloudProviderSettings>(File.ReadAllText(localSettingsPath));
-            if (!string.IsNullOrWhiteSpace(localSettings?.GoogleSharedFolderId))
+            if (localSettings is null)
             {
-                options.GoogleSharedFolderId = localSettings.GoogleSharedFolderId;
+                return options;
+            }
+
+            foreach (var (key, folderId) in localSettings.SharedFolders)
+            {
+                if (GameIdExtensions.TryParseStorageKey(key, out var game) && !string.IsNullOrWhiteSpace(folderId))
+                {
+                    options.SetSharedFolderId(game, folderId);
+                }
+            }
+
+            if (!localSettings.SharedFolders.ContainsKey(GameId.Windrose.ToStorageKey())
+                && !string.IsNullOrWhiteSpace(localSettings.GoogleSharedFolderId))
+            {
+                options.SetSharedFolderId(GameId.Windrose, localSettings.GoogleSharedFolderId);
             }
         }
         catch

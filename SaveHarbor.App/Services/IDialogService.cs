@@ -7,6 +7,7 @@ public interface IDialogService
     bool Confirm(string title, string message);
     string? SelectZipFile(string initialDirectory);
     string? ConfigureCloudFolder(
+        string gameDisplayName,
         string currentFolderId,
         Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync);
 }

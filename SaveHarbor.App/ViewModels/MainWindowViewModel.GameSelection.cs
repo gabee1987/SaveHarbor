@@ -42,6 +42,7 @@ public partial class MainWindowViewModel
 
             AddActivity("Info", $"Switched to {game.DisplayName}.");
             await RefreshAsync();
+            await PromptCloudFolderSetupIfNeededAsync();
         }
         catch (Exception ex)
         {

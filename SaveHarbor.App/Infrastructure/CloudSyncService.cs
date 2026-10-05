@@ -22,10 +22,10 @@ public sealed partial class CloudSyncService : ICloudSyncService
         this.logger = logger;
     }
 
-    public async Task<CloudConnectionResult> ConnectAsync(CancellationToken cancellationToken = default)
+    public async Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudProvider, "Connecting cloud provider {ProviderName}", cloudProvider.ProviderName);
-        return await cloudProvider.ConnectAsync(cancellationToken);
+        return await cloudProvider.ConnectAsync(game, cancellationToken);
     }
 
     public async Task<CloudSyncStatus> RefreshStatusAsync(GameWorld world, CancellationToken cancellationToken = default)
@@ -35,7 +35,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
         var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
         localState.LastCloudCheckAtUtc = DateTimeOffset.UtcNow;
 
-        var connection = await cloudProvider.GetConnectionStatusAsync(cancellationToken);
+        var connection = await cloudProvider.GetConnectionStatusAsync(world.Game, cancellationToken);
         if (!connection.IsConnected)
         {
             await localSyncStateService.SaveAsync(localState, cancellationToken);
@@ -51,8 +51,8 @@ public sealed partial class CloudSyncService : ICloudSyncService
                 "Connect a cloud provider before syncing this world.");
         }
 
-        var manifest = await cloudProvider.GetWorldManifestAsync(world.WorldId, cancellationToken);
-        var sessionLock = await cloudProvider.GetSessionLockAsync(world.WorldId, cancellationToken);
+        var manifest = await cloudProvider.GetWorldManifestAsync(world.Game, world.WorldId, cancellationToken);
+        var sessionLock = await cloudProvider.GetSessionLockAsync(world.Game, world.WorldId, cancellationToken);
         var latestVersion = manifest?.LatestVersion;
 
         if (latestVersion is not null)

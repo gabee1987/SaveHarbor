@@ -1,3 +1,4 @@
+using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 
 namespace SaveHarbor.Tests.Support;
@@ -8,7 +9,17 @@ public sealed class TestPathProvider(TempDirectory root) : IAppDataPathProvider
 
     public string LocalLogsPath => root.Combine("appdata", "logs");
 
-    public string LocalTestCloudRoot => root.Combine("appdata", "local-test-cloud");
+    public string LegacyBackupRoot => root.Combine("appdata", "backups");
+
+    public string LegacySyncStateRoot => root.Combine("appdata", "sync-state");
+
+    public string LegacyLocalTestCloudRoot => root.Combine("appdata", "cloud-test");
+
+    public string GetBackupRoot(GameId game) => Path.Combine(LegacyBackupRoot, game.ToStorageKey());
+
+    public string GetSyncStateRoot(GameId game) => Path.Combine(LegacySyncStateRoot, game.ToStorageKey());
+
+    public string GetLocalTestCloudRoot(GameId game) => Path.Combine(LegacyLocalTestCloudRoot, game.ToStorageKey());
 
     public string CloudLogsPath => root.Combine("appdata", "cloud-logs");
 

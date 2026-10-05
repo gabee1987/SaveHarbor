@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
+using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Views.Dialogs;
@@ -11,10 +12,14 @@ public partial class CloudFolderSetupWindow : Window
     private string lastTestedInput = string.Empty;
 
     public CloudFolderSetupWindow(
+        string gameDisplayName,
         string currentFolderId,
         Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync)
     {
         InitializeComponent();
+        var title = string.Format(UiTextCatalog.Get("CloudSetup.TitleFormat"), gameDisplayName);
+        Title = title;
+        TitleText.Text = title;
         this.testAccessAsync = testAccessAsync;
         FolderInput.Text = currentFolderId;
         FolderInput.TextChanged += (_, _) =>

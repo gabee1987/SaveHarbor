@@ -88,10 +88,11 @@
   "Dialog.Cancel": "Cancel",
 
   "CloudSetup.Title": "Google Drive folder setup",
+  "CloudSetup.TitleFormat": "{0} – Google Drive folder setup",
   "CloudSetup.Subtitle": "Use one shared folder for your group. Everyone signs in with their own Google account, but reads and writes this same folder.",
   "CloudSetup.FolderLink": "Shared folder link or ID",
   "CloudSetup.FolderLinkTooltip": "Paste the Google Drive folder URL or the folder ID from the URL. The folder must be shared with edit access.",
-  "CloudSetup.Help": "Create a folder in Google Drive, share it with your friends as editors, then paste its folder link here. SaveHarbor stores this once on this PC.",
+  "CloudSetup.Help": "Create a folder in Google Drive, share it with your friends as editors, then paste its folder link here. SaveHarbor stores this once on this PC. Use a separate folder for each game.",
   "CloudSetup.Ready": "Paste the shared folder link, then test access.",
   "CloudSetup.Test": "Test access",
   "CloudSetup.Save": "Save",

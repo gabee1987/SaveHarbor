@@ -45,6 +45,7 @@ public sealed class WpfDialogService : IDialogService
     }
 
     public string? ConfigureCloudFolder(
+        string gameDisplayName,
         string currentFolderId,
         Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync)
     {
@@ -53,7 +54,7 @@ public sealed class WpfDialogService : IDialogService
             .FirstOrDefault(window => window.IsActive)
             ?? System.Windows.Application.Current.MainWindow;
 
-        var window = new CloudFolderSetupWindow(currentFolderId, testAccessAsync)
+        var window = new CloudFolderSetupWindow(gameDisplayName, currentFolderId, testAccessAsync)
         {
             Owner = owner
         };

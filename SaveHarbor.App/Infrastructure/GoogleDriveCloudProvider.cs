@@ -14,7 +14,7 @@ using DriveFile = Google.Apis.Drive.v3.Data.File;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderCloudProvider
+public sealed partial class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderCloudProvider
 {
     private const string FolderMimeType = "application/vnd.google-apps.folder";
     private const string JsonMimeType = "application/json";
@@ -43,7 +43,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
 
     public string ProviderName => "Google Drive";
 
-    public async Task<CloudConnectionStatus> GetConnectionStatusAsync(CancellationToken cancellationToken = default)
+    public async Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default)
     {
         if (!HasClientSecrets(out var secretsPath))
         {
@@ -54,7 +54,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
                 $"Google Drive is not configured. Put OAuth client secrets at {secretsPath} or set SaveHarbor:CloudProvider:GoogleClientSecretsPath.");
         }
 
-        if (!HasSharedFolder(out var sharedFolderMessage))
+        if (!HasSharedFolder(game, out var sharedFolderMessage))
         {
             return new CloudConnectionStatus(false, ProviderName, null, sharedFolderMessage);
         }
@@ -78,10 +78,21 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
 
         var service = driveService ?? throw new InvalidOperationException("Google Drive service was not created.");
         accountEmail ??= await LoadAccountEmailAsync(service, cancellationToken);
+
+        try
+        {
+            await EnsureGameFolderAsync(service, game, writeMarker: true, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.Warning(AppLogKeyword.CloudProvider, "Google Drive folder check failed for {Game}: {Message}", game, exception.Message);
+            return new CloudConnectionStatus(false, ProviderName, accountEmail, exception is InvalidOperationException ? exception.Message : "Google Drive shared folder could not be checked. Use Setup to verify the folder.");
+        }
+
         return new CloudConnectionStatus(true, ProviderName, accountEmail, "Google Drive is connected.");
     }
 
-    public async Task<CloudConnectionResult> ConnectAsync(CancellationToken cancellationToken = default)
+    public async Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default)
     {
         if (!HasClientSecrets(out var secretsPath))
         {
@@ -93,7 +104,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
             return new CloudConnectionResult(false, missingStatus, missingStatus.Message);
         }
 
-        if (!HasSharedFolder(out var sharedFolderMessage))
+        if (!HasSharedFolder(game, out var sharedFolderMessage))
         {
             var missingStatus = new CloudConnectionStatus(false, ProviderName, null, sharedFolderMessage);
             return new CloudConnectionResult(false, missingStatus, sharedFolderMessage);
@@ -103,6 +114,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         {
             var service = await GetOrCreateServiceAsync(interactive: true, cancellationToken);
             accountEmail = await LoadAccountEmailAsync(service, cancellationToken);
+            await EnsureGameFolderAsync(service, game, writeMarker: true, cancellationToken);
 
             var status = new CloudConnectionStatus(true, ProviderName, accountEmail, "Google Drive is connected.");
             logger.Information(AppLogKeyword.CloudProvider, "Connected Google Drive account {AccountEmail}", accountEmail ?? "unknown");
@@ -121,10 +133,11 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         driveService?.Dispose();
         driveService = null;
         accountEmail = null;
+        verifiedGames.Clear();
         return Task.CompletedTask;
     }
 
-    public async Task<CloudSetupTestResult> TestSharedFolderAsync(string sharedFolderId, CancellationToken cancellationToken = default)
+    public async Task<CloudSetupTestResult> TestSharedFolderAsync(GameId game, string sharedFolderId, CancellationToken cancellationToken = default)
     {
         if (!HasClientSecrets(out var secretsPath))
         {
@@ -140,6 +153,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         {
             var service = await GetOrCreateServiceAsync(interactive: true, cancellationToken);
             var folder = await GetAndValidateSharedRootFolderAsync(service, sharedFolderId, cancellationToken);
+            await EnsureGameFolderAsync(service, game, sharedFolderId, writeMarker: false, cancellationToken);
             return new CloudSetupTestResult(true, $"Connected. SaveHarbor can edit shared folder '{folder.Name}'.");
         }
         catch (Exception exception)
@@ -149,22 +163,28 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         }
     }
 
-    public async Task<CloudWorldManifest?> GetWorldManifestAsync(string worldId, CancellationToken cancellationToken = default)
+    public async Task<CloudWorldManifest?> GetWorldManifestAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
-        var worldFolderId = await FindWorldFolderIdAsync(service, worldId, cancellationToken);
+        var worldFolderId = await FindWorldFolderIdAsync(service, game, worldId, cancellationToken);
         if (worldFolderId is null)
         {
             return null;
         }
 
-        return await DownloadJsonByNameAsync<CloudWorldManifest>(service, worldFolderId, "manifest.json", cancellationToken);
+        var manifest = await DownloadJsonByNameAsync<CloudWorldManifest>(service, worldFolderId, "manifest.json", cancellationToken);
+        if (manifest is not null && !BelongsToGame(manifest, game))
+        {
+            throw new InvalidDataException($"The cloud manifest for this world belongs to another game, not {game}.");
+        }
+
+        return manifest;
     }
 
-    public async Task<IReadOnlyList<CloudWorldManifest>> ListWorldManifestsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CloudWorldManifest>> ListWorldManifestsAsync(GameId game, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
-        var worldsFolderId = await FindFolderPathAsync(service, ["worlds"], createMissing: false, cancellationToken);
+        var worldsFolderId = await FindFolderPathAsync(service, game, ["worlds"], createMissing: false, cancellationToken);
         if (worldsFolderId is null)
         {
             return [];
@@ -176,7 +196,9 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         {
             cancellationToken.ThrowIfCancellationRequested();
             var manifest = await DownloadJsonByNameAsync<CloudWorldManifest>(service, worldFolder.Id, "manifest.json", cancellationToken);
-            if (manifest?.LatestVersion is not null && !string.IsNullOrWhiteSpace(manifest.WorldId))
+            if (manifest?.LatestVersion is not null
+                && !string.IsNullOrWhiteSpace(manifest.WorldId)
+                && BelongsToGame(manifest, game))
             {
                 manifests.Add(manifest);
             }
@@ -185,10 +207,10 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         return manifests;
     }
 
-    public async Task<CloudSessionLock?> GetSessionLockAsync(string worldId, CancellationToken cancellationToken = default)
+    public async Task<CloudSessionLock?> GetSessionLockAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
-        var locksFolderId = await FindFolderPathAsync(service, ["worlds", worldId, "locks"], createMissing: false, cancellationToken);
+        var locksFolderId = await FindFolderPathAsync(service, game, ["worlds", worldId, "locks"], createMissing: false, cancellationToken);
         if (locksFolderId is null)
         {
             return null;
@@ -205,8 +227,9 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         }
 
         var service = RequireConnectedService();
-        var worldFolderId = await FindFolderPathAsync(service, ["worlds", request.World.WorldId], createMissing: true, cancellationToken);
-        var versionsFolderId = await FindFolderPathAsync(service, ["worlds", request.World.WorldId, "versions"], createMissing: true, cancellationToken);
+        await EnsureGameFolderAsync(service, request.World.Game, writeMarker: true, cancellationToken);
+        var worldFolderId = await FindFolderPathAsync(service, request.World.Game, ["worlds", request.World.WorldId], createMissing: true, cancellationToken);
+        var versionsFolderId = await FindFolderPathAsync(service, request.World.Game, ["worlds", request.World.WorldId, "versions"], createMissing: true, cancellationToken);
 
         if (worldFolderId is null || versionsFolderId is null)
         {
@@ -243,7 +266,7 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
     public async Task<CloudDownloadResult> DownloadVersionAsync(CloudDownloadRequest request, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
-        var versionsFolderId = await FindFolderPathAsync(service, ["worlds", request.World.WorldId, "versions"], createMissing: false, cancellationToken);
+        var versionsFolderId = await FindFolderPathAsync(service, request.World.Game, ["worlds", request.World.WorldId, "versions"], createMissing: false, cancellationToken);
         if (versionsFolderId is null)
         {
             return new CloudDownloadResult(false, null, "Google Drive versions folder was not found.");
@@ -268,10 +291,11 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         return new CloudDownloadResult(true, request.TargetArchivePath, $"Downloaded {request.World.WorldName} v{request.Version.VersionNumber}.");
     }
 
-    public async Task WriteSessionLockAsync(CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
+    public async Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
-        var locksFolderId = await FindFolderPathAsync(service, ["worlds", sessionLock.WorldId, "locks"], createMissing: true, cancellationToken);
+        await EnsureGameFolderAsync(service, game, writeMarker: true, cancellationToken);
+        var locksFolderId = await FindFolderPathAsync(service, game, ["worlds", sessionLock.WorldId, "locks"], createMissing: true, cancellationToken);
         if (locksFolderId is null)
         {
             throw new InvalidOperationException("Google Drive lock folder could not be prepared.");
@@ -280,10 +304,10 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         await UploadJsonByNameAsync(service, locksFolderId, "active-session.json", sessionLock, cancellationToken);
     }
 
-    public async Task ClearSessionLockAsync(string worldId, string lockId, CancellationToken cancellationToken = default)
+    public async Task ClearSessionLockAsync(GameId game, string worldId, string lockId, CancellationToken cancellationToken = default)
     {
         var service = RequireConnectedService();
-        var locksFolderId = await FindFolderPathAsync(service, ["worlds", worldId, "locks"], createMissing: false, cancellationToken);
+        var locksFolderId = await FindFolderPathAsync(service, game, ["worlds", worldId, "locks"], createMissing: false, cancellationToken);
         if (locksFolderId is null)
         {
             return;
@@ -304,15 +328,15 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         return System.IO.File.Exists(secretsPath);
     }
 
-    private bool HasSharedFolder(out string message)
+    private bool HasSharedFolder(GameId game, out string message)
     {
-        if (options.HasGoogleSharedFolder)
+        if (options.HasSharedFolder(game))
         {
             message = "Google Drive shared folder is configured.";
             return true;
         }
 
-        message = "Google Drive shared folder is not configured. Create one shared SaveHarbor folder, share it with your friends, then set SaveHarbor:CloudProvider:GoogleSharedFolderId.";
+        message = $"Google Drive shared folder for {game} is not configured. Use Setup to paste the folder link.";
         return false;
     }
 
@@ -324,363 +348,5 @@ public sealed class GoogleDriveCloudProvider : ICloudProvider, ISharedFolderClou
         }
 
         throw new InvalidOperationException("Google Drive is not connected. Use Connect first.");
-    }
-
-    private async Task<DriveService> GetOrCreateServiceAsync(bool interactive, CancellationToken cancellationToken)
-    {
-        if (driveService is not null)
-        {
-            return driveService;
-        }
-
-        await connectionLock.WaitAsync(cancellationToken);
-        try
-        {
-            if (driveService is not null)
-            {
-                return driveService;
-            }
-
-            var credential = interactive
-                ? await CreateInteractiveCredentialAsync(cancellationToken)
-                : await CreateSilentCredentialAsync(cancellationToken);
-
-            driveService = new DriveService(new BaseClientService.Initializer
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = "SaveHarbor"
-            });
-
-            await EnsureSharedRootFolderAsync(driveService, cancellationToken);
-            return driveService;
-        }
-        finally
-        {
-            connectionLock.Release();
-        }
-    }
-
-    private async Task<UserCredential> CreateInteractiveCredentialAsync(CancellationToken cancellationToken)
-    {
-        var secrets = LoadClientSecrets();
-        return await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            secrets,
-            Scopes,
-            "SaveHarbor",
-            cancellationToken,
-            new FileDataStore(pathProvider.GoogleTokenStorePath, fullPath: true));
-    }
-
-    private async Task<UserCredential> CreateSilentCredentialAsync(CancellationToken cancellationToken)
-    {
-        var secrets = LoadClientSecrets();
-        var dataStore = new FileDataStore(pathProvider.GoogleTokenStorePath, fullPath: true);
-        var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
-        {
-            ClientSecrets = secrets,
-            Scopes = Scopes,
-            DataStore = dataStore
-        });
-
-        var token = await flow.LoadTokenAsync("SaveHarbor", cancellationToken);
-        if (token is null)
-        {
-            throw new InvalidOperationException("No saved Google Drive token exists.");
-        }
-
-        if (!HasRequiredScopes(token.Scope))
-        {
-            throw new InvalidOperationException("Saved Google Drive token uses old permissions. Use Connect again to approve shared-folder sync.");
-        }
-
-        var credential = new UserCredential(flow, "SaveHarbor", token);
-        if (credential.Token.IsStale && !await credential.RefreshTokenAsync(cancellationToken))
-        {
-            throw new InvalidOperationException("Saved Google Drive token could not be refreshed.");
-        }
-
-        return credential;
-    }
-
-    private ClientSecrets LoadClientSecrets()
-    {
-        var secretsPath = options.ResolveGoogleClientSecretsPath(pathProvider);
-        using var stream = GoogleClientSecretsProtector.OpenRead(secretsPath);
-        return GoogleClientSecrets.FromStream(stream).Secrets;
-    }
-
-    private static bool HasRequiredScopes(string? grantedScopes)
-    {
-        return !string.IsNullOrWhiteSpace(grantedScopes) &&
-               grantedScopes.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                   .Any(scope => string.Equals(scope, DriveService.Scope.Drive, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private async Task<string?> LoadAccountEmailAsync(DriveService service, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var request = service.About.Get();
-            request.Fields = "user(emailAddress,displayName)";
-            var about = await request.ExecuteAsync(cancellationToken);
-            return about.User?.EmailAddress ?? about.User?.DisplayName;
-        }
-        catch (Exception exception)
-        {
-            logger.Warning(AppLogKeyword.CloudProvider, "Could not read Google Drive account info: {Message}", exception.Message);
-            return null;
-        }
-    }
-
-    private async Task<string> EnsureSharedRootFolderAsync(DriveService service, CancellationToken cancellationToken)
-    {
-        var sharedFolderId = options.ResolveGoogleSharedFolderId();
-        var folder = await GetAndValidateSharedRootFolderAsync(service, sharedFolderId, cancellationToken);
-
-        logger.Information(
-            AppLogKeyword.CloudProvider,
-            "Using Google Drive shared folder {FolderName} ({FolderId})",
-            folder.Name,
-            folder.Id);
-
-        return folder.Id;
-    }
-
-    private static async Task<DriveFile> GetAndValidateSharedRootFolderAsync(
-        DriveService service,
-        string sharedFolderId,
-        CancellationToken cancellationToken)
-    {
-        var request = service.Files.Get(sharedFolderId);
-        request.Fields = "id,name,mimeType,capabilities/canEdit";
-        request.SupportsAllDrives = true;
-
-        var folder = await request.ExecuteAsync(cancellationToken);
-        if (!string.Equals(folder.MimeType, FolderMimeType, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Configured Google Drive shared folder ID does not point to a folder.");
-        }
-
-        if (folder.Capabilities?.CanEdit == false)
-        {
-            throw new InvalidOperationException($"Google Drive account does not have edit access to shared folder '{folder.Name}'.");
-        }
-
-        return folder;
-    }
-
-    private async Task<string?> FindFolderPathAsync(
-        DriveService service,
-        IReadOnlyList<string> relativePath,
-        bool createMissing,
-        CancellationToken cancellationToken)
-    {
-        var currentParentId = options.ResolveGoogleSharedFolderId();
-        foreach (var pathPart in relativePath)
-        {
-            var folderId = await FindFolderIdAsync(service, currentParentId, pathPart, cancellationToken);
-            if (folderId is null)
-            {
-                if (!createMissing)
-                {
-                    return null;
-                }
-
-                folderId = await CreateFolderAsync(service, currentParentId, pathPart, cancellationToken);
-            }
-
-            currentParentId = folderId;
-        }
-
-        return currentParentId;
-    }
-
-    private async Task<string?> FindWorldFolderIdAsync(DriveService service, string worldId, CancellationToken cancellationToken)
-    {
-        return await FindFolderPathAsync(service, ["worlds", worldId], createMissing: false, cancellationToken);
-    }
-
-    private static async Task<string> CreateFolderAsync(DriveService service, string parentId, string name, CancellationToken cancellationToken)
-    {
-        var file = new DriveFile
-        {
-            Name = name,
-            MimeType = FolderMimeType,
-            Parents = [parentId]
-        };
-
-        var request = service.Files.Create(file);
-        request.Fields = "id";
-        request.SupportsAllDrives = true;
-        var created = await request.ExecuteAsync(cancellationToken);
-        return created.Id;
-    }
-
-    private static async Task<string?> FindFolderIdAsync(DriveService service, string parentId, string name, CancellationToken cancellationToken)
-    {
-        return await FindFileIdAsync(service, parentId, name, FolderMimeType, cancellationToken);
-    }
-
-    private static async Task<string?> FindFileIdByNameAsync(DriveService service, string parentId, string name, CancellationToken cancellationToken)
-    {
-        return await FindFileIdAsync(service, parentId, name, null, cancellationToken);
-    }
-
-    private static async Task<string?> FindFileIdAsync(
-        DriveService service,
-        string parentId,
-        string name,
-        string? mimeType,
-        CancellationToken cancellationToken)
-    {
-        var query = new StringBuilder()
-            .Append('\'').Append(EscapeQueryValue(parentId)).Append("' in parents")
-            .Append(" and name = '").Append(EscapeQueryValue(name)).Append('\'')
-            .Append(" and trashed = false");
-
-        if (mimeType is not null)
-        {
-            query.Append(" and mimeType = '").Append(EscapeQueryValue(mimeType)).Append('\'');
-        }
-
-        var request = service.Files.List();
-        request.Q = query.ToString();
-        request.Fields = "files(id,name)";
-        request.PageSize = 1;
-        request.Spaces = "drive";
-        request.SupportsAllDrives = true;
-        request.IncludeItemsFromAllDrives = true;
-
-        var result = await request.ExecuteAsync(cancellationToken);
-        return result.Files.FirstOrDefault()?.Id;
-    }
-
-    private static async Task<IReadOnlyList<DriveFile>> ListChildFoldersAsync(
-        DriveService service,
-        string parentId,
-        CancellationToken cancellationToken)
-    {
-        var query = new StringBuilder()
-            .Append('\'').Append(EscapeQueryValue(parentId)).Append("' in parents")
-            .Append(" and mimeType = '").Append(FolderMimeType).Append('\'')
-            .Append(" and trashed = false");
-
-        var folders = new List<DriveFile>();
-        string? pageToken = null;
-        do
-        {
-            var request = service.Files.List();
-            request.Q = query.ToString();
-            request.Fields = "nextPageToken,files(id,name)";
-            request.PageSize = 100;
-            request.Spaces = "drive";
-            request.SupportsAllDrives = true;
-            request.IncludeItemsFromAllDrives = true;
-            request.PageToken = pageToken;
-
-            var result = await request.ExecuteAsync(cancellationToken);
-            if (result.Files is not null)
-            {
-                folders.AddRange(result.Files);
-            }
-
-            pageToken = result.NextPageToken;
-        }
-        while (!string.IsNullOrWhiteSpace(pageToken));
-
-        return folders;
-    }
-
-    private static async Task<T?> DownloadJsonByNameAsync<T>(
-        DriveService service,
-        string parentId,
-        string fileName,
-        CancellationToken cancellationToken)
-    {
-        var fileId = await FindFileIdByNameAsync(service, parentId, fileName, cancellationToken);
-        if (fileId is null)
-        {
-            return default;
-        }
-
-        await using var stream = new MemoryStream();
-        var downloadRequest = service.Files.Get(fileId);
-        downloadRequest.SupportsAllDrives = true;
-        var download = await downloadRequest.DownloadAsync(stream, cancellationToken);
-        if (download.Status != DownloadStatus.Completed)
-        {
-            throw new IOException($"Google Drive JSON download failed: {download.Exception?.Message ?? download.Status.ToString()}");
-        }
-
-        stream.Position = 0;
-        return await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions, cancellationToken);
-    }
-
-    private static async Task UploadJsonByNameAsync<T>(
-        DriveService service,
-        string parentId,
-        string fileName,
-        T value,
-        CancellationToken cancellationToken)
-    {
-        var json = JsonSerializer.Serialize(value, JsonOptions);
-        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        await UploadStreamByNameAsync(service, parentId, fileName, stream, JsonMimeType, cancellationToken);
-    }
-
-    private static async Task UploadFileByNameAsync(
-        DriveService service,
-        string parentId,
-        string fileName,
-        string sourcePath,
-        string mimeType,
-        CancellationToken cancellationToken)
-    {
-        await using var stream = System.IO.File.OpenRead(sourcePath);
-        await UploadStreamByNameAsync(service, parentId, fileName, stream, mimeType, cancellationToken);
-    }
-
-    private static async Task UploadStreamByNameAsync(
-        DriveService service,
-        string parentId,
-        string fileName,
-        Stream stream,
-        string mimeType,
-        CancellationToken cancellationToken)
-    {
-        var existingId = await FindFileIdByNameAsync(service, parentId, fileName, cancellationToken);
-        IUploadProgress upload;
-
-        if (existingId is null)
-        {
-            var metadata = new DriveFile
-            {
-                Name = fileName,
-                Parents = [parentId]
-            };
-
-            var create = service.Files.Create(metadata, stream, mimeType);
-            create.Fields = "id";
-            create.SupportsAllDrives = true;
-            upload = await create.UploadAsync(cancellationToken);
-        }
-        else
-        {
-            var metadata = new DriveFile { Name = fileName };
-            var update = service.Files.Update(metadata, existingId, stream, mimeType);
-            update.Fields = "id";
-            update.SupportsAllDrives = true;
-            upload = await update.UploadAsync(cancellationToken);
-        }
-
-        if (upload.Status != UploadStatus.Completed)
-        {
-            throw new IOException($"Google Drive upload failed: {upload.Exception?.Message ?? upload.Status.ToString()}");
-        }
-    }
-
-    private static string EscapeQueryValue(string value)
-    {
-        return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("'", "\\'", StringComparison.Ordinal);
     }
 }

@@ -16,7 +16,7 @@ public partial class MainWindowViewModel
         }
     }
 
-    public string BackupRoot => _backupService.BackupRoot;
+    public string BackupRoot => _backupService.GetBackupRoot(_activeGame.Current.Id);
 
     public string LocalSaveRoot => _activeGame.Current.SaveAdapter.SaveRootPath;
 
