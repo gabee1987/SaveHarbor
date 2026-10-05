@@ -9,6 +9,8 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(SelectedWorldSize));
         OnPropertyChanged(nameof(SelectedWorldFileCount));
         OnPropertyChanged(nameof(SelectedWorldModifiedAge));
+        RefreshSelectedWorldBackups();
+        _ = RefreshWorldFactsAsync();
 
         if (!suppressSelectedWorldCloudRefresh)
         {

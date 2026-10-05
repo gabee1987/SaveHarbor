@@ -218,7 +218,7 @@ public sealed partial class CloudSyncService
         var backup = await backupService.CreateBackupAsync(world, "cloud-upload", cancellationToken);
         var archiveSha256 = await FileHashCalculator.ComputeSha256Async(backup.FilePath, cancellationToken);
         var nextVersionNumber = (status.LatestVersion?.VersionNumber ?? 0) + 1;
-        var safePlayer = FileNameSanitizer.MakeSafeFileName(Environment.UserName);
+        var safePlayer = FileNameSanitizer.MakeSafeFileName(playerIdentity.DisplayName);
         var versionId = $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{safePlayer}_v{nextVersionNumber}";
 
         var version = new CloudVersionMetadata
@@ -226,7 +226,7 @@ public sealed partial class CloudSyncService
             VersionNumber = nextVersionNumber,
             VersionId = versionId,
             UploadedAtUtc = DateTimeOffset.UtcNow,
-            UploadedBy = Environment.UserName,
+            UploadedBy = playerIdentity.DisplayName,
             UploaderMachine = Environment.MachineName,
             ArchiveFileName = $"{versionId}.zip",
             ArchiveSha256 = archiveSha256,

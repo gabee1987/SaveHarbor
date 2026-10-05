@@ -14,7 +14,7 @@ public sealed class CloudSyncServiceStatusTests : IDisposable
     public CloudSyncServiceStatusTests()
     {
         stateService = new LocalJsonSyncStateService(new TestPathProvider(temp));
-        service = new CloudSyncService(provider, stateService, new StubBackupService(), new StubGameRegistry(), new NullAppLogger());
+        service = new CloudSyncService(provider, stateService, new StubBackupService(), new StubGameRegistry(), new FixedPlayerIdentity(), new NullAppLogger());
     }
 
     public void Dispose() => temp.Dispose();

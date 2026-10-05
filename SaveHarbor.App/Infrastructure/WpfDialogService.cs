@@ -44,6 +44,17 @@ public sealed class WpfDialogService : IDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
+    public string? SelectFolder(string title, string initialDirectory)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = title,
+            InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    }
+
     public string? ConfigureCloudFolder(
         string gameDisplayName,
         string currentFolderId,

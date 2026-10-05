@@ -209,57 +209,6 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
-    private async Task StartGameAsync()
-    {
-        if (SelectedWorld is null)
-        {
-            return;
-        }
-
-        UpdateGameStatus();
-        if (IsGameRunning)
-        {
-            await RunBusyAsync($"Starting session for running {ActiveGameName}...", async () =>
-            {
-                var sessionStarted = await TryStartCloudSessionAsync(SelectedWorld);
-                if (!sessionStarted)
-                {
-                    return;
-                }
-
-                hasObservedGameRunningDuringSession = true;
-                StatusText = $"{ActiveGameName} is running. Session is active.";
-                AddActivity("Info", StatusText);
-                _toastService.Success("Session active", $"{ActiveGameName} is already running, so SaveHarbor will end the session when the game closes.");
-            });
-            return;
-        }
-
-        await RunBusyAsync($"Starting session and launching {ActiveGameName}...", async () =>
-        {
-            var sessionStarted = await TryStartCloudSessionAsync(SelectedWorld);
-            if (!sessionStarted)
-            {
-                return;
-            }
-
-            var launchResult = await _gameLauncherService.LaunchAsync(_activeGame.Current);
-            StatusText = launchResult.Message;
-
-            if (!launchResult.IsSuccess)
-            {
-                AddActivity("Warning", launchResult.Message);
-                _toastService.Warning("Launch failed", launchResult.Message);
-                _dialogService.ShowError("Launch failed", launchResult.Message);
-                return;
-            }
-
-            AddActivity("Success", $"Session active. {ActiveGameName} launch requested.");
-            _toastService.Success($"Starting {ActiveGameName}", $"Session is active and Steam has been asked to launch {ActiveGameName}.");
-        });
-    }
-
-    [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
     private async Task EndCloudSessionAsync()
     {
         if (SelectedWorld is null)

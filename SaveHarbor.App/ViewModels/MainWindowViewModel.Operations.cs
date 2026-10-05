@@ -56,6 +56,7 @@ public partial class MainWindowViewModel
         StartCloudSessionCommand.NotifyCanExecuteChanged();
         EndCloudSessionCommand.NotifyCanExecuteChanged();
         StartGameCommand.NotifyCanExecuteChanged();
+        JoinGameCommand.NotifyCanExecuteChanged();
         NotifySwitchGameState();
     }
 
@@ -70,6 +71,8 @@ public partial class MainWindowViewModel
         BackupCount = backups.Count;
         TotalBackupSize = DisplayFormatter.FormatBytes(backups.Sum(backup => backup.SizeBytes));
         LastBackup = backups.FirstOrDefault();
+        gameBackups = backups;
+        RefreshSelectedWorldBackups();
     }
 
     private async Task RefreshProfileStatusAsync()

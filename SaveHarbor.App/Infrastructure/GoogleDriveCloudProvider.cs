@@ -25,6 +25,7 @@ public sealed partial class GoogleDriveCloudProvider : ICloudProvider, ISharedFo
 
     private readonly IAppDataPathProvider pathProvider;
     private readonly CloudProviderOptions options;
+    private readonly IPlayerIdentity playerIdentity;
     private readonly IAppLogger logger;
     private readonly SemaphoreSlim connectionLock = new(1, 1);
 
@@ -34,10 +35,12 @@ public sealed partial class GoogleDriveCloudProvider : ICloudProvider, ISharedFo
     public GoogleDriveCloudProvider(
         IAppDataPathProvider pathProvider,
         CloudProviderOptions options,
+        IPlayerIdentity playerIdentity,
         IAppLogger logger)
     {
         this.pathProvider = pathProvider;
         this.options = options;
+        this.playerIdentity = playerIdentity;
         this.logger = logger;
     }
 

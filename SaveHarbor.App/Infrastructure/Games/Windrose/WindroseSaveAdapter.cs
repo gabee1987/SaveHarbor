@@ -108,6 +108,10 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
             files.Length);
     }
 
+    // The Windrose view does not show extra world facts yet; its reskin can add them here.
+    public Task<IReadOnlyList<WorldFact>> ReadWorldFactsAsync(GameWorld world, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<WorldFact>>([]);
+
     public IReadOnlyList<string> GetPayloadFiles(GameWorld world)
     {
         return Directory.EnumerateFiles(world.SavePath, "*", SearchOption.AllDirectories)

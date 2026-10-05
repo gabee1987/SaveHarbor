@@ -14,7 +14,7 @@ public sealed class ActiveGameContextTests
     {
         using var temp = new TempDirectory();
 
-        var context = new ActiveGameContext(CreateRegistry(), new TestPathProvider(temp), null);
+        var context = new ActiveGameContext(CreateRegistry(), new AppSettingsStore(new TestPathProvider(temp)), null);
 
         Assert.Equal(GameId.Windrose, context.Current.Id);
     }
@@ -24,9 +24,9 @@ public sealed class ActiveGameContextTests
     {
         using var temp = new TempDirectory();
         var paths = new TestPathProvider(temp);
-        new ActiveGameContext(CreateRegistry(), paths, null).SetActive(GameId.Dragonwilds);
+        new ActiveGameContext(CreateRegistry(), new AppSettingsStore(paths), null).SetActive(GameId.Dragonwilds);
 
-        var restored = new ActiveGameContext(CreateRegistry(), paths, null);
+        var restored = new ActiveGameContext(CreateRegistry(), new AppSettingsStore(paths), null);
 
         Assert.Equal(GameId.Dragonwilds, restored.Current.Id);
     }
@@ -36,9 +36,9 @@ public sealed class ActiveGameContextTests
     {
         using var temp = new TempDirectory();
         var paths = new TestPathProvider(temp);
-        new ActiveGameContext(CreateRegistry(), paths, null).SetActive(GameId.Dragonwilds);
+        new ActiveGameContext(CreateRegistry(), new AppSettingsStore(paths), null).SetActive(GameId.Dragonwilds);
 
-        var context = new ActiveGameContext(CreateRegistry(), paths, GameId.Windrose);
+        var context = new ActiveGameContext(CreateRegistry(), new AppSettingsStore(paths), GameId.Windrose);
 
         Assert.Equal(GameId.Windrose, context.Current.Id);
     }
@@ -51,7 +51,7 @@ public sealed class ActiveGameContextTests
         Directory.CreateDirectory(paths.AppDataRoot);
         File.WriteAllText(paths.AppSettingsPath, "{ not json");
 
-        var context = new ActiveGameContext(CreateRegistry(), paths, null);
+        var context = new ActiveGameContext(CreateRegistry(), new AppSettingsStore(paths), null);
 
         Assert.Equal(GameId.Windrose, context.Current.Id);
     }

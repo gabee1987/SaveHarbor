@@ -8,67 +8,104 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/SaveHarbor.App;component/Resources/Themes/Dragonwilds/Dragonwilds.Theme.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <DataTemplate x:Key="EmbersTemplate">
+                <local:EmberFieldView EmberBrush="{DynamicResource DwEmberBrush}" />
+            </DataTemplate>
+            <DataTemplate x:Key="SettingsTemplate">
+                <local:DragonwildsSettingsView />
+            </DataTemplate>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Margin="28,0,28,24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseSettingsCommand}" />
+    </UserControl.InputBindings>
 
-        <local:DragonwildsHeaderView />
+    <Grid>
+        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource DwSmokeTemplate}" />
 
-        <ContentControl Grid.Row="1" Style="{StaticResource DwOrnamentDivider}" Margin="0,10,0,20">
-            <Ellipse Width="6" Height="6" Stroke="{StaticResource DwGoldBrush}" StrokeThickness="1" />
+        <!-- Embers exist only while ambient effects are on. -->
+        <ContentControl Content="{Binding}" Focusable="False" IsHitTestVisible="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding AmbientEffectsEnabled}" Value="True">
+                            <Setter Property="ContentTemplate" Value="{StaticResource EmbersTemplate}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
         </ContentControl>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <Grid Margin="28,0,28,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <local:DragonwildsWorldListView />
+            <local:DragonwildsHeaderView />
 
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="20" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+            <ContentControl Grid.Row="1" Style="{StaticResource DwOrnamentDivider}" Margin="0,10,0,18" />
 
-                <local:DragonwildsHeroView />
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <!-- Decorative only: fills the free space below the panels instead of stretching them. -->
-                <Path Grid.Row="3"
-                      Data="{StaticResource DwEmblemGeometry}"
-                      Stroke="{StaticResource DwGoldBrush}"
-                      StrokeThickness="1"
-                      Stretch="Uniform"
-                      MaxWidth="260"
-                      MaxHeight="260"
-                      Margin="0,24,0,0"
-                      Opacity="0.08"
-                      IsHitTestVisible="False" />
+                <local:DragonwildsWorldListView />
 
-                <ContentControl Grid.Row="2" Style="{StaticResource DwFrame}" Padding="20,14,20,16">
-                    <TabControl Style="{StaticResource DwTabControl}" ItemContainerStyle="{StaticResource DwTabItem}" MinHeight="170">
-                        <TabItem Header="{ui:UiText Dragonwilds.TabSharing}">
-                            <local:DragonwildsSharingView />
-                        </TabItem>
-                        <TabItem Header="{ui:UiText Dragonwilds.TabBackups}">
-                            <local:DragonwildsBackupsView />
-                        </TabItem>
-                        <TabItem Header="{ui:UiText Dragonwilds.TabChronicle}">
-                            <local:DragonwildsChronicleView />
-                        </TabItem>
-                    </TabControl>
-                </ContentControl>
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="18" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <local:DragonwildsHeroView Grid.ColumnSpan="3" />
+
+                    <local:DragonwildsDetailsView Grid.Row="2" />
+
+                    <ContentControl Grid.Row="2" Grid.Column="2" Style="{StaticResource DwFrame}" Padding="20,12,20,16">
+                        <TabControl Style="{StaticResource DwTabControl}" ItemContainerStyle="{StaticResource DwTabItem}">
+                            <TabItem Header="{ui:SpacedText Dragonwilds.TabSharing}">
+                                <local:DragonwildsSharingView />
+                            </TabItem>
+                            <TabItem Header="{ui:SpacedText Dragonwilds.TabBackups}">
+                                <local:DragonwildsBackupsView />
+                            </TabItem>
+                            <TabItem Header="{ui:SpacedText Dragonwilds.TabChronicle}">
+                                <local:DragonwildsChronicleView />
+                            </TabItem>
+                        </TabControl>
+                    </ContentControl>
+                </Grid>
             </Grid>
+
+            <local:DragonwildsFooterView Grid.Row="3" />
         </Grid>
+
+        <!-- Settings overlay: created the first time it opens. -->
+        <ContentControl Content="{Binding}" Focusable="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
+                            <Setter Property="ContentTemplate" Value="{StaticResource SettingsTemplate}" />
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
     </Grid>
 </UserControl>

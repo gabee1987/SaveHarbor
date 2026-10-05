@@ -82,6 +82,12 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
         return Task.FromResult<GameWorld?>(world);
     }
 
+    public async Task<IReadOnlyList<WorldFact>> ReadWorldFactsAsync(GameWorld world, CancellationToken cancellationToken = default)
+    {
+        var info = await DragonwildsSaveInfoReader.TryReadAsync(world.SavePath, cancellationToken);
+        return info is null ? [] : DragonwildsWorldFacts.From(info);
+    }
+
     public IReadOnlyList<string> GetPayloadFiles(GameWorld world) => [world.SavePath];
 
     public string GetExpectedWorldPath(GameSaveRoot root, string worldId)

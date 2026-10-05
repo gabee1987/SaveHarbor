@@ -25,7 +25,7 @@ public sealed class DragonwildsGameDefinition(GameOptionsProvider optionsProvide
 
     public string? PostRestoreHint => "If Steam asks about a cloud conflict, choose Local files.";
 
-    public string PlayHint => "Hosting tonight? Press Play. Just joining? Start Dragonwilds normally and join your host.";
+    public string PlayHint => "Play hosts this world for your group. Join only starts the game, so you can join a friend's world.";
 
     public IGameSaveAdapter SaveAdapter => saveAdapter;
 }

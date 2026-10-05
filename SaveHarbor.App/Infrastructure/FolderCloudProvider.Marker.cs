@@ -24,7 +24,7 @@ public sealed partial class FolderCloudProvider
                 var newMarker = new GameFolderMarker
                 {
                     Game = game.ToStorageKey(),
-                    CreatedBy = Environment.UserName,
+                    CreatedBy = playerIdentity.DisplayName,
                     CreatedAtUtc = DateTimeOffset.UtcNow
                 };
                 File.WriteAllText(markerPath, JsonSerializer.Serialize(newMarker, JsonOptions));

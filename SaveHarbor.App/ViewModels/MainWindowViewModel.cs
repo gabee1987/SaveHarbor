@@ -20,6 +20,9 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IGameLauncherService _gameLauncherService;
     private readonly IAppErrorHandler _errorHandler;
     private readonly IAppLogger _logger;
+    private readonly IAppSettingsStore _settingsStore;
+    private readonly IPlayerIdentity _playerIdentity;
+    private readonly IAppDataPathProvider _paths;
     private readonly DispatcherTimer gameMonitorTimer;
     private bool suppressSelectedWorldCloudRefresh;
     private bool hasObservedGameRunningDuringSession;
@@ -71,7 +74,10 @@ public partial class MainWindowViewModel : ObservableObject
         ICloudSetupService cloudSetupService,
         IGameLauncherService gameLauncherService,
         IAppErrorHandler errorHandler,
-        IAppLogger logger)
+        IAppLogger logger,
+        IAppSettingsStore settingsStore,
+        IPlayerIdentity playerIdentity,
+        IAppDataPathProvider paths)
     {
         _activeGame = activeGame;
         _gameRegistry = gameRegistry;
@@ -84,6 +90,9 @@ public partial class MainWindowViewModel : ObservableObject
         _gameLauncherService = gameLauncherService;
         _errorHandler = errorHandler;
         _logger = logger;
+        _settingsStore = settingsStore;
+        _playerIdentity = playerIdentity;
+        _paths = paths;
 
         _toastService.ToastRequested += OnToastRequested;
         _activeGame.ActiveGameChanged += OnActiveGameChanged;

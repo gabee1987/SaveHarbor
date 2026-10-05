@@ -6,7 +6,7 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvider) : ICloudProvider
+public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvider, IPlayerIdentity playerIdentity) : ICloudProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

@@ -43,7 +43,7 @@ public sealed partial class CloudSyncService
         {
             LockId = Guid.NewGuid().ToString("D"),
             WorldId = world.WorldId,
-            PlayerName = Environment.UserName,
+            PlayerName = playerIdentity.DisplayName,
             MachineName = Environment.MachineName,
             StartedAtUtc = now,
             LastHeartbeatAtUtc = now,

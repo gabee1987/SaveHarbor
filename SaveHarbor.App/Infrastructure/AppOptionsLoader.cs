@@ -117,7 +117,7 @@ public static class AppOptionsLoader
         return options;
     }
 
-    public static GameOptionsProvider LoadGameOptions()
+    public static IReadOnlyDictionary<GameId, GameOptions> LoadGameOptions()
     {
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
@@ -137,7 +137,7 @@ public static class AppOptionsLoader
             };
         }
 
-        return new GameOptionsProvider(byGame);
+        return byGame;
     }
 
     public static GameId? ReadGameArgument(IReadOnlyList<string> args)

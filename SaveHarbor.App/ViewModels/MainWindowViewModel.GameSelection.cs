@@ -37,6 +37,7 @@ public partial class MainWindowViewModel
             SelectedWorld = null;
             CloudStatus = null;
             hasObservedGameRunningDuringSession = false;
+            IsSettingsOpen = false;
 
             foreach (var option in GameOptions)
             {

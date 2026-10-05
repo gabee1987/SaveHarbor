@@ -4,11 +4,11 @@
              xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <ContentControl Style="{DynamicResource DwFrame}" BorderBrush="{DynamicResource DwGoldBrush}" Padding="24,18">
-        <Grid MinHeight="118">
+        <Grid MinHeight="124">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="24" />
-                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <!-- No world selected: one short instruction instead of empty fields. -->
@@ -16,24 +16,26 @@
                         Visibility="{Binding SelectedWorld, Converter={x:Static converters:NullToVisibleConverter.Instance}}">
                 <TextBlock Text="{ui:UiText Dragonwilds.ChooseWorld}"
                            FontFamily="{DynamicResource AppDisplayFontFamily}"
-                           FontSize="22"
+                           FontSize="24"
                            Foreground="{DynamicResource DwGoldTextBrush}" />
-                <TextBlock Text="{ui:UiText Dragonwilds.ChooseWorldHint}" Style="{DynamicResource DwMuted}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                <TextBlock Text="{ui:UiText Dragonwilds.ChooseWorldHint}" Style="{DynamicResource DwMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,6,0,0" />
             </StackPanel>
 
             <StackPanel VerticalAlignment="Center"
                         Visibility="{Binding SelectedWorld, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                <TextBlock Text="{ui:SpacedText Dragonwilds.SelectedWorld}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
                 <TextBlock Text="{Binding SelectedWorld.WorldName}"
                            FontFamily="{DynamicResource AppDisplayFontFamily}"
-                           FontSize="30"
+                           FontSize="32"
                            FontWeight="Bold"
                            TextTrimming="CharacterEllipsis"
+                           Margin="0,2,0,0"
                            Foreground="{DynamicResource DwGoldTextBrush}">
                     <TextBlock.Effect>
                         <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.6" />
                     </TextBlock.Effect>
                 </TextBlock>
-                <TextBlock Style="{DynamicResource DwMuted}" Margin="1,4,0,0">
+                <TextBlock Style="{DynamicResource DwMuted}" Margin="1,2,0,0">
                     <Run Text="{ui:UiText Dragonwilds.LastPlayed}" />
                     <Run Text="{Binding SelectedWorld.LastModifiedAt, Mode=OneWay, Converter={x:Static converters:RelativeAgeConverter.Instance}}" />
                     <Run Text=" · " />
@@ -67,18 +69,23 @@
                 </WrapPanel>
             </StackPanel>
 
-            <!-- Idle: the Play button. Busy: the arcane loader and what is happening right now. -->
-            <ContentControl Grid.Column="2" Content="{Binding}" Focusable="False" VerticalAlignment="Center">
+            <!-- Idle: Play (host) and Join. Busy: the arcane loader and what is happening right now. -->
+            <ContentControl Grid.Column="2" Content="{Binding}" Focusable="False" VerticalAlignment="Center" Width="300">
                 <ContentControl.Style>
                     <Style TargetType="ContentControl">
                         <Setter Property="ContentTemplate">
                             <Setter.Value>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <Button Content="{ui:UiText Dragonwilds.Play}"
+                                        <Button Content="{ui:SpacedText Dragonwilds.Play}"
                                                 Command="{Binding StartGameCommand}"
                                                 Style="{DynamicResource DwPlayButton}"
-                                                ToolTip="{ui:UiText Actions.StartGameTooltip}" />
+                                                ToolTip="{ui:UiText Dragonwilds.PlayTooltip}" />
+                                        <Button Content="{ui:SpacedText Dragonwilds.Join}"
+                                                Command="{Binding JoinGameCommand}"
+                                                Style="{DynamicResource DwButton}"
+                                                Margin="0,10,0,0"
+                                                ToolTip="{ui:UiText Dragonwilds.JoinTooltip}" />
                                         <TextBlock Text="{Binding PlayHintText}"
                                                    Style="{DynamicResource DwMuted}"
                                                    TextTrimming="None"

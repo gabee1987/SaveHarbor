@@ -14,61 +14,68 @@
         <StackPanel>
             <TextBlock Text="{Binding CloudStateText}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" />
             <TextBlock Text="{Binding CloudDetailText}" Style="{DynamicResource DwMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,4,0,0" />
-            <TextBlock Style="{DynamicResource DwMuted}"
-                       Margin="0,6,0,0"
-                       Visibility="{Binding IsCloudConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Run Text="{Binding CloudLatestVersionText, Mode=OneWay}" />
-                <Run Text=" · " />
-                <Run Text="{Binding CloudLocalBaseText, Mode=OneWay}" />
-            </TextBlock>
+            <Grid Margin="0,12,0,0" Visibility="{Binding IsCloudConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel ToolTip="{ui:UiText Header.LatestTooltip}">
+                    <TextBlock Text="{ui:UiText Dragonwilds.SharedVersion}" Style="{DynamicResource DwLabel}" />
+                    <TextBlock Text="{Binding CloudLatestVersionText}" Foreground="{DynamicResource InkBrush}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,2,8,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{ui:UiText Dragonwilds.YourCopy}" Style="{DynamicResource DwLabel}" />
+                    <TextBlock Text="{Binding CloudLocalBaseText}" Foreground="{DynamicResource InkBrush}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,2,8,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" ToolTip="{Binding CloudSessionTooltip}">
+                    <TextBlock Text="{ui:UiText Dragonwilds.Host}" Style="{DynamicResource DwLabel}" />
+                    <TextBlock Text="{Binding CloudSessionText}" Foreground="{DynamicResource InkBrush}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                </StackPanel>
+            </Grid>
         </StackPanel>
 
         <WrapPanel Grid.Row="1" Margin="0,16,0,0">
-            <Button Content="{ui:UiText Actions.Connect}"
+            <Button Content="{ui:SpacedText Actions.Connect}"
                     Command="{Binding ConnectCloudCommand}"
-                    Style="{DynamicResource DwPrimaryButton}"
+                    Style="{DynamicResource DwButton}"
                     Margin="0,0,8,8"
                     Visibility="{Binding IsCloudConnected, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
                     ToolTip="{ui:UiText Actions.ConnectTooltip}" />
-            <Button Content="{ui:UiText Actions.Check}"
+            <Button Content="{ui:SpacedText Actions.Check}"
                     Command="{Binding CheckCloudCommand}"
-                    Style="{DynamicResource DwSecondaryButton}"
+                    Style="{DynamicResource DwButton}"
                     Margin="0,0,8,8"
                     ToolTip="{ui:UiText Actions.CheckTooltip}" />
-            <Button Content="{ui:UiText Actions.Upload}"
+            <Button Content="{ui:SpacedText Actions.Upload}"
                     Command="{Binding UploadCloudCommand}"
-                    Style="{DynamicResource DwSecondaryButton}"
+                    Style="{DynamicResource DwButton}"
                     Margin="0,0,8,8"
                     ToolTip="{ui:UiText Actions.UploadTooltip}" />
-            <Button Content="{ui:UiText Actions.Download}"
+            <Button Content="{ui:SpacedText Actions.Download}"
                     Command="{Binding DownloadCloudCommand}"
-                    Style="{DynamicResource DwSecondaryButton}"
+                    Style="{DynamicResource DwButton}"
                     Margin="0,0,8,8"
                     ToolTip="{ui:UiText Actions.DownloadTooltip}" />
-            <Button Content="{ui:UiText Actions.StartSession}"
+            <Button Content="{ui:SpacedText Actions.StartSession}"
                     Command="{Binding StartCloudSessionCommand}"
-                    Style="{DynamicResource DwSecondaryButton}"
+                    Style="{DynamicResource DwButton}"
                     Margin="0,0,8,8"
                     Visibility="{Binding HasSessionLock, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
                     ToolTip="{ui:UiText Actions.StartSessionTooltip}" />
-            <Button Content="{ui:UiText Actions.EndSession}"
+            <Button Content="{ui:SpacedText Actions.EndSession}"
                     Command="{Binding EndCloudSessionCommand}"
-                    Style="{DynamicResource DwSecondaryButton}"
+                    Style="{DynamicResource DwButton}"
                     Margin="0,0,8,8"
                     Visibility="{Binding IsOwnSession, Converter={StaticResource BooleanToVisibilityConverter}}"
                     ToolTip="{ui:UiText Actions.EndSessionTooltip}" />
         </WrapPanel>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,6,0,0">
-            <TextBlock Style="{DynamicResource DwMuted}" FontSize="11.5" VerticalAlignment="Center" ToolTip="{Binding CloudAccountText}">
-                <Run Text="{Binding CloudProviderText, Mode=OneWay}" />
-            </TextBlock>
             <Button Content="{ui:UiText Dragonwilds.ChangeFolder}"
                     Command="{Binding SetupCloudFolderCommand}"
                     Style="{DynamicResource DwLinkButton}"
                     FontSize="11.5"
-                    Margin="14,0,0,0"
-                    VerticalAlignment="Center"
                     ToolTip="{ui:UiText Actions.SetupCloudTooltip}" />
         </StackPanel>
     </Grid>

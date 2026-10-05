@@ -1,90 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Entry point for the Dragonwilds skin, merged by DragonwildsShellView only. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Dragonwilds.Styles.xaml" />
-        <ResourceDictionary Source="Dragonwilds.Loader.xaml" />
+        <ResourceDictionary Source="Dragonwilds.Controls.xaml" />
+        <ResourceDictionary Source="Dragonwilds.Effects.xaml" />
     </ResourceDictionary.MergedDictionaries>
-
-    <!-- Entry point for the Dragonwilds skin: merges the shared Dragonwilds styles and the loader. -->
-
-    <!-- World cards: hover warms the frame, selection is marked with a magic (purple) edge. -->
-    <Style x:Key="DwWorldItem" TargetType="ListBoxItem">
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Card" Background="Transparent" BorderBrush="{StaticResource DwFrameInnerBrush}"
-                            BorderThickness="1" CornerRadius="3" Margin="0,0,0,6">
-                        <Grid>
-                            <Rectangle x:Name="Edge" Width="3" HorizontalAlignment="Left" Fill="{StaticResource DwMagicBrush}" Visibility="Hidden" />
-                            <ContentPresenter Margin="14,10,12,10" />
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource DwFrameBrush}" />
-                            <Setter TargetName="Card" Property="Background" Value="{DynamicResource HoverSurfaceBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Card" Property="Background" Value="{StaticResource DwSelectedCardBrush}" />
-                            <Setter TargetName="Card" Property="BorderBrush" Value="#6E4A9C" />
-                            <Setter TargetName="Edge" Property="Visibility" Value="Visible" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="DwTabControl" TargetType="TabControl">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="TabControl">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Border BorderBrush="{StaticResource DwFrameInnerBrush}" BorderThickness="0,0,0,1">
-                            <TabPanel IsItemsHost="True" />
-                        </Border>
-                        <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" Margin="0,14,0,0" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="DwTabItem" TargetType="TabItem">
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="TabItem">
-                    <Grid Background="Transparent" Margin="0,0,22,0">
-                        <TextBlock x:Name="Label" Text="{TemplateBinding Header}" FontFamily="{DynamicResource AppDisplayFontFamily}"
-                                   FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,9" />
-                        <Grid x:Name="Marker" VerticalAlignment="Bottom" Margin="0,0,0,-4" Visibility="Hidden">
-                            <Rectangle Height="2" Fill="{StaticResource DwGoldBrush}" VerticalAlignment="Center" />
-                            <Path Data="{StaticResource DwDiamondGeometry}" Fill="{StaticResource DwGoldBrightBrush}" Width="8" Height="8"
-                                  HorizontalAlignment="Center" />
-                        </Grid>
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource InkBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Label" Property="Foreground" Value="{StaticResource DwGoldBrightBrush}" />
-                            <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
 </ResourceDictionary>

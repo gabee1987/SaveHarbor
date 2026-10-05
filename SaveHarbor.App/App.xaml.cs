@@ -37,7 +37,11 @@ public partial class App : Application
                 services.AddSingleton(_cloudProviderOptions);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
-                services.AddSingleton(AppOptionsLoader.LoadGameOptions());
+                services.AddSingleton<IAppSettingsStore, AppSettingsStore>();
+                services.AddSingleton<IPlayerIdentity, PlayerIdentity>();
+                services.AddSingleton(serviceProvider => new GameOptionsProvider(
+                    AppOptionsLoader.LoadGameOptions(),
+                    serviceProvider.GetRequiredService<IAppSettingsStore>()));
                 services.AddSingleton<WindroseSaveAdapter>();
                 services.AddSingleton<IGameDefinition, WindroseGameDefinition>();
                 services.AddSingleton<DragonwildsSaveAdapter>();
@@ -45,7 +49,7 @@ public partial class App : Application
                 services.AddSingleton<IGameRegistry, GameRegistry>();
                 services.AddSingleton<IActiveGameContext>(serviceProvider => new ActiveGameContext(
                     serviceProvider.GetRequiredService<IGameRegistry>(),
-                    serviceProvider.GetRequiredService<IAppDataPathProvider>(),
+                    serviceProvider.GetRequiredService<IAppSettingsStore>(),
                     AppOptionsLoader.ReadGameArgument(Environment.GetCommandLineArgs())));
                 services.AddSingleton<IBackupService, ZipBackupService>();
                 services.AddSingleton<IProcessDetectionService, WindowsProcessDetectionService>();

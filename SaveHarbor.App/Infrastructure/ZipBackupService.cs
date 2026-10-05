@@ -8,7 +8,7 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameRegistry gameRegistry) : IBackupService
+public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameRegistry gameRegistry, IAppSettingsStore settings) : IBackupService
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private static readonly DirectoryPayloadStrategy DirectoryStrategy = new();
@@ -84,6 +84,7 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
         var targetPath = Path.Combine(backupRoot, fileName);
 
         await Task.Run(() => CreateArchive(world, targetPath, reason, cancellationToken), cancellationToken);
+        await PruneOldBackupsAsync(world.Game, targetPath, cancellationToken);
 
         var fileInfo = new FileInfo(targetPath);
         return new BackupInfo(fileInfo.FullName, fileInfo.Name, fileInfo.CreationTime, fileInfo.Length);
@@ -120,6 +121,25 @@ public sealed class ZipBackupService(IAppDataPathProvider pathProvider, IGameReg
             importedPath = strategy.Import(payloadRoot, manifest, profile, adapter, overwriteExisting, cancellationToken), cancellationToken);
 
         return importedPath;
+    }
+
+    // Keeps the newest N backups of the game (Settings); 0 keeps everything. The backup just created is never removed.
+    private async Task PruneOldBackupsAsync(GameId game, string keepPath, CancellationToken cancellationToken)
+    {
+        var keep = settings.Current.BackupRetentionCount;
+        if (keep <= 0)
+        {
+            return;
+        }
+
+        var backups = await ListBackupsAsync(game, cancellationToken);
+        foreach (var backup in backups.Skip(keep))
+        {
+            if (!string.Equals(backup.FilePath, Path.GetFullPath(keepPath), StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(backup.FilePath);
+            }
+        }
     }
 
     private static IPayloadStrategy SelectStrategy(WorldPayloadKind kind) =>

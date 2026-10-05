@@ -40,7 +40,7 @@ public sealed partial class GoogleDriveCloudProvider
                 var newMarker = new GameFolderMarker
                 {
                     Game = game.ToStorageKey(),
-                    CreatedBy = Environment.UserName,
+                    CreatedBy = playerIdentity.DisplayName,
                     CreatedAtUtc = DateTimeOffset.UtcNow
                 };
                 await UploadJsonByNameAsync(service, rootId, GameFolderMarker.FileName, newMarker, cancellationToken);

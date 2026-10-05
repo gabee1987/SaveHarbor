@@ -1,0 +1,66 @@
+<UserControl x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsDetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <ContentControl Style="{DynamicResource DwFrame}" Padding="20,16">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <ContentControl Style="{DynamicResource DwPanelHeading}" Content="{ui:SpacedText Dragonwilds.WorldDetails}" />
+
+                <TextBlock Text="{ui:UiText Dragonwilds.NoDetails}"
+                           Style="{DynamicResource DwMuted}"
+                           TextTrimming="None"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding SelectedWorldDetails.Count, Converter={x:Static converters:ZeroToVisibleConverter.Instance}}" />
+
+                <ItemsControl ItemsSource="{Binding SelectedWorldDetails}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type domain:WorldFact}">
+                            <StackPanel Margin="0,0,12,12">
+                                <TextBlock Text="{Binding Label}" Style="{DynamicResource DwLabel}" />
+                                <TextBlock Text="{Binding Value}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource InkBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Value}"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Margin="0,6,0,0"
+                            Visibility="{Binding SelectedWorldRules.Count, Converter={x:Static converters:ZeroToCollapsedConverter.Instance}}">
+                    <ContentControl Style="{DynamicResource DwPanelHeading}" Content="{ui:SpacedText Dragonwilds.WorldRules}" />
+                    <ItemsControl ItemsSource="{Binding SelectedWorldRules}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type domain:WorldFact}">
+                                <Grid Margin="0,0,12,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Label}" Style="{DynamicResource DwMuted}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" Foreground="{DynamicResource DwGoldBrightBrush}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </ContentControl>
+</UserControl>

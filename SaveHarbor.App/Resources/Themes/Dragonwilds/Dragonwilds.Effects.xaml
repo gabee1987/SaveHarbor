@@ -1,5 +1,45 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="DwEmberBrush" Color="#FFC47A" />
+
+    <!-- Static smoke and vignette behind the panels, echoing the game's menu backdrops. -->
+    <DataTemplate x:Key="DwSmokeTemplate">
+        <Grid IsHitTestVisible="False">
+            <Ellipse Width="900" Height="520" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-200,-120,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#383A3428" Offset="0" />
+                        <GradientStop Color="#003A3428" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="1000" Height="600" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-260,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#30443B2A" Offset="0" />
+                        <GradientStop Color="#00443B2A" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="800" Height="420" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-160,0,0,-160">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#2E5A3A1C" Offset="0" />
+                        <GradientStop Color="#005A3A1C" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush RadiusX="0.75" RadiusY="0.8">
+                        <GradientStop Color="#00000000" Offset="0.55" />
+                        <GradientStop Color="#99000000" Offset="1" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+    </DataTemplate>
+
     <!-- Arcane rune circle shown while an operation runs. It is a template, so it exists (and animates) only while busy. -->
     <DataTemplate x:Key="DwArcaneLoaderTemplate">
         <Viewbox Width="64" Height="64">

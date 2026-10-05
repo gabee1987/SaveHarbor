@@ -4,34 +4,27 @@
              xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
              xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
-    <ContentControl Style="{DynamicResource DwFrame}">
+    <ContentControl Style="{DynamicResource DwFrame}" Padding="16">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="{ui:UiText Dragonwilds.Worlds}" Style="{DynamicResource DwHeading}" VerticalAlignment="Center" />
-                <Button Grid.Column="1"
-                        Content="{ui:UiText World.OpenFolder}"
-                        Command="{Binding OpenWorldFolderCommand}"
-                        Style="{DynamicResource DwLinkButton}"
-                        Margin="0,0,12,0"
-                        VerticalAlignment="Center"
-                        ToolTip="{Binding LocalSaveRoot}" />
-                <Button Grid.Column="2"
-                        Content="{ui:UiText World.Refresh}"
+            <ContentControl Style="{DynamicResource DwPanelHeading}" Content="{ui:SpacedText Dragonwilds.Worlds}" />
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="2,10,0,0">
+                <Button Content="{ui:UiText World.Refresh}"
                         Command="{Binding RefreshCommand}"
                         Style="{DynamicResource DwLinkButton}"
-                        VerticalAlignment="Center"
+                        Margin="0,0,16,0"
                         ToolTip="{ui:UiText World.RefreshTooltip}" />
-            </Grid>
+                <Button Content="{ui:UiText World.OpenFolder}"
+                        Command="{Binding OpenWorldFolderCommand}"
+                        Style="{DynamicResource DwLinkButton}"
+                        ToolTip="{Binding LocalSaveRoot}" />
+            </StackPanel>
 
             <ListBox Grid.Row="1"
                      ItemsSource="{Binding Worlds}"

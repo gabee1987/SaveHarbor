@@ -25,9 +25,10 @@ public sealed class BackupHarness : IDisposable
         WindroseAdapter = new WindroseSaveAdapter(options);
         DragonwildsAdapter = new DragonwildsSaveAdapter(options);
         Paths = new TestPathProvider(temp);
+        Settings = new AppSettingsStore(Paths);
         Backups = new ZipBackupService(Paths, new StubGameRegistry(
             new StubGameDefinition(GameId.Windrose, WindroseAdapter),
-            new StubGameDefinition(GameId.Dragonwilds, DragonwildsAdapter)));
+            new StubGameDefinition(GameId.Dragonwilds, DragonwildsAdapter)), Settings);
     }
 
     public string WindroseRoot { get; }
@@ -39,6 +40,8 @@ public sealed class BackupHarness : IDisposable
     public DragonwildsSaveAdapter DragonwildsAdapter { get; }
 
     public TestPathProvider Paths { get; }
+
+    public AppSettingsStore Settings { get; }
 
     public ZipBackupService Backups { get; }
 
