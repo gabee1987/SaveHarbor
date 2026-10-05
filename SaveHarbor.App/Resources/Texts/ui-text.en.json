@@ -94,5 +94,27 @@
   "CloudSetup.Ready": "Paste the shared folder link, then test access.",
   "CloudSetup.Test": "Test access",
   "CloudSetup.Save": "Save",
-  "CloudSetup.Cancel": "Cancel"
+  "CloudSetup.Cancel": "Cancel",
+
+  "Dragonwilds.Kicker": "RUNESCAPE",
+  "Dragonwilds.Title": "DRAGONWILDS",
+  "Dragonwilds.GameRunning": "Game is running",
+  "Dragonwilds.Worlds": "YOUR WORLDS",
+  "Dragonwilds.NoWorlds": "No worlds found yet. Create a world in Dragonwilds, or download your group's world from the Sharing tab.",
+  "Dragonwilds.ChooseWorld": "Choose a world",
+  "Dragonwilds.ChooseWorldHint": "Pick a world on the left to see its sharing status and play it.",
+  "Dragonwilds.LastPlayed": "Last played",
+  "Dragonwilds.Shared": "Shared",
+  "Dragonwilds.HostedBy": "Hosted by",
+  "Dragonwilds.YouAreHosting": "You are hosting",
+  "Dragonwilds.Play": "PLAY",
+  "Dragonwilds.TabSharing": "SHARING",
+  "Dragonwilds.TabBackups": "BACKUPS",
+  "Dragonwilds.TabChronicle": "CHRONICLE",
+  "Dragonwilds.ChangeFolder": "Change shared folder",
+  "Dragonwilds.BackUpNow": "BACK UP NOW",
+  "Dragonwilds.Restore": "Restore…",
+  "Dragonwilds.Import": "Import…",
+  "Dragonwilds.OpenBackups": "Open backup folder",
+  "Dragonwilds.NoActivity": "Nothing has happened yet in this session."
 }

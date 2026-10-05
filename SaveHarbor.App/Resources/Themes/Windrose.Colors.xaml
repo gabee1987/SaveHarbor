@@ -1,6 +1,5 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#0D1114" />
     <SolidColorBrush x:Key="PanelBrush" Color="#151B20" />
     <SolidColorBrush x:Key="PanelAltBrush" Color="#10161A" />
@@ -38,11 +37,6 @@
     <SolidColorBrush x:Key="InputHoverBrush" Color="#131B20" />
     <SolidColorBrush x:Key="ItemHoverBrush" Color="#1F2B33" />
     <SolidColorBrush x:Key="ItemSelectedBrush" Color="#17352F" />
-
-    <SolidColorBrush x:Key="PlayCardBorderBrush" Color="#19A38C" />
-    <SolidColorBrush x:Key="HeaderDividerBrush" Color="#1F2931" />
-    <Color x:Key="PlayGlowColor">#19A38C</Color>
-    <sys:Double x:Key="PlayGlowOpacity">0</sys:Double>
 
     <FontFamily x:Key="AppDisplayFontFamily">Segoe UI</FontFamily>
     <Visibility x:Key="ShowOrnamentGlyphs">Collapsed</Visibility>

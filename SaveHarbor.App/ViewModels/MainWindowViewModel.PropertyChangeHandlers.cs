@@ -27,6 +27,10 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(CloudLocalBaseText));
         OnPropertyChanged(nameof(CloudSessionText));
         OnPropertyChanged(nameof(CloudSessionTooltip));
+        OnPropertyChanged(nameof(IsCloudConnected));
+        OnPropertyChanged(nameof(HasSessionLock));
+        OnPropertyChanged(nameof(IsOwnSession));
+        OnPropertyChanged(nameof(IsOtherPlayerHosting));
     }
 
     partial void OnLastBackupChanged(BackupInfo? value)

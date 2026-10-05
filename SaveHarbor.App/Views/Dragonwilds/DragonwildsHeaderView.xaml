@@ -1,0 +1,126 @@
+<UserControl x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsHeaderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <Grid Margin="0,18,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel VerticalAlignment="Center">
+            <StackPanel.ToolTip>
+                <TextBlock>
+                    <Run Text="{ui:UiText App.Title}" />
+                    <Run Text="{Binding AppVersionText, Mode=OneWay}" />
+                </TextBlock>
+            </StackPanel.ToolTip>
+            <TextBlock Text="{ui:UiText Dragonwilds.Kicker}"
+                       FontFamily="{DynamicResource AppDisplayFontFamily}"
+                       FontSize="11"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource DwGoldBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="{ui:UiText Dragonwilds.Title}"
+                       FontFamily="{DynamicResource AppDisplayFontFamily}"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource DwGoldTextBrush}">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.6" />
+                </TextBlock.Effect>
+            </TextBlock>
+        </StackPanel>
+
+        <ItemsControl Grid.Column="1"
+                      ItemsSource="{Binding GameOptions}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      ToolTip="{Binding SwitchGameDisabledReason}"
+                      ToolTipService.ShowOnDisabled="True">
+            <ItemsControl.Style>
+                <Style TargetType="ItemsControl">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding CanSwitchGame}" Value="True">
+                            <Setter Property="ToolTipService.IsEnabled" Value="False" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ItemsControl.Style>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <RadioButton GroupName="DragonwildsGameSwitch"
+                                 Style="{DynamicResource DwGameSwitch}"
+                                 Content="{Binding DisplayName}"
+                                 IsChecked="{Binding IsActive, Mode=OneWay}"
+                                 Command="{Binding DataContext.SwitchGameCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                 CommandParameter="{Binding Id}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border ToolTip="{ui:UiText Header.GameTooltip}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsGameRunning}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Border Style="{DynamicResource DwPill}" BorderBrush="{DynamicResource ToneWarnBorderBrush}">
+                    <TextBlock Text="{ui:UiText Dragonwilds.GameRunning}" Foreground="{DynamicResource WarnBrush}" FontSize="12" FontWeight="SemiBold" />
+                </Border>
+            </Border>
+
+            <Border Style="{DynamicResource DwPill}"
+                    Margin="0"
+                    Visibility="{Binding CloudStatus, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                <Border.ToolTip>
+                    <StackPanel>
+                        <TextBlock Text="{Binding CloudDetailText}" />
+                        <TextBlock Text="{Binding CloudAccountText}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border.ToolTip>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Margin="0,0,7,0" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource SubtleBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.UpToDate}">
+                                        <Setter Property="Fill" Value="{DynamicResource SuccessBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.LocalNewerUploadSafe}">
+                                        <Setter Property="Fill" Value="{DynamicResource InfoBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.CloudNewer}">
+                                        <Setter Property="Fill" Value="{DynamicResource WarnBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.SomeonePlaying}">
+                                        <Setter Property="Fill" Value="{DynamicResource WarnBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CloudStatus.State}" Value="{x:Static domain:CloudSyncState.Conflict}">
+                                        <Setter Property="Fill" Value="{DynamicResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding CloudStateText}" Foreground="{DynamicResource InkBrush}" FontSize="12" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

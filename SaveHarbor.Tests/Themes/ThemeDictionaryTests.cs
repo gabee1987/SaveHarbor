@@ -15,7 +15,6 @@ public sealed class ThemeDictionaryTests
         "ToneInfoBorderBrush", "ToneSuccessBackgroundBrush", "ToneSuccessBorderBrush", "ToneWarnBackgroundBrush",
         "ToneWarnBorderBrush", "ToneNeutralBackgroundBrush", "HoverSurfaceBrush", "HoverLineBrush",
         "PressedSurfaceBrush", "InputHoverBrush", "ItemHoverBrush", "ItemSelectedBrush",
-        "PlayCardBorderBrush", "HeaderDividerBrush", "PlayGlowColor", "PlayGlowOpacity",
         "AppDisplayFontFamily", "ShowOrnamentGlyphs", "GameIconGeometry"
     ];
 

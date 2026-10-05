@@ -81,4 +81,12 @@ public partial class MainWindowViewModel
     public string CloudSessionTooltip => CloudStatus?.SessionLock is null
         ? "No active cloud session. Nobody has marked this world as currently being played."
         : $"{CloudStatus.SessionLock.PlayerName} started a cloud session from v{CloudStatus.SessionLock.BasedOnVersionNumber} on {CloudStatus.SessionLock.StartedAtUtc:yyyy-MM-dd HH:mm} UTC. Lock expires at {CloudStatus.SessionLock.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.";
+
+    public bool IsCloudConnected => CloudStatus?.Connection.IsConnected == true;
+
+    public bool HasSessionLock => CloudStatus?.SessionLock is not null;
+
+    public bool IsOwnSession => HasOwnCloudSession();
+
+    public bool IsOtherPlayerHosting => HasSessionLock && !IsOwnSession;
 }

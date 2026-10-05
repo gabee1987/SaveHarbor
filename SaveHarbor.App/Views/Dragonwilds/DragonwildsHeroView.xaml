@@ -1,0 +1,118 @@
+<UserControl x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsHeroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <ContentControl Style="{DynamicResource DwFrame}" BorderBrush="{DynamicResource DwGoldBrush}" Padding="24,18">
+        <Grid MinHeight="118">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="280" />
+            </Grid.ColumnDefinitions>
+
+            <!-- No world selected: one short instruction instead of empty fields. -->
+            <StackPanel VerticalAlignment="Center"
+                        Visibility="{Binding SelectedWorld, Converter={x:Static converters:NullToVisibleConverter.Instance}}">
+                <TextBlock Text="{ui:UiText Dragonwilds.ChooseWorld}"
+                           FontFamily="{DynamicResource AppDisplayFontFamily}"
+                           FontSize="22"
+                           Foreground="{DynamicResource DwGoldTextBrush}" />
+                <TextBlock Text="{ui:UiText Dragonwilds.ChooseWorldHint}" Style="{DynamicResource DwMuted}" TextWrapping="Wrap" Margin="0,6,0,0" />
+            </StackPanel>
+
+            <StackPanel VerticalAlignment="Center"
+                        Visibility="{Binding SelectedWorld, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                <TextBlock Text="{Binding SelectedWorld.WorldName}"
+                           FontFamily="{DynamicResource AppDisplayFontFamily}"
+                           FontSize="30"
+                           FontWeight="Bold"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource DwGoldTextBrush}">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.6" />
+                    </TextBlock.Effect>
+                </TextBlock>
+                <TextBlock Style="{DynamicResource DwMuted}" Margin="1,4,0,0">
+                    <Run Text="{ui:UiText Dragonwilds.LastPlayed}" />
+                    <Run Text="{Binding SelectedWorld.LastModifiedAt, Mode=OneWay, Converter={x:Static converters:RelativeAgeConverter.Instance}}" />
+                    <Run Text=" · " />
+                    <Run Text="{Binding SelectedWorldSize, Mode=OneWay}" />
+                </TextBlock>
+
+                <WrapPanel Margin="0,12,0,0">
+                    <Border Style="{DynamicResource DwPill}"
+                            Visibility="{Binding CloudStatus.LatestVersion, Converter={x:Static converters:NullToCollapsedConverter.Instance}}"
+                            ToolTip="{ui:UiText Header.LatestTooltip}">
+                        <TextBlock Foreground="{DynamicResource InkBrush}" FontSize="12">
+                            <Run Text="{ui:UiText Dragonwilds.Shared}" Foreground="{DynamicResource MutedBrush}" />
+                            <Run Text="{Binding CloudLatestVersionText, Mode=OneWay}" />
+                        </TextBlock>
+                    </Border>
+                    <Border Style="{DynamicResource DwPill}"
+                            BorderBrush="{DynamicResource ToneWarnBorderBrush}"
+                            Visibility="{Binding IsOtherPlayerHosting, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            ToolTip="{Binding CloudSessionTooltip}">
+                        <TextBlock Foreground="{DynamicResource WarnBrush}" FontSize="12" FontWeight="SemiBold">
+                            <Run Text="{ui:UiText Dragonwilds.HostedBy}" />
+                            <Run Text="{Binding CloudSessionText, Mode=OneWay}" />
+                        </TextBlock>
+                    </Border>
+                    <Border Style="{DynamicResource DwPill}"
+                            BorderBrush="{DynamicResource DwMagicBrush}"
+                            Visibility="{Binding IsOwnSession, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            ToolTip="{Binding CloudSessionTooltip}">
+                        <TextBlock Text="{ui:UiText Dragonwilds.YouAreHosting}" Foreground="{DynamicResource InfoBrush}" FontSize="12" FontWeight="SemiBold" />
+                    </Border>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Idle: the Play button. Busy: the arcane loader and what is happening right now. -->
+            <ContentControl Grid.Column="2" Content="{Binding}" Focusable="False" VerticalAlignment="Center">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <Button Content="{ui:UiText Dragonwilds.Play}"
+                                                Command="{Binding StartGameCommand}"
+                                                Style="{DynamicResource DwPlayButton}"
+                                                ToolTip="{ui:UiText Actions.StartGameTooltip}" />
+                                        <TextBlock Text="{Binding PlayHintText}"
+                                                   Style="{DynamicResource DwMuted}"
+                                                   TextTrimming="None"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"
+                                                   FontSize="11.5"
+                                                   Margin="0,10,0,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                <Setter Property="ContentTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource DwArcaneLoaderTemplate}" HorizontalAlignment="Center" />
+                                                <TextBlock Text="{Binding StatusText}"
+                                                           FontFamily="{DynamicResource AppDisplayFontFamily}"
+                                                           FontSize="12.5"
+                                                           Foreground="{DynamicResource DwGoldBrightBrush}"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,10,0,0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
+        </Grid>
+    </ContentControl>
+</UserControl>

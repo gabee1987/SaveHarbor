@@ -9,6 +9,8 @@ public partial class MainWindowViewModel
 {
     public string ActiveGameName => _activeGame.Current.DisplayName;
 
+    public GameId ActiveGameId => _activeGame.Current.Id;
+
     public ObservableCollection<GameOptionViewModel> GameOptions { get; } = [];
 
     public bool CanSwitchGame => !IsBusy && !IsGameRunning && !HasOwnCloudSession();
@@ -42,6 +44,7 @@ public partial class MainWindowViewModel
             }
 
             OnPropertyChanged(nameof(ActiveGameName));
+            OnPropertyChanged(nameof(ActiveGameId));
             OnPropertyChanged(nameof(SafetyHint));
             OnPropertyChanged(nameof(LocalSaveRoot));
             OnPropertyChanged(nameof(PlayHintText));

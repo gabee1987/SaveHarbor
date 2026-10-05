@@ -4,67 +4,47 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:SaveHarbor.App.Views.Controls"
+        xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+        xmlns:dragonwilds="clr-namespace:SaveHarbor.App.Views.Dragonwilds"
+        xmlns:windrose="clr-namespace:SaveHarbor.App.Views.Windrose"
         xmlns:ui="clr-namespace:SaveHarbor.App.Localization"
         mc:Ignorable="d"
         Title="{ui:UiText App.Title}"
-        Height="690"
-        Width="1120"
-        MinHeight="660"
-        MinWidth="1040"
+        Height="860"
+        Width="1360"
+        MinHeight="720"
+        MinWidth="1100"
         Background="{DynamicResource AppBackgroundBrush}"
         FontFamily="Segoe UI"
         FontSize="13"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <!-- Each game has its own shell. Only the active game's template is instantiated, so the other game's
+             views and resources are created when the user switches to it. -->
+        <DataTemplate x:Key="WindroseShellTemplate">
+            <windrose:WindroseShellView />
+        </DataTemplate>
+        <DataTemplate x:Key="DragonwildsShellTemplate">
+            <dragonwilds:DragonwildsShellView />
+        </DataTemplate>
+    </Window.Resources>
+
     <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <ContentControl Content="{Binding}" Focusable="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="ContentTemplate" Value="{StaticResource WindroseShellTemplate}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ActiveGameId}" Value="{x:Static domain:GameId.Dragonwilds}">
+                            <Setter Property="ContentTemplate" Value="{StaticResource DragonwildsShellTemplate}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
 
-        <controls:HeaderStatusView />
-
-        <Border Height="1"
-                Background="{DynamicResource HeaderDividerBrush}"
-                Margin="20,0"
-                VerticalAlignment="Bottom" />
-
-        <Grid Grid.Row="1" Margin="20,0,20,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.02*" MinWidth="400" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="1.18*" MinWidth="470" />
-            </Grid.ColumnDefinitions>
-
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="10" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <controls:WorldSectionView />
-                <controls:BackupSectionView Grid.Row="2" />
-            </Grid>
-
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="10" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <controls:ActionsSectionView />
-                <controls:ActivitySectionView Grid.Row="2" />
-            </Grid>
-        </Grid>
-
-        <controls:ToastHostView Grid.RowSpan="2"
-                                HorizontalAlignment="Right"
+        <controls:ToastHostView HorizontalAlignment="Right"
                                 VerticalAlignment="Bottom"
                                 Margin="0,0,20,20" />
-
-        <controls:IndeterminateProgressLineView Grid.RowSpan="2"
-                                                VerticalAlignment="Bottom"
-                                                IsActive="{Binding IsBusy}" />
     </Grid>
 </Window>
