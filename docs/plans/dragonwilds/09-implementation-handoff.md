@@ -86,3 +86,26 @@ T06 (theme) can be done before T03 if the owner prefers; the tasks do not depend
 - `MainWindowViewModel` is registered as a singleton; the toast event handler is wired in its constructor; game monitor is a `DispatcherTimer` (5 s).
 - `HeaderStatusView.xaml` uses a fixed 780 px right-hand grid with 5 chips; adding the game switch requires re-flowing it (T06.5).
 - `App.xaml.cs` (283 lines) contains three option loaders that each rebuild a `ConfigurationBuilder`.
+- `FolderCloudProvider` implements only `ICloudProvider` (not `ISharedFolderCloudProvider`). `NotConfiguredCloudProvider` exists but is **not registered** in DI.
+- `SerilogAppLogger` filters per keyword via `AppLoggingOptions.IsEnabled`, then logs with `Log.ForContext("Keyword", …)`.
+- Code-behind resolves brushes only through `TryFindResource(...) as Brush` (`WpfDialogService`, `CloudFolderSetupWindow.xaml.cs`), so non-solid brushes such as the Dragonwilds radial background are safe.
+- `ZipBackupService` and `LocalJsonSyncStateService` have parameterless constructors today; adding `IAppDataPathProvider` works because it is registered as an instance.
+- `StartGameCommand` is referenced in `MainWindowViewModel.cs:35` (attribute), `MainWindowViewModel.Operations.cs:58`, and `ActionsSectionView.xaml:45`.
+
+## 7. Review log
+
+**2026-10-05: review against `develop` @ `0dbf842`.** Corrected in the task files:
+- **Test project:** it needs `OutputType Exe` (xunit v3) and `UseWPF` (so the Windows Desktop runtime loads).
+- **Restored world record:** `GameWorld` construction in `DownloadLatestAvailableAsync` now keeps today's values (`"Unknown"`, `MinValue`).
+- **Dictionary initialiser:** `Dictionary` uses `new()`, not `[]`.
+- **Fake provider hook:** renamed to `AfterLockWrite`, since only an after-write hook can simulate the race.
+- **Dragonwilds discovery:** it filters on the exact `.sav` extension. The Windows `*.sav` pattern also matches longer extensions.
+- **GVAS check:** the unused header-check constant was removed.
+- **Single-file restore:** it refuses a backup whose file name differs from the target, so it cannot create a duplicate world.
+- **Drive locks:** reading every duplicate lock file needs a `DownloadJsonByIdAsync` helper.
+- **Finishing after exit:** it checks for a foreign lock (`LockLost`) before uploading, and runs inside `RunBusyAsync`.
+- **After launch:** the cloud status must be refreshed, or the heartbeat and finish steps never trigger.
+- **"Get shared world":** this case no longer depends on `CloudStatus`, which is null when no world is selected.
+- **Font:** the font URI uses `/SaveHarbor.App;component/…`, because the commas in `pack://application:,,,` break the fallback list. The XAML forms for the non-brush resources are given explicitly.
+- **Publish check:** the output folder is no longer deleted automatically (AGENT.md §10).
+- **Placeholder world ID:** the SafePath test sample uses a placeholder.

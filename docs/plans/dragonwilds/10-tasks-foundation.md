@@ -9,7 +9,7 @@ Read [09-implementation-handoff.md](09-implementation-handoff.md) first. Paths a
 **Pre-check (stop if it fails):** `dotnet --list-sdks` must list a `10.0.x` SDK. If only 8.x is installed, **stop and tell the owner** to install it (`winget install Microsoft.DotNet.SDK.10`). Do not install it yourself.
 
 ### T01.1 Baseline
-1. `dotnet build SaveHarbor.sln -c Debug 2>&1 | tail -5` on the *current* state. If the 10 SDK is installed it will still build `net8.0-windows` only if the 8.0 targeting pack is available; if the baseline cannot build, record "baseline not buildable: <reason>" and continue.
+1. `dotnet build SaveHarbor.sln -c Debug 2>&1 | tail -5` on the *current* state (before `global.json` exists; the 10 SDK can still build `net8.0-windows`). If the baseline cannot build, record "baseline not buildable: <reason>" and continue.
 2. Record the warning count in `docs/plans/dragonwilds/FINDINGS.md` under a heading `## Build baseline` (create the file). Format: `Warnings: <n> (SDK <version>, TFM net8.0-windows)`.
 
 ### T01.2 `global.json` (new, repo root)
@@ -49,7 +49,7 @@ Change the single occurrence `-f net8.0` → `-f net10.0`. Nothing else.
 Then: `dotnet list App/SaveHarbor.App.csproj package --outdated` (expect none) and `dotnet list App/SaveHarbor.App.csproj package --vulnerable --include-transitive` (expect none).
 
 ### T01.6 Publish check
-`dotnet publish App/SaveHarbor.App.csproj -c Release -r win-x64 --self-contained true -o artifacts/publish/SaveHarbor-net10-check` (this folder is git-ignored via `artifacts/`). Confirm `SaveHarbor.App.exe` exists. Delete the `-net10-check` folder afterwards (it is your own output; verify the path before deleting).
+`dotnet publish App/SaveHarbor.App.csproj -c Release -r win-x64 --self-contained true -o artifacts/publish-check/SaveHarbor` (git-ignored via `artifacts/`). Confirm `SaveHarbor.App.exe` exists. **Do not delete** the folder (AGENT.md §10 forbids recursive deletion without an explicit request); mention it in the report so the owner can remove it.
 
 **Done when:** build succeeds, outdated/vulnerable lists empty, publish produced the exe. Report the new warning count vs baseline.
 
@@ -65,6 +65,8 @@ Create `SaveHarbor.Tests/SaveHarbor.Tests.csproj`:
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -79,7 +81,8 @@ Create `SaveHarbor.Tests/SaveHarbor.Tests.csproj`:
   </ItemGroup>
 </Project>
 ```
-Replace `LATEST` with the current stable versions: run `dotnet package search xunit.v3 --take 1` (or `dotnet add package <name>` which resolves latest) rather than guessing. Do **not** set `UseWPF` in the test project. Add it to the solution: `dotnet sln SaveHarbor.sln add SaveHarbor.Tests/SaveHarbor.Tests.csproj`.
+Replace `LATEST` with the current stable versions: run `dotnet package search xunit.v3 --take 1` (or `dotnet add package <name>` which resolves latest) rather than guessing.
+`OutputType Exe` is required by xunit v3 (test projects are executables). `UseWPF` is set so the test host loads the Windows Desktop runtime that the referenced WPF app assembly needs; the test project contains no XAML and tests never create windows. Add it to the solution: `dotnet sln SaveHarbor.sln add SaveHarbor.Tests/SaveHarbor.Tests.csproj`.
 
 If referencing the WPF `WinExe` project fails to build or run (duplicate entry point, XAML compilation, `Application` already running), **stop and ask the owner** — the fallback (extract a `SaveHarbor.Core` class library) is a larger decision.
 
@@ -203,8 +206,20 @@ Delete `Domain/WindroseWorld.cs` and `Domain/WindroseProfile.cs`.
 **Rename pass (compile-driven).** Replace `WindroseWorld` → `GameWorld` and `WindroseProfile` → `GameSaveRoot` in exactly these files (found with `rg -l "WindroseWorld|WindroseProfile" App`):
 `Domain/CloudDownloadRequest.cs`, `Domain/CloudUploadRequest.cs`, `Domain/LocalSyncState.cs`, `Infrastructure/CloudSyncService.cs`, `.Sessions.cs`, `.Transfers.cs`, `Infrastructure/LocalJsonSyncStateService.cs`, `Infrastructure/ZipBackupService.cs`, `Services/IBackupService.cs`, `Services/ICloudSyncService.cs`, `Services/ILocalSyncStateService.cs`, all `ViewModels/MainWindowViewModel*.cs` that matched, and `Resources/Styles/DarkTheme.xaml` line ~327 (`DataType="{x:Type domain:WindroseWorld}"` → `domain:GameWorld`).
 Field mapping for `GameSaveRoot`: `profile.ProfileId` → `root.RootId`; `profile.WorldsPath` unchanged; `profile.RocksDbVersion` → use `root.Detail` only for display (`RefreshProfileStatusAsync`).
-`CloudSyncService.Transfers.cs` line ~114 constructs a `WindroseWorld` — becomes
-`new GameWorld(profile.Game, manifest.WorldId, manifest.WorldName, "", targetWorldPath, now, now, 0, 0)` (parameter order per the record; keep the other existing arguments' meaning).
+`CloudSyncService.Transfers.cs` line ~114 constructs a `WindroseWorld` — becomes (same argument values as today, plus the game):
+```csharp
+var world = new GameWorld(
+    profile.Game,
+    manifest.WorldId,
+    string.IsNullOrWhiteSpace(manifest.WorldName) ? manifest.WorldId : manifest.WorldName,
+    "Unknown",
+    targetWorldPath,
+    DateTimeOffset.MinValue,
+    DateTimeOffset.MinValue,
+    0,
+    0);
+```
+Line ~157 message `profile.ProfileId` → `profile.RootId`.
 `XAML`: `Views/Controls/WorldSectionView.xaml` lines 63 and 67: `SelectedWorld.WorldPresetType` → `SelectedWorld.Subtitle`.
 
 ### T02.2 Game options and the options loader
@@ -455,7 +470,7 @@ private static bool IsAnyProcessNameContaining(IReadOnlyList<string> hints)
 
 ### T02.8 View model
 
-1. `MainWindowViewModel.cs`: replace `IWindroseSaveDiscoveryService _saveDiscoveryService` with `IActiveGameContext _activeGame` (ctor parameter replaces `saveDiscoveryService`; subscribe `_activeGame.ActiveGameChanged += OnActiveGameChanged;`). Observable `profileStatus` initial text: `"Checking save profile..."`. `ObservableCollection<GameWorld> Worlds`.
+1. `MainWindowViewModel.cs`: replace `IWindroseSaveDiscoveryService _saveDiscoveryService` with `IActiveGameContext _activeGame` and add `IGameRegistry _gameRegistry` (ctor parameters replace `saveDiscoveryService`; subscribe `_activeGame.ActiveGameChanged += OnActiveGameChanged;`). Observable `profileStatus` initial text: `"Checking save profile..."`. `ObservableCollection<GameWorld> Worlds`.
 2. Every `_saveDiscoveryService.X` → `_activeGame.Current.SaveAdapter.X` with the renames (`DiscoverProfilesAsync` → `DiscoverSaveRootsAsync`).
 3. `UpdateGameStatus()` → `IsGameRunning = _processDetectionService.IsGameRunning(_activeGame.Current);`
 4. `_gameLauncherService.LaunchAsync()` → `LaunchAsync(_activeGame.Current)`.

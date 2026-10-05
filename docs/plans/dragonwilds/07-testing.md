@@ -10,7 +10,7 @@ Introduce the repository's first automated tests, so that the game abstraction r
 
 ## 2. Project
 
-- `SaveHarbor.Tests/SaveHarbor.Tests.csproj`: `net10.0-windows`, `UseWPF` **false** (tests target services, not views), `ProjectReference` to `SaveHarbor.App`.
+- `SaveHarbor.Tests/SaveHarbor.Tests.csproj`: `net10.0-windows`, `OutputType Exe` (xunit v3), `UseWPF` **true** so the test host loads the Windows Desktop runtime the referenced app assembly needs (tests still target services, not views), `ProjectReference` to `SaveHarbor.App`.
 - Packages (latest stable at implementation time; check with `dotnet list package --outdated`): `xunit.v3`, `xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`. **No mocking library.** Hand-written fakes keep dependencies small (AGENT.md §6).
 - Added to `SaveHarbor.sln`.
 - `SaveHarbor.App` gets `<InternalsVisibleTo Include="SaveHarbor.Tests" />` only if an internal type needs it.

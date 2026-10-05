@@ -74,7 +74,7 @@ public static class SafePath
 ```
 `Path.GetInvalidFileNameChars()` on Windows includes `\ / : * ? " < > |` and control chars, so separators and drive colons are rejected.
 
-**Tests** (`SaveHarbor.Tests/Utilities/SafePathTests.cs`, `[Theory]`): safe: `"C8320961717B4D7C459CB58190797ECC"`, `"My World"`, `"My·World"`, `"world.sav"`. Unsafe: `""`, `" "`, `"."`, `".."`, `"..\\evil"`, `"../evil"`, `"a/b"`, `"C:\\x"`, `"name."`, `"name "`, `"CON"`, `"nul.txt"`, `"a|b"`. `CombineUnderRoot` returns a path under the root for safe input and throws `InvalidDataException` for unsafe input.
+**Tests** (`SaveHarbor.Tests/Utilities/SafePathTests.cs`, `[Theory]`): safe: `"0123456789ABCDEF0123456789ABCDEF"` (placeholder in the Windrose id format), `"My World"`, `"My·World"`, `"world.sav"`. Unsafe: `""`, `" "`, `"."`, `".."`, `"..\\evil"`, `"../evil"`, `"a/b"`, `"C:\\x"`, `"name."`, `"name "`, `"CON"`, `"nul.txt"`, `"a|b"`. `CombineUnderRoot` returns a path under the root for safe input and throws `InvalidDataException` for unsafe input.
 
 **Apply at the untrusted boundaries** (each: validate, and on failure return a failed result / throw `InvalidDataException`; do not sanitise silently):
 1. `CloudSyncService.Transfers.cs` `DownloadLatestAvailableAsync`: `targetWorldPath = SafePath.CombineUnderRoot(profile.WorldsPath, manifest.WorldId)` (T03 changes this line again for FileSet; keep it correct for Directory now). Wrap in try/catch `InvalidDataException` → `new CloudSyncResult(false, CloudSyncState.Error, "The cloud manifest contains an invalid world id. Nothing was changed.")`.
@@ -132,7 +132,7 @@ Call site: `App.OnStartup`, right after `await _host.StartAsync();` and before `
 
 1. `CloudProviderOptions`: replace `GoogleSharedFolderId` with
 ```csharp
-public Dictionary<GameId, string> SharedFolderIds { get; } = [];
+public Dictionary<GameId, string> SharedFolderIds { get; } = new();
 public string GetSharedFolderId(GameId game) => NormalizeSharedFolderInput(SharedFolderIds.GetValueOrDefault(game, string.Empty));
 public bool HasSharedFolder(GameId game) => !string.IsNullOrWhiteSpace(GetSharedFolderId(game));
 public void SetSharedFolderId(GameId game, string input) => SharedFolderIds[game] = NormalizeSharedFolderInput(input);
@@ -215,7 +215,8 @@ Reject messages: `$"This folder is used for {markerGame}. Choose a separate fold
 Provider integration:
 - Drive: add `GoogleDriveCloudProvider.Marker.cs` (partial) with `EnsureGameFolderAsync(service, game, ct)`: reads marker via `DownloadJsonByNameAsync<GameFolderMarker>(service, rootId, GameFolderMarker.FileName, ct)`, computes `folderHasWorldsSubfolder` via `FindFolderIdAsync(service, rootId, "worlds", ct)` and `folderIsEmpty` by listing 1 child (`ListChildFoldersAsync` is folders only — add a small `HasAnyChildAsync`), applies the policy, writes the marker with `UploadJsonByNameAsync` on `AcceptAndWriteMarker` (only when the account has edit access, already validated), throws `InvalidOperationException(message)` on `Reject`. Cache validated games in a `HashSet<GameId> verifiedGames` (cleared by `DisconnectAsync`).
 - Call it from: `TestSharedFolderAsync` **in validate-only mode** (do not write; a flag `writeMarker: false` → on `AcceptAndWriteMarker` just return success), `ConnectAsync`, `GetConnectionStatusAsync` (after the service exists; catch `InvalidOperationException` → status `IsConnected=false` with the message), and `UploadVersionAsync`/`WriteSessionLockAsync` (before the first write).
-- `FolderCloudProvider`: identical logic against `<root>/saveharbor-game.json` and `<root>/worlds`.
+- `FolderCloudProvider`: identical logic against `<root>/saveharbor-game.json` and `<root>/worlds`, called from `GetConnectionStatusAsync`, `ConnectAsync`, `UploadVersionAsync` and `WriteSessionLockAsync`. (It does **not** implement `ISharedFolderCloudProvider`, so there is no test-setup path for it — leave it that way.)
+- `NotConfiguredCloudProvider` is not registered in DI today; only update its signatures so it compiles.
 
 **Tests:** `GameFolderMarkerPolicyTests` — one test per table row (6) + Dragonwilds-on-legacy-folder rejected.
 
@@ -230,7 +231,7 @@ Provider integration:
 - DI order: `SerilogAppLogger` depends on `IActiveGameContext`; `ActiveGameContext` therefore must not depend on `IAppLogger` (already the case per T02.5).
 
 ### T04.9 `FakeCloudProvider` + tests
-`SaveHarbor.Tests/Support/FakeCloudProvider.cs`: implements `ICloudProvider`; in-memory `Dictionary<(GameId, string), CloudWorldManifest>`, locks dictionary, versions dictionary; public hooks `Func<Task>? BeforeLockWrite`, `bool ThrowOnUpload`; records calls in `List<string> Calls`. It is needed from here on (also T05).
+`SaveHarbor.Tests/Support/FakeCloudProvider.cs`: implements `ICloudProvider`; in-memory `Dictionary<(GameId, string), CloudWorldManifest>`, locks dictionary, versions dictionary; public hooks `Func<Task>? AfterLockWrite` (runs after a lock is stored and before the method returns — used to simulate another client writing between our write and our verify-read), `int FailUploadTimes` (the next N uploads fail), `TimeSpan LockVerifyDelay => TimeSpan.Zero` (added in T05.2); records calls in `List<string> Calls`. It is needed from here on (also T05).
 Tests: `CloudSyncService.RefreshStatusAsync` per state branch (NotConnected, NoCloudSave, SomeonePlaying, CloudNewer ×2, Conflict, UpToDate) with a `TestPathProvider`-backed `LocalJsonSyncStateService`, a stub `IBackupService`, `NullAppLogger`; game isolation (a Windrose manifest invisible when querying Dragonwilds).
 
 ### T04.10 Verification (CP3)
@@ -259,7 +260,11 @@ Create `docs/plans/dragonwilds/PHASE0-RESULTS.md` from this template and ask the
 | V7 | Does the game rely on file modified time for the world list? | | |
 | V8 | Where is the game build id (appmanifest_1374490.acf)? | | |
 ```
-**Assumptions used until results exist (isolate each behind a named constant or option so it can change in one place):** worlds are top-level `*.sav` in `SaveGames`; no subfolders; game backup files end with `.bak` or `.backup` or contain `.bak.` (ignored by discovery); no header validation (`DragonwildsSaveAdapter.ValidateGvasHeader = false` const); processes `RSDragonwilds-Win64-Shipping`, `RSDragonwilds`, `RSDragonwildsServer`.
+**Assumptions used until results exist (each lives in exactly one place so it can change easily):**
+- A1: worlds are top-level files with extension exactly `.sav` in `SaveGames`, with no subfolders.
+- A2: game backup files contain `.bak` or `.backup` in the name and are ignored.
+- A3: no `GVAS` header validation. It is **not implemented** (no unused constant or flag); add it only after V2 confirms the header.
+- A4: process names are `RSDragonwilds-Win64-Shipping`, `RSDragonwilds` and `RSDragonwildsServer`.
 If V5 fails, **stop** and report; do not continue with T05's Dragonwilds behaviour.
 
 ### T03.1 Interface additions and definition
@@ -292,8 +297,7 @@ public sealed class DragonwildsGameDefinition(GameOptionsProvider optionsProvide
 ```csharp
 public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) : IGameSaveAdapter
 {
-    internal const bool ValidateGvasHeader = false;
-    private static readonly string[] IgnoredSuffixes = [".bak", ".backup"];
+    private const string WorldExtension = ".sav";
 
     public WorldPayloadKind PayloadKind => WorldPayloadKind.FileSet;
     public string SaveRootPath => ResolveRoot();
@@ -302,7 +306,7 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
 ```
 - `ResolveRoot()`: `SaveRoot` option (env-expanded) if set, else `Path.Combine(LocalApplicationData, "RSDragonwilds", "Saved", "SaveGames")`.
 - `DiscoverSaveRootsAsync`: if the folder exists → one `GameSaveRoot(GameId.Dragonwilds, "steam", root, root, $"{n} world(s)", Directory.GetLastWriteTimeUtc(root))`; else empty.
-- `DiscoverWorldsAsync`: `Directory.EnumerateFiles(root, "*.sav", SearchOption.TopDirectoryOnly)`, skipping names that contain an ignored suffix (`name.Contains(".bak", OrdinalIgnoreCase)` or ends with `.backup`); each → `ReadWorldAsync`. Order: `LastModifiedAt` desc, then name.
+- `DiscoverWorldsAsync`: `Directory.EnumerateFiles(root, "*", SearchOption.TopDirectoryOnly)` filtered by `string.Equals(Path.GetExtension(file), WorldExtension, OrdinalIgnoreCase)` and by name not containing `.bak` / `.backup` (OrdinalIgnoreCase). Do **not** use the search pattern `"*.sav"`: on Windows a 3-character extension pattern also matches longer extensions such as `.save`. Each match → `ReadWorldAsync`. Order: `LastModifiedAt` desc, then name.
 - `ReadWorldAsync(path)`: returns null if the file does not exist or has a non-`.sav` extension; `stem = Path.GetFileNameWithoutExtension(path)`; `WorldId = FileNameSanitizer.MakeSafeFileName(stem)` — if that is empty/unsafe (`!SafePath.IsSafeSegment`) return null; `WorldName = stem`; `Subtitle = string.Empty`; `SavePath = file.FullName`; `CreatedAt = file.CreationTime`; `LastModifiedAt = new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero).ToLocalTime()`; `SizeBytes`; `FileCount = 1`.
 - `GetPayloadFiles(world)` = `[world.SavePath]`.
 - `GetExpectedWorldPath(root, worldId)` = `SafePath.CombineUnderRoot(root.WorldsPath, worldId + ".sav")`.
@@ -327,7 +331,7 @@ internal interface IPayloadStrategy
 }
 ```
    - `DirectoryPayloadStrategy`: **move** `CopyDirectory` and `ReplaceDirectory` here unchanged; `Stage` = `CopyDirectory(world.SavePath, payloadRoot, ct)` then returns an empty list (v1-compatible); `Restore` = `ReplaceDirectory(payloadRoot, target.SavePath, ct)`; `Import` = existing logic from `ImportBackupAsNewWorldAsync` (target = `adapter.GetExpectedWorldPath(root, manifest.WorldId)`; if exists and !overwrite → `IOException`-style existing message; delete + move staging as today).
-   - `FileSetPayloadStrategy`: `Stage` copies each `adapter.GetPayloadFiles(world)` to `payloadRoot/<file name>` and returns entries (`RelativePath = file name`, SHA-256 via `FileHashCalculator`-equivalent sync hash, size). `Restore`: for each entry validate `SafePath.IsSafeSegment(entry.RelativePath)`, target path = `Path.Combine(Path.GetDirectoryName(target.SavePath)!, entry.RelativePath)`, then `ReplaceFile(...)` below. `Import`: target dir = `root.WorldsPath` (create if missing), each entry's target via `SafePath.CombineUnderRoot(root.WorldsPath, entry.RelativePath)`; if any target exists and `!overwriteExisting` → throw `IOException($"A local world file named '{name}' already exists.")`; returns the path of the first entry.
+   - `FileSetPayloadStrategy`: `Stage` copies each `adapter.GetPayloadFiles(world)` to `payloadRoot/<file name>` and returns entries (`RelativePath = file name`, SHA-256 via `FileHashCalculator`-equivalent sync hash, size). `Restore`: for each entry validate `SafePath.IsSafeSegment(entry.RelativePath)`. Guard: if the manifest has exactly one entry and its name differs (OrdinalIgnoreCase) from `Path.GetFileName(target.SavePath)`, throw `InvalidOperationException("This backup belongs to a world file with a different name.")`. Otherwise a restore would silently create a second world next to the original. Then target path = `Path.Combine(Path.GetDirectoryName(target.SavePath)!, entry.RelativePath)` and `ReplaceFile(...)` below. `Import`: target dir = `root.WorldsPath` (create if missing), each entry's target via `SafePath.CombineUnderRoot(root.WorldsPath, entry.RelativePath)`; if any target exists and `!overwriteExisting` → throw `IOException($"A local world file named '{name}' already exists.")`; returns the path of the first entry.
    - `ReplaceFile(string source, string target)` (private static in the file-set strategy):
 ```csharp
 var temp = target + ".saveharbor-tmp";

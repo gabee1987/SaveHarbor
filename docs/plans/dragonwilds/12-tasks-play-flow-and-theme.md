@@ -49,9 +49,19 @@ plus `AppDisplayFontFamily` (`FontFamily`), `ShowOrnamentGlyphs` (`Visibility`),
 | `ToneSuccessBackgroundBrush` / `Border` | `#26301F` / `#5F8A4F` |
 | `ToneWarnBackgroundBrush` / `Border` | `#3A2A16` / `#B4772F` |
 | `ToneNeutralBackgroundBrush` | `#1D1913` |
-| `AppDisplayFontFamily` | `pack://application:,,,/Resources/Fonts/#Cinzel, Georgia` |
+| `AppDisplayFontFamily` | `/SaveHarbor.App;component/Resources/Fonts/#Cinzel, Georgia` |
 | `ShowOrnamentGlyphs` | `Visible` |
 | `GameIconGeometry` | `M12,2 C16,6 20,7 22,7 C21,14 17,19 12,22 C7,19 3,14 2,7 C4,7 8,6 12,2 Z` (a simple shield/wing silhouette; original shape) |
+
+**XAML syntax for the non-brush keys** (use exactly these forms):
+```xml
+<FontFamily x:Key="AppDisplayFontFamily">/SaveHarbor.App;component/Resources/Fonts/#Cinzel, Georgia</FontFamily>
+<Visibility x:Key="ShowOrnamentGlyphs">Visible</Visibility>
+<PathGeometry x:Key="GameIconGeometry" Figures="M12,2 C16,6 20,7 22,7 C21,14 17,19 12,22 C7,19 3,14 2,7 C4,7 8,6 12,2 Z" />
+```
+- **Font URI:** do **not** use the `pack://application:,,,/…` form for the font. Its commas collide with the comma that separates the `Georgia` fallback. The `/SaveHarbor.App;component/…` form is absolute, so it also does not depend on the dictionary's own folder.
+- **Check the fallback:** after T06.3, confirm the fallback works by running once *without* the font files (the text must render in Georgia) and once *with* them.
+- **If parsing fails:** if the fallback list does not parse, use `/SaveHarbor.App;component/Resources/Fonts/#Cinzel` alone and report it.
 
 Contrast (already measured on `PanelBrush`): Subtle is 3.5:1 → never use `SubtleBrush` for information the user needs (only hints/disabled).
 
@@ -94,7 +104,7 @@ public sealed class ThemeService : IThemeService
 - `App.xaml` merged dictionaries: `[0] Resources/Themes/Windrose.Colors.xaml`, `[1] Resources/Styles/Controls.xaml`; add an XML comment above: `<!-- Index 0 = game colours, replaced by ThemeService. Keep it first. -->`.
 - Register `services.AddSingleton<IThemeService, ThemeService>();` and **resolve it once in `App.OnStartup` before `MainWindow` is created**: `_host.Services.GetRequiredService<IThemeService>();`.
 - `WindroseGameDefinition.ThemeDictionary` → `pack://application:,,,/Resources/Themes/Windrose.Colors.xaml`; `DragonwildsGameDefinition.ThemeDictionary` → `…/Dragonwilds.Colors.xaml`.
-- `HighContrast.Colors.xaml`: same key set; brushes map to system colours using `{x:Static SystemColors.WindowBrush}` etc. (`AppBackground/Panel/PanelAlt/Input` → `WindowBrush`; `LineBrush/LineSoft` → `WindowTextBrush`; `Ink/Muted/Subtle` → `WindowTextBrush`; `Accent*` → `HotTrackBrush`; `Danger/Warn/Success/Info` → `WindowTextBrush`; `Tone*Background` → `WindowBrush`; `Tone*Border` → `WindowTextBrush`; `PrimaryButtonForegroundBrush` → `HighlightTextBrush`; `OrnamentBrush` → `WindowTextBrush`; `ShowOrnamentGlyphs` Collapsed; font `Segoe UI`). The `ThemeDictionaryTests` key-set test covers this file too.
+- `HighContrast.Colors.xaml`: same key set; each brush is an alias element such as `<x:Static x:Key="PanelBrush" Member="SystemColors.WindowBrush" />`, mapped as follows (`AppBackground/Panel/PanelAlt/Input` → `WindowBrush`; `LineBrush/LineSoft` → `WindowTextBrush`; `Ink/Muted/Subtle` → `WindowTextBrush`; `Accent*` → `HotTrackBrush`; `Danger/Warn/Success/Info` → `WindowTextBrush`; `Tone*Background` → `WindowBrush`; `Tone*Border` → `WindowTextBrush`; `PrimaryButtonForegroundBrush` → `HighlightTextBrush`; `OrnamentBrush` → `WindowTextBrush`; `ShowOrnamentGlyphs` Collapsed; font `Segoe UI`). The `ThemeDictionaryTests` key-set test covers this file too.
 
 ### T06.5 Game switch (header)
 1. `App/ViewModels/GameOptionViewModel.cs`: `public sealed partial class GameOptionViewModel(GameId id, string displayName) : ObservableObject { public GameId Id { get; } = id; public string DisplayName { get; } = displayName; [ObservableProperty] private bool isActive; }`.
@@ -176,7 +186,11 @@ public static class SessionLockPolicy
 
 ### T05.2 Providers: heartbeat-safe reads, verified acquire
 1. `ICloudProvider`: add `TimeSpan LockVerifyDelay { get; }` (Folder 200 ms, Drive 2 s, NotConfigured `TimeSpan.Zero`, Fake `TimeSpan.Zero`).
-2. `GoogleDriveCloudProvider.GetSessionLockAsync(game, worldId)`: list **all** non-trashed `active-session.json` in the locks folder (new helper `ListFileIdsByNameAsync` in `.Folders.cs` returning ids), download each, `SessionLockPolicy.ResolveWinner(...)`. Do not delete anything here.
+2. `GoogleDriveCloudProvider.GetSessionLockAsync(game, worldId)`:
+   - List **all** non-trashed `active-session.json` files in the locks folder, using a new helper `ListFileIdsByNameAsync` in `.Folders.cs` that returns their ids.
+   - Download each one. Split the existing `DownloadJsonByNameAsync` into the existing find step plus a new `DownloadJsonByIdAsync<T>(service, fileId, ct)` in `.Files.cs`, and make `DownloadJsonByNameAsync` call it so behaviour is unchanged.
+   - Pick the lock with `SessionLockPolicy.ResolveWinner(...)`.
+   - Do not delete anything here.
 3. `ClearSessionLockAsync(game, worldId, lockId)`: delete every `active-session.json` whose content `LockId == lockId`; if none match, do nothing (it is not ours / already replaced). Same in `FolderCloudProvider` (read file; delete only if `LockId` matches; an unreadable file is left alone).
 4. `WriteSessionLockAsync` keeps update-or-create semantics.
 5. `CloudSyncService.Sessions.cs` `StartSessionAsync(GameWorld world, bool allowTakeOver = false, CancellationToken ct = default)` (update `ICloudSyncService`):
@@ -198,7 +212,7 @@ if (current is null || !string.Equals(current.LockId, sessionLock.LockId, String
    - add a short comment explaining *why* (Drive has no compare-and-swap, so write → wait → verify is the substitute).
 6. `HeartbeatAsync(GameWorld world, ct)` on `ICloudSyncService`: read lock; `null` or foreign → `CloudSyncResult(false, CloudSyncState.SomeonePlaying, "Your session lock was taken over.")`; own → rewrite same `LockId` with `LastHeartbeatAtUtc = now`, `ExpiresAtUtc = now + LockTtl` → success. (It does not call `RefreshStatusAsync` — one provider read, one write.)
 
-**Tests (FakeCloudProvider hooks):** two clients race (`BeforeLockWrite` lets "client B" write its lock between A's write and verify) → A loses, A's file removed, B's remains; sole client acquires; expired foreign lock without `allowTakeOver` blocked, with it acquires; heartbeat extends expiry and keeps `LockId`; heartbeat reports takeover when the lock is foreign.
+**Tests (FakeCloudProvider hooks):** two clients race (`AfterLockWrite` lets "client B" overwrite the lock between A's write and A's verify-read) → A loses, A's file removed, B's remains; sole client acquires; expired foreign lock without `allowTakeOver` blocked, with it acquires; heartbeat extends expiry and keeps `LockId`; heartbeat reports takeover when the lock is foreign.
 
 ### T05.3 Payload hash (`App/Utilities/PayloadHasher.cs`) + local state
 ```csharp
@@ -222,7 +236,7 @@ public enum PlayOutcome { Launched, NotConnected, BlockedSomeonePlaying, Blocked
                           NeedsFirstPublishConfirmation, NeedsReplaceUnsyncedConfirmation, LaunchFailed, Failed }
 public sealed record PlayOptions(bool AllowTakeOver = false, bool ConfirmedFirstPublish = false, bool ConfirmedReplaceUnsynced = false);
 public sealed record PlayPrepareResult(PlayOutcome Outcome, CloudSessionLock? Lock = null, string? Detail = null);
-public enum FinishOutcome { Uploaded, NoChanges, UploadFailedLockKept, ConflictLockKept, LockReleaseFailed }
+public enum FinishOutcome { Uploaded, NoChanges, UploadFailedLockKept, ConflictLockKept, LockLost, LockReleaseFailed }
 public sealed record PlayFinishResult(FinishOutcome Outcome, string Message, int? VersionNumber = null);
 ```
 Interface:
@@ -246,22 +260,23 @@ Constructor deps: `ICloudSyncService`, `IGameLauncherService`, `ILocalSyncStateS
 
 `FinishAfterExitAsync`:
 1. `WaitingForSaves`: poll every 1 s until `UtcNow - max(LastWriteTimeUtc of payload files) >= game.SaveSettleDelay` or `SettleCap` elapsed.
-2. Compute `PayloadHasher`; if equal to `LocalSyncState.LastSyncedPayloadSha256` (non-empty) → `Releasing`: `EndSessionAsync`; return `NoChanges` (or `LockReleaseFailed` if it fails).
-3. `Uploading`: `UploadCurrentAsync(world)` with retries: attempts at t=0, +5 s, +15 s, +45 s (`Task.Delay`, cancellation-aware). Success → `Uploaded(version)` (upload already clears our lock). A `Conflict` state result → `ConflictLockKept` (no retry). After the last failure → `UploadFailedLockKept`.
+2. `status = RefreshStatusAsync(world)`. If `status.SessionLock` exists and is **not own** (another machine took over, active or expired), return `LockLost` without uploading or releasing. Uploading would publish a version on top of someone else's session. (`UploadCurrentAsync` does not check foreign locks itself.)
+3. Compute `PayloadHasher`; if equal to `LocalSyncState.LastSyncedPayloadSha256` (non-empty) → `Releasing`: `EndSessionAsync`; return `NoChanges` (or `LockReleaseFailed` if it fails).
+4. `Uploading`: `UploadCurrentAsync(world)` with retries: attempts at t=0, +5 s, +15 s, +45 s (`Task.Delay`, cancellation-aware). Success → `Uploaded(version)` (upload already clears our lock). A `Conflict` state result → `ConflictLockKept` (no retry). After the last failure → `UploadFailedLockKept`.
 Expose the delays as an injectable `IReadOnlyList<TimeSpan> RetryDelays` constructor parameter with the default above so tests run instantly.
 
-**Tests (`PlaySessionServiceTests`, FakeCloudProvider + stub launcher/process detection + `TestPathProvider`):** one test per `PlayOutcome`; `CloudNewer` triggers a download before locking (assert call order `Download` → `WriteLock` → `Launch`); launch failure releases the lock; first-publish and replace-unsynced require confirmation flags; finish: no-change skip releases without uploading; upload fails 4× → `UploadFailedLockKept` and the lock still exists; second call succeeds; settle wait returns immediately when files are old; settle wait honours the cap (use a tiny cap via an overload/parameter for the test).
+**Tests (`PlaySessionServiceTests`, FakeCloudProvider + stub launcher/process detection + `TestPathProvider`):** one test per `PlayOutcome`; `CloudNewer` triggers a download before locking (assert call order `Download` → `WriteLock` → `Launch`); launch failure releases the lock; first-publish and replace-unsynced require confirmation flags; finish: foreign lock → `LockLost` with no upload and no release; no-change skip releases without uploading; upload fails 4× → `UploadFailedLockKept` and the lock still exists; second call succeeds; settle wait returns immediately when files are old; settle wait honours the cap (use a tiny cap via an overload/parameter for the test).
 
 ### T05.5 View model (`MainWindowViewModel.Play.cs`, new; trim `.CloudCommands.cs` and `.GameMonitor.cs`)
 - Inject `IPlaySessionService` (constructor).
 - State: `[ObservableProperty] string playStageText`, `[ObservableProperty] bool isPlaying`, `[ObservableProperty] bool hasPendingUpload`, fields `DateTimeOffset? launchRequestedAt`, `DateTimeOffset lastHeartbeatAt`, `bool isFinishing`, `bool isHeartbeatInFlight`.
-- Computed `PlayButtonText` (raise it from the handlers of `IsBusy`, `IsGameRunning`, `CloudStatus`, `IsPlaying`, `HasPendingUpload`, `SelectedWorld`): `HasPendingUpload` → "Retry sharing"; `IsPlaying` → "Playing…"; busy → "Working…"; `CloudStatus.State == SomeonePlaying` and lock foreign → `$"{player} is playing"`; `Worlds.Count == 0 && CloudStatus?.LatestVersion is not null` → "Get shared world"; else "Play".
-- `PlayCommand` (replaces `StartGameCommand`; delete `StartGameAsync`, keep its "game already running" branch semantics inside `PlayAsync`): 
-  1. If no local world and a cloud version exists → run the existing no-local-world download path (`DownloadCloudWithoutLocalWorldAsync` + `RefreshAsync`) and return.
+- Computed `PlayButtonText` (raise it from the handlers of `IsBusy`, `IsGameRunning`, `CloudStatus`, `IsPlaying`, `HasPendingUpload`, `SelectedWorld`): `HasPendingUpload` → "Retry sharing"; `IsPlaying` → "Playing…"; busy → "Working…"; `CloudStatus.State == SomeonePlaying` and lock foreign → `$"{player} is playing"`; `Worlds.Count == 0` → "Get shared world"; else "Play". (`CloudStatus` is always `null` when no world is selected, so the "no local world" case cannot depend on it. The download path itself reports "No cloud save is available" when the group has none.)
+- `PlayCommand` (replaces `StartGameCommand`; delete `StartGameAsync`, keep its "game already running" branch semantics inside `PlayAsync`). `[RelayCommand(CanExecute = nameof(CanPlay))]` with `private bool CanPlay() => !IsBusy && (SelectedWorld is not null || Worlds.Count == 0);`. Rename the `[NotifyCanExecuteChangedFor(nameof(StartGameCommand))]` attribute on `selectedWorld` (MainWindowViewModel.cs line 35) to `PlayCommand`, change the XAML binding (`ActionsSectionView.xaml` line 45), and `NotifyCommandStates()` (Operations.cs line 58). After `RefreshAsync` repopulates `Worlds`, call `PlayCommand.NotifyCanExecuteChanged()` (it already happens via `NotifyCommandStates()` in `RunBusyAsync`'s `finally`; verify).
+  1. If `Worlds.Count == 0` → `UpdateGameStatus()`; block if the game is running (existing message); else run the existing no-local-world download path (`DownloadCloudWithoutLocalWorldAsync` + `RefreshAsync`, inside `RunBusyAsync`) and return. This path does not launch the game; the next Play press does.
   2. `UpdateGameStatus()`; if the game is already running → start/keep the session as the old branch did (`StartSessionAsync(world, allowTakeOver:false)` then `hasObservedGameRunningDuringSession = true`).
   3. Else `RunBusyAsync` → call `PrepareAndLaunchAsync(world, _activeGame.Current, options, progress, ct)` where `progress` sets `PlayStageText` via the stage → text map (`CheckingCloud` "Checking the cloud…", `Downloading` "Downloading the latest world…", `Locking` "Locking the world…", `Launching` $"Launching {ActiveGameName}…", `WaitingForSaves` "Waiting for saves to finish…", `Uploading` "Sharing your progress…", `Releasing` "Releasing the session…").
   4. Map outcomes (single `switch` in this file only):
-     - `Launched` → `launchRequestedAt = Now; IsPlaying = true; hasObservedGameRunningDuringSession = false;` status/activity/toast (existing wording style).
+     - `Launched` → `await RefreshSelectedWorldFromDiskAsync()` (a download may have changed it), then `await RefreshCloudStatusAsync(showToast: false)`. This refresh is **required**: the monitor's `HasOwnCloudSession()` reads the cached `CloudStatus`, so without it no heartbeat or finish ever triggers. Then `launchRequestedAt = Now; lastHeartbeatAt = Now; IsPlaying = true; hasObservedGameRunningDuringSession = false;` and status/activity/toast in the existing wording style.
      - `BlockedSomeonePlaying` → `_dialogService.ShowError($"{ActiveGameName} is in use", $"{lock.PlayerName} has been hosting since {lock.StartedAtUtc.ToLocalTime():HH:mm} (from v{lock.BasedOnVersionNumber}). Try again when they have finished.")`.
      - `NeedsTakeOverConfirmation` → `Confirm("Take over the session?", $"{player}'s session expired {age}. If they are still playing, taking over can lose progress. Continue?")` → if yes re-run with `AllowTakeOver: true`.
      - `NeedsFirstPublishConfirmation` → `Confirm("Share this world?", "No shared version exists yet. SaveHarbor will upload your current world as version 1 and then start the game.")` → re-run with `ConfirmedFirstPublish: true`.
@@ -272,7 +287,19 @@ Expose the delays as an injectable `IReadOnlyList<TimeSpan> RetryDelays` constru
 - `GameMonitor` changes (tick handler, still every 5 s, no new timers):
   - While running and own lock: `observed = true`; heartbeat when `Now - lastHeartbeatAt >= HeartbeatInterval && !isHeartbeatInFlight` → fire-and-forget `SendHeartbeatAsync()` (sets `isHeartbeatInFlight`, calls `_cloudSyncService.HeartbeatAsync`; on a takeover result show one persistent warning toast and set `HasPendingUpload = false`, `IsPlaying = false`; wrap in try/catch → `_errorHandler.Handle`).
   - Not running, `IsPlaying`, never observed, and `Now - launchRequestedAt > GameStartTimeout` → `EndSessionAsync`, `IsPlaying = false`, toast "`{ActiveGameName}` did not start. Session released. If Steam is updating the game, press Play again when it has finished."
-  - Was running and now closed with own lock → `FinishAfterExitAsync` (replaces `AutoEndCloudSessionAfterGameClosedAsync`; keep the `isAutoEndingSession` guard as `isFinishing`). Map `FinishOutcome`: `Uploaded` → toast Success "Progress shared as v{n}"; `NoChanges` → toast Info "No changes to share. Session released."; `UploadFailedLockKept`/`ConflictLockKept` → `HasPendingUpload = true` (this drives the persistent banner in T05.7) + toast Error; in every case set `IsPlaying = false` (the banner, not `IsPlaying`, carries the "lock still held" state).
+  - Was running and now closed with own lock → run `FinishAfterExitAsync` **inside `RunBusyAsync("Sharing your progress…", …)`**. It can take minutes (settle wait plus retries), and `IsBusy` blocks the other commands and makes later ticks return early through the existing `IsBusy` guard. This replaces `AutoEndCloudSessionAfterGameClosedAsync`; rename the `isAutoEndingSession` guard to `isFinishing`.
+
+    Map each `FinishOutcome`:
+
+    | Outcome | Result |
+    |---|---|
+    | `Uploaded` | Success toast "Progress shared as v{n}" |
+    | `NoChanges` | Info toast "No changes to share. Session released." |
+    | `UploadFailedLockKept` / `ConflictLockKept` | `HasPendingUpload = true` (drives the persistent banner in T05.7) + Error toast |
+    | `LockLost` | Warning dialog "{player} took over the session while you were playing. Your progress was not uploaded and your local files are unchanged. Sort out with your group which version to keep (Advanced → Backups)." `HasPendingUpload` stays `false` |
+    | `LockReleaseFailed` | Warning toast |
+
+    After every outcome, `RefreshCloudStatusAsync(showToast: false)` and `IsPlaying = false`. The banner, not `IsPlaying`, carries the "lock still held" state.
 - `RetryUploadCommand` (`[RelayCommand]`, enabled when `HasPendingUpload && !IsBusy`): `RunBusyAsync("Sharing your progress…")` → `FinishAfterExitAsync` again; clear `HasPendingUpload` on `Uploaded`/`NoChanges`.
 - `NotifyCommandStates()`: replace `StartGameCommand` with `PlayCommand`, add `RetryUploadCommand`, `SwitchGameCommand`.
 - Manual buttons (Advanced): Start session now calls `StartSessionAsync(world, allowTakeOver)` with the same take-over `Confirm` when `CloudStatus.SessionLock` is foreign and expired.
