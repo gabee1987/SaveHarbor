@@ -17,11 +17,11 @@ public sealed class DragonwildsGameDefinition(GameOptionsProvider optionsProvide
 
     public IReadOnlyList<string> ProcessNames { get; } = ["RSDragonwilds-Win64-Shipping", "RSDragonwilds", "RSDragonwildsServer"];
 
-    public ProcessMatch ProcessMatch => ProcessMatch.Exact;
-
     public TimeSpan SaveSettleDelay => TimeSpan.FromSeconds(15);
 
     public Uri ThemeDictionary { get; } = new("/Resources/Themes/Dragonwilds.Colors.xaml", UriKind.Relative);
+
+    public Uri SkinDictionary { get; } = new("/SaveHarbor.App;component/Resources/Themes/Dragonwilds/Dragonwilds.Theme.xaml", UriKind.Relative);
 
     public string? PostRestoreHint => "If Steam asks about a cloud conflict, choose Local files.";
 

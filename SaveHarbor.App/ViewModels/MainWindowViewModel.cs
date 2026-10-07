@@ -51,16 +51,10 @@ public partial class MainWindowViewModel : ObservableObject
     private string statusText = "Ready";
 
     [ObservableProperty]
-    private BackupInfo? lastBackup;
-
-    [ObservableProperty]
     private int backupCount;
 
     [ObservableProperty]
     private string totalBackupSize = "0 B";
-
-    [ObservableProperty]
-    private string profileStatus = "Checking save profile...";
 
     [ObservableProperty]
     private CloudSyncStatus? cloudStatus;

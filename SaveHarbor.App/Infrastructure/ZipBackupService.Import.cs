@@ -1,5 +1,6 @@
 using System.IO;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Backup;
 
 namespace SaveHarbor.App.Infrastructure;
 
@@ -17,6 +18,7 @@ public sealed partial class ZipBackupService
         var strategy = SelectStrategyForManifest(manifest, adapter);
 
         var targetPath = adapter.GetExpectedWorldPath(profile, manifest.WorldId);
+        SaveFormatCompatibility.EnsureCanRestore(manifest.SaveFormatVersion, adapter.GetSaveFormatVersion(targetPath));
         if (overwriteExisting && (File.Exists(targetPath) || Directory.Exists(targetPath)))
         {
             var existing = await adapter.ReadWorldAsync(targetPath, cancellationToken)
@@ -26,7 +28,10 @@ public sealed partial class ZipBackupService
 
         var importedPath = string.Empty;
         await RunWithExtractedPayloadAsync(backupPath, payloadRoot =>
-            importedPath = strategy.Import(payloadRoot, manifest, profile, adapter, overwriteExisting, cancellationToken), cancellationToken);
+        {
+            adapter.ValidatePayload(payloadRoot, manifest.WorldId);
+            importedPath = strategy.Import(payloadRoot, manifest, profile, adapter, overwriteExisting, cancellationToken);
+        }, cancellationToken);
 
         return importedPath;
     }

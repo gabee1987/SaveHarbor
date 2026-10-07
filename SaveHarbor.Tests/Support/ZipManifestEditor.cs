@@ -31,6 +31,9 @@ public static class ZipManifestEditor
         Directory.CreateDirectory(Path.Combine(staging, "world"));
         File.WriteAllText(Path.Combine(staging, "world", fileName), content);
         File.WriteAllText(
+            Path.Combine(staging, "world", "WorldDescription.json"),
+            $$$"""{"Version":1,"WorldDescription":{"islandId":"{{{worldId}}}","WorldName":"Test World"}}""");
+        File.WriteAllText(
             Path.Combine(staging, ManifestName),
             $$$"""{"SchemaVersion":1,"Game":"windrose","WorldId":"{{{worldId}}}","WorldName":"Test World","FileCount":1}""");
         ZipFile.CreateFromDirectory(staging, zipPath, CompressionLevel.Optimal, includeBaseDirectory: false);

@@ -18,10 +18,8 @@ public partial class CloudFolderSetupWindow : Window
     private bool isSelectingSilently;
     private string lastTestedInput = string.Empty;
 
-    private const string DragonwildsThemeSource = "/SaveHarbor.App;component/Resources/Themes/Dragonwilds/Dragonwilds.Theme.xaml";
-
     public CloudFolderSetupWindow(
-        GameId game,
+        Uri skinDictionary,
         string gameDisplayName,
         string currentFolderId,
         IReadOnlyList<SavedCloudFolder> savedFolders,
@@ -30,12 +28,9 @@ public partial class CloudFolderSetupWindow : Window
     {
         InitializeComponent();
 
-        // The dialog is shared by both games; for Dragonwilds the folder list uses the game's framed dropdown.
-        if (game == GameId.Dragonwilds)
-        {
-            Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(DragonwildsThemeSource, UriKind.Relative) });
-            SavedFolderPicker.Style = (Style)FindResource("DwComboBox");
-        }
+        // The dialog is shared by both games; the folder list uses the active game's own dropdown.
+        Resources.MergedDictionaries.Add(new ResourceDictionary { Source = skinDictionary });
+        SavedFolderPicker.Style = (Style)FindResource("SkinComboBox");
 
         var title = string.Format(UiTextCatalog.Get("CloudSetup.TitleFormat"), gameDisplayName);
         Title = title;

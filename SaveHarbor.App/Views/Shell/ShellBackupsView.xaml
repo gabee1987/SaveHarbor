@@ -1,0 +1,160 @@
+<UserControl x:Class="SaveHarbor.App.Views.Shell.ShellBackupsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+             xmlns:vm="clr-namespace:SaveHarbor.App.ViewModels"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <UserControl.Resources>
+        <!-- A folder path that can be copied (for Total Commander and the like) or opened. -->
+        <DataTemplate x:Key="FolderPathTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding}" Style="{DynamicResource SkinMuted}" FontSize="11.5" VerticalAlignment="Center" ToolTip="{Binding}" />
+                <Button Grid.Column="1" Style="{DynamicResource SkinCopyButton}" Margin="6,0,0,0"
+                        Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding}" ToolTip="{ui:UiText Paths.CopyTooltip}" />
+                <Button Grid.Column="2" Content="{ui:UiText Paths.Open}" Style="{DynamicResource SkinLinkButton}" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"
+                        Command="{Binding DataContext.OpenFolderPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- One backup: when, why, size, copy its path, and the restore action given as Tag on the row. -->
+        <DataTemplate x:Key="BackupRowTemplate" DataType="{x:Type domain:WorldBackupItem}">
+            <Border BorderBrush="{DynamicResource SkinFrameInnerBrush}" BorderThickness="0,0,0,1" Padding="0,5" ToolTip="{Binding FilePath}">
+                <Grid>
+                    <!-- Age, reason and size sit together on the left; the spare width goes before the actions. -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="BackupReason" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding CreatedAt, Converter={x:Static converters:RelativeAgeConverter.Instance}}" Style="{DynamicResource SkinMuted}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Reason}" Foreground="{DynamicResource InkBrush}" FontSize="12.5" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding SizeBytes, Converter={x:Static converters:ByteSizeConverter.Instance}}" Style="{DynamicResource SkinMuted}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                    <Button Grid.Column="4" Style="{DynamicResource SkinCopyButton}" Margin="8,0,0,0"
+                            Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding FilePath}" ToolTip="{ui:UiText Paths.CopyFileTooltip}" />
+                    <ContentPresenter Grid.Column="5" Content="{Binding}" ContentTemplate="{Binding Tag, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RestoreHereAction">
+            <Button Content="{ui:UiText Shell.RestoreThis}"
+                    Command="{Binding DataContext.RestoreListedBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}" Style="{DynamicResource SkinLinkButton}" ToolTip="{ui:UiText Shell.RestoreThisTooltip}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="RestoreAsWorldAction">
+            <Button Content="{ui:UiText Shell.RestoreAsWorld}"
+                    Command="{Binding DataContext.RestoreBackupAsWorldCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}" Style="{DynamicResource SkinLinkButton}" ToolTip="{ui:UiText Shell.RestoreAsWorldTooltip}" />
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <!-- Right margin keeps the row actions clear of the scrollbar. -->
+        <StackPanel Margin="0,0,14,0">
+            <!-- Shown only while it matters: save operations are blocked while the game runs. -->
+            <Border Margin="0,0,0,12" Padding="12,8" CornerRadius="3" BorderThickness="1"
+                    Background="{DynamicResource ToneWarnBackgroundBrush}" BorderBrush="{DynamicResource ToneWarnBorderBrush}"
+                    Visibility="{Binding IsGameRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{Binding SafetyHint}" Foreground="{DynamicResource WarnBrush}" TextWrapping="Wrap" FontSize="12" />
+            </Border>
+
+            <!-- The selected world -->
+            <TextBlock Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}">
+                <Run Text="{ui:SpacedText Shell.BackupsOf}" />
+                <Run Text="  " />
+                <Run Text="{Binding SelectedWorld.WorldName, Mode=OneWay, Converter={x:Static converters:SpacedCapsConverter.Instance}}" Foreground="{DynamicResource SkinGoldBrightBrush}" />
+            </TextBlock>
+            <TextBlock Text="{Binding SelectedWorldBackupSummary}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" Margin="0,4,0,0" />
+            <ContentControl Content="{Binding SelectedWorldBackupFolder}" ContentTemplate="{StaticResource FolderPathTemplate}" Focusable="False" Margin="0,4,0,0" />
+
+            <WrapPanel Margin="0,12,0,0">
+                <Button Content="{ui:SpacedText Shell.BackUpNow}" Command="{Binding CreateBackupCommand}" Style="{DynamicResource SkinButton}" Margin="0,0,8,8" ToolTip="{ui:UiText Actions.BackupTooltip}" />
+                <Button Content="{ui:SpacedText Shell.Restore}" Command="{Binding RestoreBackupCommand}" Style="{DynamicResource SkinButton}" Margin="0,0,8,8" ToolTip="{ui:UiText Actions.RestoreTooltip}" />
+                <Button Content="{ui:SpacedText Shell.Import}" Command="{Binding ImportBackupCommand}" Style="{DynamicResource SkinButton}" Margin="0,0,8,8" ToolTip="{ui:UiText Actions.ImportTooltip}" />
+            </WrapPanel>
+
+            <TextBlock Text="{ui:UiText Shell.NoWorldBackups}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap"
+                       Visibility="{Binding SelectedWorldBackups.Count, Converter={x:Static converters:ZeroToVisibleConverter.Instance}}" />
+            <ItemsControl ItemsSource="{Binding SelectedWorldBackups}" ItemTemplate="{StaticResource BackupRowTemplate}" Tag="{StaticResource RestoreHereAction}" Grid.IsSharedSizeScope="True" />
+
+            <!-- Every other world, including worlds no longer on this PC -->
+            <StackPanel Margin="0,18,0,0" Visibility="{Binding OtherWorldBackupGroups.Count, Converter={x:Static converters:ZeroToCollapsedConverter.Instance}}">
+                <TextBlock Text="{ui:SpacedText Shell.OtherWorldBackups}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
+                <TextBlock Text="{ui:UiText Shell.OtherWorldBackupsHint}" Style="{DynamicResource SkinMuted}" FontSize="11.5" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,8" />
+                <ItemsControl ItemsSource="{Binding OtherWorldBackupGroups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:WorldBackupGroup}">
+                            <Border Background="#40181310" BorderBrush="{DynamicResource SkinRowBorderBrush}" BorderThickness="1" Margin="0,0,0,6">
+                                <StackPanel>
+                                    <ToggleButton IsChecked="{Binding IsExpanded}" Cursor="Hand" Focusable="True">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border x:Name="Header" Background="Transparent" Padding="10,7">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="18" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Path x:Name="Chevron" Data="{DynamicResource SkinChevronGeometry}" Stroke="{DynamicResource SkinGoldBrush}" StrokeThickness="1.4"
+                                                              Width="9" Height="5" Stretch="Fill" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="-90" />
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding Summary}" Style="{DynamicResource SkinMuted}" FontSize="11.5" Margin="0,1,0,0" />
+                                                        </StackPanel>
+                                                        <Border Grid.Column="2" BorderBrush="{DynamicResource ToneWarnBorderBrush}" BorderThickness="1" Padding="6,1" VerticalAlignment="Center"
+                                                                Visibility="{Binding IsOnThisPc, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}">
+                                                            <TextBlock Text="{ui:UiText Shell.NotOnThisPc}" Foreground="{DynamicResource WarnBrush}" FontSize="10.5" FontWeight="SemiBold" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Header" Property="Background" Value="#26C9A24A" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Chevron" Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <RotateTransform Angle="0" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                    <StackPanel Margin="22,0,10,8" Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <ContentControl Content="{Binding FolderPath}" ContentTemplate="{StaticResource FolderPathTemplate}" Focusable="False" Margin="0,0,0,4" />
+                                        <ItemsControl ItemsSource="{Binding Backups}" ItemTemplate="{StaticResource BackupRowTemplate}" Tag="{StaticResource RestoreAsWorldAction}" Grid.IsSharedSizeScope="True" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Where everything lives -->
+            <TextBlock Text="{ui:SpacedText Shell.AllBackups}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" Margin="0,16,0,2" />
+            <TextBlock Text="{Binding BackupStorageSummary}" Style="{DynamicResource SkinMuted}" FontSize="11.5" />
+            <ContentControl Content="{Binding BackupRoot}" ContentTemplate="{StaticResource FolderPathTemplate}" Focusable="False" Margin="0,2,0,0" />
+            <TextBlock Text="{ui:SpacedText Shell.GameSaveFolder}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" Margin="0,10,0,2" />
+            <ContentControl Content="{Binding LocalSaveRoot}" ContentTemplate="{StaticResource FolderPathTemplate}" Focusable="False" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

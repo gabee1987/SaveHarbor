@@ -15,6 +15,9 @@ public sealed class BackupManifest
     // Schema version 2. Version 1 manifests carry neither field and describe a directory payload.
     public string PayloadKind { get; set; } = nameof(WorldPayloadKind.Directory);
     public List<BackupFileEntry> Files { get; set; } = [];
+
+    // The game's save-format version when the backup was made (Windrose: "0.10.0"); empty when unknown.
+    public string SaveFormatVersion { get; set; } = string.Empty;
 }
 
 public sealed class BackupFileEntry

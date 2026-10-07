@@ -26,6 +26,8 @@
 
   <ItemGroup>
     <Content Include="..\SaveHarbor.App\Resources\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\SaveHarbor.App\Resources\Themes\*\*.xaml" Link="Themes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\SaveHarbor.App\Views\Shell\*.xaml;..\SaveHarbor.App\Views\Dialogs\*.xaml.cs" Link="ShellViews\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

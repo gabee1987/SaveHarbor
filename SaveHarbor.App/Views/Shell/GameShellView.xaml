@@ -1,0 +1,110 @@
+<UserControl x:Class="SaveHarbor.App.Views.Shell.GameShellView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SaveHarbor.App.Views.Shell"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <!-- The main screen shared by every game. The game's skin (styles, ornaments, effects) is merged by the game's
+         own shell wrapper around this view, e.g. DragonwildsShellView. -->
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate x:Key="EmbersTemplate">
+                <local:EmberFieldView EmberBrush="{DynamicResource SkinEmberBrush}" />
+            </DataTemplate>
+            <DataTemplate x:Key="SettingsTemplate">
+                <local:ShellSettingsView />
+            </DataTemplate>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseSettingsCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource SkinSmokeTemplate}" />
+
+        <!-- Embers exist only while ambient effects are on. -->
+        <ContentControl Content="{Binding}" Focusable="False" IsHitTestVisible="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding AmbientEffectsEnabled}" Value="True">
+                            <Setter Property="ContentTemplate" Value="{StaticResource EmbersTemplate}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
+
+        <Grid Margin="28,0,28,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <local:ShellHeaderView />
+
+            <ContentControl Grid.Row="1" Style="{DynamicResource SkinOrnamentDivider}" Margin="0,10,0,18" />
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <local:ShellWorldListView />
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="18" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <local:ShellHeroView Grid.ColumnSpan="3" />
+
+                    <local:ShellDetailsView Grid.Row="2" />
+
+                    <ContentControl Grid.Row="2" Grid.Column="2" Style="{DynamicResource SkinFrame}" Padding="20,12,20,16">
+                        <TabControl Style="{DynamicResource SkinTabControl}" ItemContainerStyle="{DynamicResource SkinTabItem}">
+                            <TabItem Header="{ui:SpacedText Shell.TabSharing}">
+                                <local:ShellSharingView />
+                            </TabItem>
+                            <TabItem Header="{ui:SpacedText Shell.TabBackups}">
+                                <local:ShellBackupsView />
+                            </TabItem>
+                            <TabItem Header="{ui:SpacedText Shell.TabChronicle}">
+                                <local:ShellChronicleView />
+                            </TabItem>
+                        </TabControl>
+                    </ContentControl>
+                </Grid>
+            </Grid>
+
+            <local:ShellFooterView Grid.Row="3" />
+        </Grid>
+
+        <!-- Settings overlay: created the first time it opens. -->
+        <ContentControl Content="{Binding}" Focusable="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
+                            <Setter Property="ContentTemplate" Value="{StaticResource SettingsTemplate}" />
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
+    </Grid>
+</UserControl>

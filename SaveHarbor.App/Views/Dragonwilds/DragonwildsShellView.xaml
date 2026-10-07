@@ -1,111 +1,11 @@
 <UserControl x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsShellView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SaveHarbor.App.Views.Dragonwilds"
-             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+             xmlns:shell="clr-namespace:SaveHarbor.App.Views.Shell">
+    <!-- Dragonwilds = the shared main screen in the fantasy skin. -->
     <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/SaveHarbor.App;component/Resources/Themes/Dragonwilds/Dragonwilds.Theme.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-            <DataTemplate x:Key="EmbersTemplate">
-                <local:EmberFieldView EmberBrush="{DynamicResource DwEmberBrush}" />
-            </DataTemplate>
-            <DataTemplate x:Key="SettingsTemplate">
-                <local:DragonwildsSettingsView />
-            </DataTemplate>
-        </ResourceDictionary>
+        <ResourceDictionary Source="/SaveHarbor.App;component/Resources/Themes/Dragonwilds/Dragonwilds.Theme.xaml" />
     </UserControl.Resources>
 
-    <UserControl.InputBindings>
-        <KeyBinding Key="Escape" Command="{Binding CloseSettingsCommand}" />
-    </UserControl.InputBindings>
-
-    <Grid>
-        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource DwSmokeTemplate}" />
-
-        <!-- Embers exist only while ambient effects are on. -->
-        <ContentControl Content="{Binding}" Focusable="False" IsHitTestVisible="False">
-            <ContentControl.Style>
-                <Style TargetType="ContentControl">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding AmbientEffectsEnabled}" Value="True">
-                            <Setter Property="ContentTemplate" Value="{StaticResource EmbersTemplate}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ContentControl.Style>
-        </ContentControl>
-
-        <Grid Margin="28,0,28,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <local:DragonwildsHeaderView />
-
-            <ContentControl Grid.Row="1" Style="{StaticResource DwOrnamentDivider}" Margin="0,10,0,18" />
-
-            <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300" />
-                    <ColumnDefinition Width="18" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <local:DragonwildsWorldListView />
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="18" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <local:DragonwildsHeroView Grid.ColumnSpan="3" />
-
-                    <local:DragonwildsDetailsView Grid.Row="2" />
-
-                    <ContentControl Grid.Row="2" Grid.Column="2" Style="{StaticResource DwFrame}" Padding="20,12,20,16">
-                        <TabControl Style="{StaticResource DwTabControl}" ItemContainerStyle="{StaticResource DwTabItem}">
-                            <TabItem Header="{ui:SpacedText Dragonwilds.TabSharing}">
-                                <local:DragonwildsSharingView />
-                            </TabItem>
-                            <TabItem Header="{ui:SpacedText Dragonwilds.TabBackups}">
-                                <local:DragonwildsBackupsView />
-                            </TabItem>
-                            <TabItem Header="{ui:SpacedText Dragonwilds.TabChronicle}">
-                                <local:DragonwildsChronicleView />
-                            </TabItem>
-                        </TabControl>
-                    </ContentControl>
-                </Grid>
-            </Grid>
-
-            <local:DragonwildsFooterView Grid.Row="3" />
-        </Grid>
-
-        <!-- Settings overlay: created the first time it opens. -->
-        <ContentControl Content="{Binding}" Focusable="False">
-            <ContentControl.Style>
-                <Style TargetType="ContentControl">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
-                            <Setter Property="ContentTemplate" Value="{StaticResource SettingsTemplate}" />
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ContentControl.Style>
-        </ContentControl>
-    </Grid>
+    <shell:GameShellView />
 </UserControl>

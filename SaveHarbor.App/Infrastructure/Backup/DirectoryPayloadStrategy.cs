@@ -5,8 +5,11 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure.Backup;
 
-internal sealed class DirectoryPayloadStrategy : IPayloadStrategy
+// stagingRoot: a folder of SaveHarbor's own where new and replaced worlds are kept while a restore runs.
+internal sealed class DirectoryPayloadStrategy(string stagingRoot) : IPayloadStrategy
 {
+    private const string FallbackStagingFolderName = ".saveharbor-staging";
+
     public IReadOnlyList<BackupFileEntry> Stage(GameWorld world, IGameSaveAdapter adapter, string payloadRoot, CancellationToken cancellationToken)
     {
         CopyDirectory(world.SavePath, payloadRoot, cancellationToken);
@@ -71,19 +74,20 @@ internal sealed class DirectoryPayloadStrategy : IPayloadStrategy
     }
 
     // The new folder is fully copied before the old one is touched. The old folder is moved aside, not deleted, until
-    // the new one is in place, and is moved back if that fails.
-    private static void ReplaceDirectory(string source, string target, CancellationToken cancellationToken)
+    // the new one is in place, and is moved back if that fails. Both are kept outside the folder that holds the worlds:
+    // the game would take a half-copied or moved-aside folder there for a second world with the same id.
+    private void ReplaceDirectory(string source, string target, CancellationToken cancellationToken)
     {
-        var suffix = Guid.NewGuid().ToString("N");
-        var stagingPath = $"{target}.saveharbor-staging-{suffix}";
-        var previousPath = $"{target}.saveharbor-prev-{suffix}";
+        var workFolder = CreateWorkFolder(target);
+        var stagingPath = Path.Combine(workFolder, "new");
+        var previousPath = Path.Combine(workFolder, "previous");
         try
         {
             CopyDirectory(source, stagingPath, cancellationToken);
         }
         catch
         {
-            DeleteIfExists(stagingPath);
+            DeleteIfExists(workFolder);
             throw;
         }
 
@@ -104,11 +108,24 @@ internal sealed class DirectoryPayloadStrategy : IPayloadStrategy
                 Directory.Move(previousPath, target);
             }
 
-            DeleteIfExists(stagingPath);
+            DeleteIfExists(workFolder);
             throw;
         }
 
-        DeleteIfExists(previousPath);
+        DeleteIfExists(workFolder);
+    }
+
+    // Directory.Move only works within one drive. When SaveHarbor's data is on another drive than the game's saves,
+    // the work folder goes two levels above the world instead (for Windrose: next to Worlds, Players and Accounts).
+    private string CreateWorkFolder(string target)
+    {
+        var fullTarget = Path.GetFullPath(target);
+        var root = string.Equals(Path.GetPathRoot(Path.GetFullPath(stagingRoot)), Path.GetPathRoot(fullTarget), StringComparison.OrdinalIgnoreCase)
+            ? stagingRoot
+            : Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(fullTarget)!)!, FallbackStagingFolderName);
+        var folder = Path.Combine(root, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        return folder;
     }
 
     private static void DeleteIfExists(string path)

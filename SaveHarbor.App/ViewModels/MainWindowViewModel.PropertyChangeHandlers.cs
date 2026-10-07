@@ -7,8 +7,6 @@ public partial class MainWindowViewModel
     partial void OnSelectedWorldChanged(GameWorld? value)
     {
         OnPropertyChanged(nameof(SelectedWorldSize));
-        OnPropertyChanged(nameof(SelectedWorldFileCount));
-        OnPropertyChanged(nameof(SelectedWorldModifiedAge));
         RefreshSelectedWorldBackups();
         NotifySyncComparison();
         _ = RefreshWorldFactsAsync();
@@ -27,7 +25,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(CloudProviderText));
         OnPropertyChanged(nameof(CloudAccountText));
         OnPropertyChanged(nameof(CloudLatestVersionText));
-        OnPropertyChanged(nameof(CloudLocalBaseText));
         OnPropertyChanged(nameof(CloudSessionText));
         OnPropertyChanged(nameof(CloudSessionTooltip));
         OnPropertyChanged(nameof(IsCloudConnected));
@@ -36,16 +33,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsOtherPlayerHosting));
         NotifySyncComparison();
         ApplySelectedStatusToBadges(value);
-    }
-
-    partial void OnLastBackupChanged(BackupInfo? value)
-    {
-        OnPropertyChanged(nameof(LatestBackupSummary));
-        OnPropertyChanged(nameof(LatestBackupFileName));
-        OnPropertyChanged(nameof(LatestBackupPath));
-        OnPropertyChanged(nameof(LatestBackupAge));
-        OnPropertyChanged(nameof(LatestBackupDetails));
-        OnPropertyChanged(nameof(LatestBackupHeader));
     }
 
     partial void OnBackupCountChanged(int value)

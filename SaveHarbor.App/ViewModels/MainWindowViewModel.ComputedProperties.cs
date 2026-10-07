@@ -24,33 +24,7 @@ public partial class MainWindowViewModel
 
     public string SelectedWorldSize => SelectedWorld is null ? "Unknown" : DisplayFormatter.FormatBytes(SelectedWorld.SizeBytes);
 
-    public string SelectedWorldFileCount => SelectedWorld is null ? "0 files" : $"{SelectedWorld.FileCount:N0} files";
-
-    public string LatestBackupSummary => LastBackup is null
-        ? "No backups found"
-        : $"{LastBackup.FileName} • {DisplayFormatter.FormatBytes(LastBackup.SizeBytes)}";
-
-    public string LatestBackupFileName => LastBackup?.FileName ?? "No backups found";
-
-    public string LatestBackupPath => LastBackup?.FilePath ?? "Create a backup to see the latest backup path here.";
-
-    public string LatestBackupAge => LastBackup is null
-        ? "Create a backup before sharing or restoring this world."
-        : $"Created {DisplayFormatter.FormatAge(LastBackup.CreatedAt)}";
-
-    public string LatestBackupDetails => LastBackup is null
-        ? "No backup has been created yet."
-        : $"{DisplayFormatter.FormatBytes(LastBackup.SizeBytes)} • {LatestBackupAge}";
-
-    public string LatestBackupHeader => LastBackup is null
-        ? "Latest backup • No backup has been created yet."
-        : $"Latest backup • {LatestBackupDetails}";
-
     public string BackupStorageSummary => $"{BackupCount:N0} backups • {TotalBackupSize}";
-
-    public string SelectedWorldModifiedAge => SelectedWorld is null
-        ? "No world selected"
-        : $"Modified {DisplayFormatter.FormatAge(SelectedWorld.LastModifiedAt)}";
 
     public string SafetyHint => IsGameRunning
         ? $"Close {ActiveGameName} before backup, restore, upload, or download."
@@ -67,12 +41,6 @@ public partial class MainWindowViewModel
     public string CloudLatestVersionText => CloudStatus?.LatestVersion is null
         ? "No cloud version"
         : $"v{CloudStatus.LatestVersion.VersionNumber} by {CloudStatus.LatestVersion.UploadedBy}";
-
-    public string CloudLocalBaseText => CloudStatus?.LocalState.LocalBaseVersionNumber is null
-        ? "No local base version"
-        : CloudStatus.HasLocalChanges
-            ? $"v{CloudStatus.LocalState.LocalBaseVersionNumber} + new progress"
-            : $"Local base v{CloudStatus.LocalState.LocalBaseVersionNumber}";
 
     public string CloudSessionText => CloudStatus?.SessionLock is null
         ? "None"

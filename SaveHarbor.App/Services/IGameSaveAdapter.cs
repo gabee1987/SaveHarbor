@@ -32,4 +32,12 @@ public interface IGameSaveAdapter
     IReadOnlyList<string> GetPayloadFiles(GameWorld world);
 
     string GetExpectedWorldPath(GameSaveRoot root, string worldId);
+
+    // The game's save-format version a world path belongs to (Windrose: the RocksDB version folder), when it has one.
+    // Recorded in backups and compared before a world is put back, so a newer format never lands in an older game.
+    string? GetSaveFormatVersion(string worldPath);
+
+    // Checks an extracted backup payload before it replaces or adds a world. Throws InvalidDataException when the
+    // payload does not belong to the world it would become (the payload is untrusted).
+    void ValidatePayload(string payloadRoot, string expectedWorldId);
 }

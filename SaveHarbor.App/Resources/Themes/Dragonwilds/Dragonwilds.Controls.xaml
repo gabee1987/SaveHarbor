@@ -3,13 +3,13 @@
     <!-- Dragonwilds list, tab and input styles. Brushes come from Dragonwilds.Styles.xaml (DynamicResource across dictionaries). -->
 
     <!-- World rows: framed like the game's world list; the selected row gets a bright gold frame and warm glow. -->
-    <Style x:Key="DwWorldItem" TargetType="ListBoxItem">
+    <Style x:Key="SkinWorldItem" TargetType="ListBoxItem">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Row" Background="{DynamicResource DwRowBrush}" BorderBrush="{DynamicResource DwRowBorderBrush}"
+                    <Border x:Name="Row" Background="{DynamicResource SkinRowBrush}" BorderBrush="{DynamicResource SkinRowBorderBrush}"
                             BorderThickness="1" Margin="0,0,0,6" Padding="12,9">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -17,8 +17,8 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid Width="22" Height="22" Margin="0,0,11,0" VerticalAlignment="Center">
-                                <Ellipse x:Name="Badge" Stroke="{DynamicResource DwFrameBrush}" StrokeThickness="1.2" />
-                                <Path x:Name="BadgeMark" Data="{DynamicResource DwDiamondGeometry}" Fill="{DynamicResource DwFrameBrush}"
+                                <Ellipse x:Name="Badge" Stroke="{DynamicResource SkinFrameBrush}" StrokeThickness="1.2" />
+                                <Path x:Name="BadgeMark" Data="{DynamicResource SkinDiamondGeometry}" Fill="{DynamicResource SkinFrameBrush}"
                                       Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Grid>
                             <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
@@ -26,13 +26,13 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource DwFrameBrush}" />
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SkinFrameBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource DwSelectedRowBrush}" />
-                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource DwGoldBrightBrush}" />
-                            <Setter TargetName="Badge" Property="Stroke" Value="{DynamicResource DwGoldBrightBrush}" />
-                            <Setter TargetName="BadgeMark" Property="Fill" Value="{DynamicResource DwGoldBrightBrush}" />
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource SkinSelectedRowBrush}" />
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="Badge" Property="Stroke" Value="{DynamicResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="BadgeMark" Property="Fill" Value="{DynamicResource SkinGoldBrightBrush}" />
                             <Setter TargetName="Row" Property="Effect">
                                 <Setter.Value>
                                     <DropShadowEffect Color="#E0B860" BlurRadius="12" ShadowDepth="0" Opacity="0.35" />
@@ -45,7 +45,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="DwTabControl" TargetType="TabControl">
+    <Style x:Key="SkinTabControl" TargetType="TabControl">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
@@ -58,7 +58,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <Border BorderBrush="{DynamicResource DwFrameInnerBrush}" BorderThickness="0,0,0,1">
+                        <Border BorderBrush="{DynamicResource SkinFrameInnerBrush}" BorderThickness="0,0,0,1">
                             <TabPanel IsItemsHost="True" />
                         </Border>
                         <!-- The standard part name lets screen readers and UI automation reach the tab content. -->
@@ -70,19 +70,19 @@
     </Style>
 
     <!-- Tracked capitals separated by small rings; the active tab glows like the game's settings tabs. -->
-    <Style x:Key="DwTabItem" TargetType="TabItem">
+    <Style x:Key="SkinTabItem" TargetType="TabItem">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
-                        <Ellipse x:Name="Separator" Width="5" Height="5" Stroke="{DynamicResource DwFrameBrush}" StrokeThickness="1"
+                        <Ellipse x:Name="Separator" Width="5" Height="5" Stroke="{DynamicResource SkinFrameBrush}" StrokeThickness="1"
                                  Margin="14,0,14,4" VerticalAlignment="Center" />
                         <Grid>
                             <TextBlock x:Name="Label" Text="{TemplateBinding Header}" FontFamily="{DynamicResource AppDisplayFontFamily}"
                                        FontSize="13" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,10" />
-                            <Rectangle x:Name="Glow" Height="2" VerticalAlignment="Bottom" Margin="-6,0,-6,-1" Fill="{DynamicResource DwGlowLineBrush}"
+                            <Rectangle x:Name="Glow" Height="2" VerticalAlignment="Bottom" Margin="-6,0,-6,-1" Fill="{DynamicResource SkinGlowLineBrush}"
                                        Visibility="Hidden">
                                 <Rectangle.Effect>
                                     <DropShadowEffect Color="#F2D488" BlurRadius="8" ShadowDepth="0" Opacity="0.9" />
@@ -98,7 +98,7 @@
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource InkBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource DwParchmentBrush}" />
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource SkinParchmentBrush}" />
                             <Setter TargetName="Glow" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -107,7 +107,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="DwGameSwitch" TargetType="RadioButton">
+    <Style x:Key="SkinGameSwitch" TargetType="RadioButton">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -115,7 +115,7 @@
                     <Grid Background="Transparent" Margin="12,0">
                         <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontFamily="{DynamicResource AppDisplayFontFamily}"
                                    FontSize="12.5" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,8" />
-                        <Rectangle x:Name="Glow" Height="2" VerticalAlignment="Bottom" Margin="-6,0" Fill="{DynamicResource DwGlowLineBrush}" Visibility="Hidden">
+                        <Rectangle x:Name="Glow" Height="2" VerticalAlignment="Bottom" Margin="-6,0" Fill="{DynamicResource SkinGlowLineBrush}" Visibility="Hidden">
                             <Rectangle.Effect>
                                 <DropShadowEffect Color="#F2D488" BlurRadius="8" ShadowDepth="0" Opacity="0.9" />
                             </Rectangle.Effect>
@@ -126,7 +126,7 @@
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource InkBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource DwParchmentBrush}" />
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource SkinParchmentBrush}" />
                             <Setter TargetName="Glow" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -140,22 +140,22 @@
     </Style>
 
     <!-- Square toggle like the game's settings checkboxes: framed box, gold fill when on. -->
-    <Style x:Key="DwToggle" TargetType="CheckBox">
+    <Style x:Key="SkinToggle" TargetType="CheckBox">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
-                    <Border x:Name="Box" Width="30" Height="30" Background="#99141110" BorderBrush="{DynamicResource DwRowBorderBrush}" BorderThickness="1">
-                        <Border x:Name="Fill" Margin="7" Background="{DynamicResource DwFrameInnerBrush}" />
+                    <Border x:Name="Box" Width="30" Height="30" Background="#99141110" BorderBrush="{DynamicResource SkinRowBorderBrush}" BorderThickness="1">
+                        <Border x:Name="Fill" Margin="7" Background="{DynamicResource SkinFrameInnerBrush}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource DwFrameBrush}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource SkinFrameBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource DwGoldBrush}" />
-                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource DwGoldFillBrush}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource SkinGoldBrush}" />
+                            <Setter TargetName="Fill" Property="Background" Value="{DynamicResource SkinGoldFillBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -163,20 +163,20 @@
         </Setter>
     </Style>
 
-    <Style x:Key="DwTextBox" TargetType="TextBox">
+    <Style x:Key="SkinTextBox" TargetType="TextBox">
         <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
-        <Setter Property="CaretBrush" Value="{DynamicResource DwGoldBrightBrush}" />
-        <Setter Property="SelectionBrush" Value="{DynamicResource DwGoldBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource SkinGoldBrightBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource SkinGoldBrush}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Box" Background="#99141110" BorderBrush="{DynamicResource DwRowBorderBrush}" BorderThickness="1" Padding="10,6">
+                    <Border x:Name="Box" Background="#99141110" BorderBrush="{DynamicResource SkinRowBorderBrush}" BorderThickness="1" Padding="10,6">
                         <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource DwGoldBrush}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource SkinGoldBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -185,7 +185,7 @@
     </Style>
 
     <!-- Panel heading: tracked capitals over a gold rule that ends in the "o<>o" ornament. -->
-    <Style x:Key="DwPanelHeading" TargetType="ContentControl">
+    <Style x:Key="SkinPanelHeading" TargetType="ContentControl">
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Margin" Value="0,0,0,14" />
         <Setter Property="Template">
@@ -193,15 +193,15 @@
                 <ControlTemplate TargetType="ContentControl">
                     <StackPanel>
                         <TextBlock Text="{TemplateBinding Content}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="14"
-                                   Foreground="{DynamicResource DwParchmentBrush}" />
+                                   Foreground="{DynamicResource SkinParchmentBrush}" />
                         <Grid Margin="0,7,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Rectangle Height="1" Fill="{DynamicResource DwFrameBrush}" VerticalAlignment="Center" />
-                            <Path Grid.Column="1" Data="{DynamicResource DwRuleEndGeometry}" Stroke="{DynamicResource DwGoldBrush}"
-                                  Fill="{DynamicResource DwGoldBrush}" StrokeThickness="1" Width="42" Height="8" VerticalAlignment="Center" />
+                            <Rectangle Height="1" Fill="{DynamicResource SkinFrameBrush}" VerticalAlignment="Center" />
+                            <Path Grid.Column="1" Data="{DynamicResource SkinRuleEndGeometry}" Stroke="{DynamicResource SkinGoldBrush}"
+                                  Fill="{DynamicResource SkinGoldBrush}" StrokeThickness="1" Width="42" Height="8" VerticalAlignment="Center" />
                         </Grid>
                     </StackPanel>
                 </ControlTemplate>
@@ -210,9 +210,9 @@
     </Style>
 
     <!-- A settings row: dark band with label on the left, control on the right. -->
-    <Style x:Key="DwSettingRow" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource DwRowBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource DwRowBorderBrush}" />
+    <Style x:Key="SkinSettingRow" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SkinRowBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkinRowBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="14,10" />
         <Setter Property="Margin" Value="0,0,0,8" />

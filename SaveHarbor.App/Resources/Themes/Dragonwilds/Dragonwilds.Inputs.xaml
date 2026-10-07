@@ -2,12 +2,12 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Dropdowns, copy buttons and danger links in the game's framed, gold-on-dark style. -->
 
-    <Geometry x:Key="DwChevronGeometry">M0,0 L5,5 L10,0</Geometry>
-    <Geometry x:Key="DwCopyGeometry">M4.5,0.5 H12.5 V9.5 M0.5,3.5 H9.5 V13.5 H0.5 Z</Geometry>
+    <Geometry x:Key="SkinChevronGeometry">M0,0 L5,5 L10,0</Geometry>
+    <Geometry x:Key="SkinCopyGeometry">M4.5,0.5 H12.5 V9.5 M0.5,3.5 H9.5 V13.5 H0.5 Z</Geometry>
 
     <!-- Each choice in the list: a gold diamond marks the selected one, hover warms the row. -->
-    <Style x:Key="DwComboBoxItem" TargetType="ComboBoxItem">
-        <Setter Property="Foreground" Value="{DynamicResource DwParchmentBrush}" />
+    <Style x:Key="SkinComboBoxItem" TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource SkinParchmentBrush}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
@@ -19,7 +19,7 @@
                                 <ColumnDefinition Width="16" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Path x:Name="Marker" Data="{DynamicResource DwDiamondGeometry}" Fill="{DynamicResource DwGoldBrightBrush}"
+                            <Path x:Name="Marker" Data="{DynamicResource SkinDiamondGeometry}" Fill="{DynamicResource SkinGoldBrightBrush}"
                                   Width="7" Height="7" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left" Visibility="Hidden" />
                             <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
                         </Grid>
@@ -27,11 +27,11 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Row" Property="Background" Value="#33C9A24A" />
-                            <Setter Property="Foreground" Value="{DynamicResource DwGoldBrightBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkinGoldBrightBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
-                            <Setter Property="Foreground" Value="{DynamicResource DwGoldBrightBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkinGoldBrightBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -39,14 +39,14 @@
         </Setter>
     </Style>
 
-    <!-- Framed like DwButton, with a gold chevron that turns when the list is open. -->
-    <Style x:Key="DwComboBox" TargetType="ComboBox">
-        <Setter Property="Foreground" Value="{DynamicResource DwParchmentBrush}" />
+    <!-- Framed like SkinButton, with a gold chevron that turns when the list is open. -->
+    <Style x:Key="SkinComboBox" TargetType="ComboBox">
+        <Setter Property="Foreground" Value="{DynamicResource SkinParchmentBrush}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="MinHeight" Value="38" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="ItemContainerStyle" Value="{StaticResource DwComboBoxItem}" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource SkinComboBoxItem}" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
         <Setter Property="Template">
             <Setter.Value>
@@ -58,21 +58,21 @@
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Chrome" Background="#B2181410" BorderBrush="{DynamicResource DwFrameBrush}" BorderThickness="1">
-                                        <Border BorderBrush="{DynamicResource DwFrameInnerBrush}" BorderThickness="1" Margin="2">
-                                            <Path x:Name="Chevron" Data="{DynamicResource DwChevronGeometry}" Stroke="{DynamicResource DwGoldBrush}" StrokeThickness="1.5"
+                                    <Border x:Name="Chrome" Background="#B2181410" BorderBrush="{DynamicResource SkinFrameBrush}" BorderThickness="1">
+                                        <Border BorderBrush="{DynamicResource SkinFrameInnerBrush}" BorderThickness="1" Margin="2">
+                                            <Path x:Name="Chevron" Data="{DynamicResource SkinChevronGeometry}" Stroke="{DynamicResource SkinGoldBrush}" StrokeThickness="1.5"
                                                   Width="10" Height="5" Stretch="Fill" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
                                                   RenderTransformOrigin="0.5,0.5" />
                                         </Border>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource DwGoldBrightBrush}" />
+                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource SkinGoldBrightBrush}" />
                                             <Setter TargetName="Chrome" Property="Background" Value="#CC2A2216" />
-                                            <Setter TargetName="Chevron" Property="Stroke" Value="{DynamicResource DwGoldBrightBrush}" />
+                                            <Setter TargetName="Chevron" Property="Stroke" Value="{DynamicResource SkinGoldBrightBrush}" />
                                         </Trigger>
                                         <Trigger Property="IsChecked" Value="True">
-                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource DwGoldBrightBrush}" />
+                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource SkinGoldBrightBrush}" />
                                             <Setter TargetName="Chevron" Property="RenderTransform">
                                                 <Setter.Value>
                                                     <RotateTransform Angle="180" />
@@ -100,13 +100,13 @@
                             <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                     MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                     Background="#F5130F0C"
-                                    BorderBrush="{DynamicResource DwFrameBrush}"
+                                    BorderBrush="{DynamicResource SkinFrameBrush}"
                                     BorderThickness="1"
                                     Margin="0,0,8,8">
                                 <Border.Effect>
                                     <DropShadowEffect Color="Black" BlurRadius="14" ShadowDepth="3" Opacity="0.6" />
                                 </Border.Effect>
-                                <Border BorderBrush="{DynamicResource DwFrameInnerBrush}" BorderThickness="1" Margin="2" Padding="0,3">
+                                <Border BorderBrush="{DynamicResource SkinFrameInnerBrush}" BorderThickness="1" Margin="2" Padding="0,3">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                                     </ScrollViewer>
@@ -125,7 +125,7 @@
     </Style>
 
     <!-- Small icon button that copies a path; put the text in CommandParameter. -->
-    <Style x:Key="DwCopyButton" TargetType="Button">
+    <Style x:Key="SkinCopyButton" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -133,13 +133,13 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Width="24" Height="22">
-                        <Path Data="{DynamicResource DwCopyGeometry}" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.2"
+                        <Path Data="{DynamicResource SkinCopyGeometry}" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.2"
                               Width="12" Height="13" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource DwFrameBrush}" />
-                            <Setter Property="Foreground" Value="{DynamicResource DwGoldBrightBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource SkinFrameBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SkinGoldBrightBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.35" />
@@ -151,7 +151,7 @@
     </Style>
 
     <!-- Link for actions that remove something. -->
-    <Style x:Key="DwDangerLink" TargetType="Button">
+    <Style x:Key="SkinDangerLink" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
         <Setter Property="FontSize" Value="11.5" />
         <Setter Property="Cursor" Value="Hand" />

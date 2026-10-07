@@ -11,10 +11,10 @@ public interface IDialogService
     bool ConfirmDanger(string title, string message, string actionText);
     string? SelectZipFile(string initialDirectory);
     string? SelectImportFile(string initialDirectory, string saveFileFilter);
-    void ShowWorldInspector(WorldInspectorViewModel viewModel);
+    void ShowWorldInspector(WorldInspectorViewModel viewModel, Uri skinDictionary);
     string? SelectFolder(string title, string initialDirectory);
     CloudFolderChoice? ConfigureCloudFolder(
-        GameId game,
+        Uri skinDictionary,
         string gameDisplayName,
         string currentFolderId,
         IReadOnlyList<SavedCloudFolder> savedFolders,

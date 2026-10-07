@@ -1,9 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="DwEmberBrush" Color="#FFC47A" />
+    <SolidColorBrush x:Key="SkinEmberBrush" Color="#FFC47A" />
 
     <!-- Static smoke and vignette behind the panels, echoing the game's menu backdrops. -->
-    <DataTemplate x:Key="DwSmokeTemplate">
+    <DataTemplate x:Key="SkinSmokeTemplate">
         <Grid IsHitTestVisible="False">
             <Ellipse Width="900" Height="520" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-200,-120,0,0">
                 <Ellipse.Fill>
@@ -41,7 +41,7 @@
     </DataTemplate>
 
     <!-- Arcane rune circle shown while an operation runs. It is a template, so it exists (and animates) only while busy. -->
-    <DataTemplate x:Key="DwArcaneLoaderTemplate">
+    <DataTemplate x:Key="SkinArcaneLoaderTemplate">
         <Viewbox Width="64" Height="64">
             <Grid Width="64" Height="64">
                 <Ellipse x:Name="Glow" Width="44" Height="44" Opacity="0.55">

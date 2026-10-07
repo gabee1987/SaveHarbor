@@ -39,7 +39,6 @@ public partial class MainWindowViewModel
                 suppressSelectedWorldCloudRefresh = false;
             }
 
-            await RefreshProfileStatusAsync();
             await RefreshBackupStatsAsync();
             await RefreshCloudStatusAsync(showToast: false);
             await RefreshCloudOverviewAsync();
@@ -69,12 +68,12 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync("Creating backup...", async () =>
         {
-            LastBackup = await _backupService.CreateBackupAsync(SelectedWorld, BackupReasons.Manual);
+            var backup = await _backupService.CreateBackupAsync(SelectedWorld, BackupReasons.Manual);
             await RefreshBackupStatsAsync();
-            StatusText = $"Backup created: {LastBackup.FileName}";
+            StatusText = $"Backup created: {backup.FileName}";
             AddActivity("Success", StatusText);
-            _toastService.Success("Backup created", LastBackup.FileName);
-            _dialogService.ShowInfo("Backup created", $"Saved backup:\n{LastBackup.FilePath}");
+            _toastService.Success("Backup created", backup.FileName);
+            _dialogService.ShowInfo("Backup created", $"Saved backup:\n{backup.FilePath}");
         });
     }
 

@@ -1,0 +1,84 @@
+<UserControl x:Class="SaveHarbor.App.Views.Shell.ShellDetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <ContentControl Style="{DynamicResource SkinFrame}" Padding="20,16">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Shell.WorldDetails}" />
+
+                <TextBlock Text="{ui:UiText Shell.NoDetails}"
+                           Style="{DynamicResource SkinMuted}"
+                           TextTrimming="None"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding SelectedWorldDetails.Count, Converter={x:Static converters:ZeroToVisibleConverter.Instance}}" />
+
+                <ItemsControl ItemsSource="{Binding SelectedWorldDetails}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type domain:WorldFact}">
+                            <StackPanel Margin="0,0,12,12">
+                                <TextBlock Text="{Binding Label}" Style="{DynamicResource SkinLabel}" />
+                                <TextBlock Text="{Binding Value}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource InkBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Value}"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Margin="0,6,0,0"
+                            Visibility="{Binding SelectedWorldRules.Count, Converter={x:Static converters:ZeroToCollapsedConverter.Instance}}">
+                    <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Shell.WorldRules}" />
+                    <ItemsControl ItemsSource="{Binding SelectedWorldRules}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type domain:WorldFact}">
+                                <Grid Margin="0,0,12,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Label}" Style="{DynamicResource SkinMuted}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" Foreground="{DynamicResource SkinGoldBrightBrush}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel Margin="0,6,0,0" Visibility="{Binding SelectedWorld, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                    <TextBlock Text="{ui:UiText Shell.SaveFile}" Style="{DynamicResource SkinLabel}" />
+                    <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding SelectedWorld.SavePath}" Foreground="{DynamicResource InkBrush}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" ToolTip="{Binding SelectedWorld.SavePath}" />
+                        <Button Grid.Column="1" Style="{DynamicResource SkinCopyButton}" Margin="6,0,0,0"
+                                Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding SelectedWorld.SavePath}" ToolTip="{ui:UiText Paths.CopyFileTooltip}" />
+                        <Button Grid.Column="2" Content="{ui:UiText Paths.Show}" Command="{Binding OpenWorldFolderCommand}" Style="{DynamicResource SkinLinkButton}"
+                                FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="{ui:UiText Paths.ShowTooltip}" />
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </ContentControl>
+</UserControl>

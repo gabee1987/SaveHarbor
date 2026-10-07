@@ -12,8 +12,8 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
 {
     private const int MaxNameAttempts = 100;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-    private static readonly DirectoryPayloadStrategy DirectoryStrategy = new();
     private static readonly FileSetPayloadStrategy FileSetStrategy = new();
+    private readonly DirectoryPayloadStrategy directoryStrategy = new(Path.Combine(pathProvider.AppDataRoot, "staging"));
 
     public string GetBackupRoot(GameId game) => pathProvider.GetBackupRoot(game);
 
@@ -105,12 +105,17 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
         }
 
         var manifest = await ReadManifestAsync(backupPath, targetWorld.Game, cancellationToken);
-        var strategy = SelectStrategyForManifest(manifest, gameRegistry.Get(targetWorld.Game).SaveAdapter);
+        var adapter = gameRegistry.Get(targetWorld.Game).SaveAdapter;
+        var strategy = SelectStrategyForManifest(manifest, adapter);
+        SaveFormatCompatibility.EnsureCanRestore(manifest.SaveFormatVersion, adapter.GetSaveFormatVersion(targetWorld.SavePath));
 
         await CreateBackupAsync(targetWorld, BackupReasons.PreRestore, cancellationToken);
 
         await RunWithExtractedPayloadAsync(backupPath, payloadRoot =>
-            strategy.Restore(payloadRoot, targetWorld, manifest, cancellationToken), cancellationToken);
+        {
+            adapter.ValidatePayload(payloadRoot, targetWorld.WorldId);
+            strategy.Restore(payloadRoot, targetWorld, manifest, cancellationToken);
+        }, cancellationToken);
     }
 
     private async Task PruneOldBackupsAsync(GameId game, string justCreatedPath, CancellationToken cancellationToken)
@@ -122,10 +127,10 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
         }
     }
 
-    private static IPayloadStrategy SelectStrategy(WorldPayloadKind kind) =>
-        kind == WorldPayloadKind.FileSet ? FileSetStrategy : DirectoryStrategy;
+    private IPayloadStrategy SelectStrategy(WorldPayloadKind kind) =>
+        kind == WorldPayloadKind.FileSet ? FileSetStrategy : directoryStrategy;
 
-    private static IPayloadStrategy SelectStrategyForManifest(BackupManifest manifest, IGameSaveAdapter adapter)
+    private IPayloadStrategy SelectStrategyForManifest(BackupManifest manifest, IGameSaveAdapter adapter)
     {
         if (!Enum.TryParse<WorldPayloadKind>(manifest.PayloadKind, ignoreCase: true, out var manifestKind) || manifestKind != adapter.PayloadKind)
         {
@@ -196,7 +201,8 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
                 FileCount = Directory.EnumerateFiles(payloadRoot, "*", SearchOption.AllDirectories).Count(),
                 PayloadSha256 = DirectoryHashCalculator.ComputeSha256(payloadRoot),
                 PayloadKind = adapter.PayloadKind.ToString(),
-                Files = [.. files]
+                Files = [.. files],
+                SaveFormatVersion = adapter.GetSaveFormatVersion(world.SavePath) ?? string.Empty
             };
 
             var manifestPath = Path.Combine(tempPath, "saveharbor-manifest.json");

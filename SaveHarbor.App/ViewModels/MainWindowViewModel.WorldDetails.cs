@@ -138,7 +138,7 @@ public partial class MainWindowViewModel
             () => DescribeBackupsOf(world),
             ImportSaveFileAsync);
         _ = inspector.LoadAsync();
-        _dialogService.ShowWorldInspector(inspector);
+        _dialogService.ShowWorldInspector(inspector, _activeGame.Current.SkinDictionary);
     }
 
     private IReadOnlyList<InspectionItem> DescribeBackupsOf(GameWorld world)

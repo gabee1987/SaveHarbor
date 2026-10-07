@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Entry point for the Windrose (pirate) skin, merged by WindroseShellView and Windrose dialogs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Windrose.Styles.xaml" />
+        <ResourceDictionary Source="Windrose.Controls.xaml" />
+        <ResourceDictionary Source="Windrose.Effects.xaml" />
+        <ResourceDictionary Source="Windrose.Sync.xaml" />
+        <ResourceDictionary Source="Windrose.Inputs.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

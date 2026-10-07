@@ -1,52 +1,11 @@
 <UserControl x:Class="SaveHarbor.App.Views.Windrose.WindroseShellView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:SaveHarbor.App.Views.Controls">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+             xmlns:shell="clr-namespace:SaveHarbor.App.Views.Shell">
+    <!-- Windrose = the shared main screen in the pirate skin. -->
+    <UserControl.Resources>
+        <ResourceDictionary Source="/SaveHarbor.App;component/Resources/Themes/Windrose/Windrose.Theme.xaml" />
+    </UserControl.Resources>
 
-        <controls:HeaderStatusView />
-
-        <Border Height="1"
-                Background="{DynamicResource LineSoftBrush}"
-                Margin="20,0"
-                VerticalAlignment="Bottom" />
-
-        <Grid Grid.Row="1" Margin="20,0,20,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.02*" MinWidth="400" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="1.18*" MinWidth="470" />
-            </Grid.ColumnDefinitions>
-
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="10" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <controls:WorldSectionView />
-                <controls:BackupSectionView Grid.Row="2" />
-            </Grid>
-
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="10" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <controls:ActionsSectionView />
-                <controls:ActivitySectionView Grid.Row="2" />
-            </Grid>
-        </Grid>
-
-        <controls:IndeterminateProgressLineView Grid.RowSpan="2"
-                                                VerticalAlignment="Bottom"
-                                                IsActive="{Binding IsBusy}" />
-    </Grid>
+    <shell:GameShellView />
 </UserControl>

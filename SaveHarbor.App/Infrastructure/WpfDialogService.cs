@@ -6,7 +6,7 @@ using SaveHarbor.App.Domain;
 using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
-using SaveHarbor.App.Views.Dragonwilds;
+using SaveHarbor.App.Views.Shell;
 using SaveHarbor.App.Views.Dialogs;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -74,9 +74,9 @@ public sealed class WpfDialogService : IDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
-    public void ShowWorldInspector(WorldInspectorViewModel viewModel)
+    public void ShowWorldInspector(WorldInspectorViewModel viewModel, Uri skinDictionary)
     {
-        new DragonwildsWorldInspectorWindow { Owner = FindOwner(), DataContext = viewModel }.ShowDialog();
+        new WorldInspectorWindow(skinDictionary) { Owner = FindOwner(), DataContext = viewModel }.ShowDialog();
     }
 
     public string? SelectFolder(string title, string initialDirectory)
@@ -91,7 +91,7 @@ public sealed class WpfDialogService : IDialogService
     }
 
     public CloudFolderChoice? ConfigureCloudFolder(
-        GameId game,
+        Uri skinDictionary,
         string gameDisplayName,
         string currentFolderId,
         IReadOnlyList<SavedCloudFolder> savedFolders,
@@ -100,7 +100,7 @@ public sealed class WpfDialogService : IDialogService
     {
         var owner = FindOwner();
 
-        var window = new CloudFolderSetupWindow(game, gameDisplayName, currentFolderId, savedFolders, testAccessAsync, forgetSavedFolderAsync)
+        var window = new CloudFolderSetupWindow(skinDictionary, gameDisplayName, currentFolderId, savedFolders, testAccessAsync, forgetSavedFolderAsync)
         {
             Owner = owner
         };

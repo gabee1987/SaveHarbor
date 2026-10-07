@@ -9,7 +9,8 @@ namespace SaveHarbor.App.Infrastructure.Games.Windrose;
 
 public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : IGameSaveAdapter
 {
-    private const string DescriptionFileName = "WorldDescription.json";
+    public const string DescriptionFileName = "WorldDescription.json";
+    private const long MaxDescriptionBytes = 1024 * 1024;
     private const string DefaultRocksDbVersion = "0.10.0";
     private static readonly string[] RocksDbRootNames = ["RocksDB_v2", "RocksDB"];
 
@@ -35,6 +36,7 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
             .Select(CreateSaveRoot)
             .Where(profile => Directory.Exists(profile.WorldsPath))
             .SelectMany(profile => Directory.EnumerateDirectories(profile.WorldsPath))
+            .Where(folder => !WindrosePaths.IsSaveHarborFolder(folder))
             .ToArray();
 
         var worlds = new List<GameWorld>();
@@ -109,25 +111,14 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
             files.Length);
     }
 
-    // The Windrose view does not show extra world facts yet; its reskin can add them here.
-    public Task<IReadOnlyList<WorldFact>> ReadWorldFactsAsync(GameWorld world, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<WorldFact>>([]);
-
-    public Task<IReadOnlyList<InspectionSection>> InspectWorldAsync(GameWorld world, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<WorldFact>> ReadWorldFactsAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<InspectionSection> sections =
-        [
-            new("World", [new("World name", world.WorldName), new("World ID", world.WorldId), new("Preset", world.Subtitle)]),
-            new("Save folder",
-            [
-                new("Folder", world.SavePath),
-                new("Files", world.FileCount.ToString(CultureInfo.InvariantCulture)),
-                new("Size", DisplayFormatter.FormatBytes(world.SizeBytes)),
-                new("Modified", world.LastModifiedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))
-            ])
-        ];
-        return Task.FromResult(sections);
+        var settings = await WindroseWorldSettings.ReadAsync(Path.Combine(world.SavePath, DescriptionFileName), cancellationToken);
+        return WindroseWorldFacts.From(world, settings, WindrosePaths.FormatVersion(world.SavePath));
     }
+
+    public Task<IReadOnlyList<InspectionSection>> InspectWorldAsync(GameWorld world, CancellationToken cancellationToken = default) =>
+        WindroseWorldInspector.InspectAsync(world, cancellationToken);
 
     // A Windrose world is a folder; it is picked through the WorldDescription.json file inside it (or given as the folder).
     public string ImportFileFilter => $"Windrose world folder ({DescriptionFileName})|{DescriptionFileName}";
@@ -176,6 +167,35 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
 
     public string GetExpectedWorldPath(GameSaveRoot root, string worldId) =>
         SafePath.CombineUnderRoot(root.WorldsPath, worldId);
+
+    public string? GetSaveFormatVersion(string worldPath) => WindrosePaths.FormatVersion(worldPath);
+
+    // The game finds a world by its folder name, which must equal "islandId" inside WorldDescription.json. A payload
+    // whose island id differs would appear as a broken or duplicate world, so it is refused.
+    public void ValidatePayload(string payloadRoot, string expectedWorldId)
+    {
+        var description = new FileInfo(Path.Combine(payloadRoot, DescriptionFileName));
+        if (!description.Exists || description.Length > MaxDescriptionBytes)
+        {
+            throw new InvalidDataException("The backup does not contain a valid Windrose world (WorldDescription.json is missing). Nothing was changed.");
+        }
+
+        WorldDescriptionDocument? document;
+        try
+        {
+            document = JsonSerializer.Deserialize<WorldDescriptionDocument>(File.ReadAllText(description.FullName), JsonOptions);
+        }
+        catch (JsonException)
+        {
+            throw new InvalidDataException("The backup's WorldDescription.json could not be read. Nothing was changed.");
+        }
+
+        var islandId = document?.WorldDescription?.IslandId;
+        if (!string.IsNullOrWhiteSpace(islandId) && !string.Equals(islandId, expectedWorldId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("This backup belongs to a different Windrose world. Restore it as its own world instead. Nothing was changed.");
+        }
+    }
 
     private static DateTimeOffset ConvertUnrealTimestamp(double creationTime)
     {

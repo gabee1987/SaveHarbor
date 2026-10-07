@@ -17,11 +17,12 @@ public sealed class StubGameDefinition(GameId id, IGameSaveAdapter? saveAdapter 
 
     public IReadOnlyList<string> ProcessNames { get; } = [];
 
-    public ProcessMatch ProcessMatch => ProcessMatch.Exact;
 
     public TimeSpan SaveSettleDelay => TimeSpan.Zero;
 
     public Uri ThemeDictionary { get; } = new("/Resources/Themes/Windrose.Colors.xaml", UriKind.Relative);
+
+    public Uri SkinDictionary { get; } = new("/TEST_SKIN.xaml", UriKind.Relative);
 
     public string? PostRestoreHint => null;
 

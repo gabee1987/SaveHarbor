@@ -72,19 +72,8 @@ public partial class MainWindowViewModel
         var backups = await _backupService.ListBackupsAsync(_activeGame.Current.Id);
         BackupCount = backups.Count;
         TotalBackupSize = DisplayFormatter.FormatBytes(backups.Sum(backup => backup.SizeBytes));
-        LastBackup = backups.FirstOrDefault();
         gameBackups = backups;
         RefreshSelectedWorldBackups();
-    }
-
-    private async Task RefreshProfileStatusAsync()
-    {
-        var profiles = await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync();
-        var profile = profiles.FirstOrDefault();
-
-        ProfileStatus = profile is null
-            ? $"No {ActiveGameName} profile found. Start {ActiveGameName} once before importing a backup."
-            : $"Profile {profile.RootId} • {profile.Detail}";
     }
 
     private async Task RefreshCloudStatusAsync(bool showToast)
