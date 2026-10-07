@@ -1,12 +1,15 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class CloudProviderSettingsService : ICloudSetupService
+public sealed partial class CloudProviderSettingsService : ICloudSetupService
 {
+    private const int MaxSavedFoldersPerGame = 20;
+    private const int MaxFolderNameLength = 100;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     private readonly CloudProviderOptions options;
@@ -26,9 +29,33 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
         this.logger = logger;
     }
 
+    // Google Drive folder IDs use only letters, digits, '-' and '_'.
+    [GeneratedRegex("^[A-Za-z0-9_-]{10,128}$")]
+    private static partial Regex FolderIdPattern();
+
     public string GetCurrentSharedFolderId(GameId game) => options.GetSharedFolderId(game);
 
     public bool HasSharedFolderConfigured(GameId game) => options.HasSharedFolder(game);
+
+    public IReadOnlyList<SavedCloudFolder> GetSavedFolders(GameId game)
+    {
+        var key = game.ToStorageKey();
+        var current = options.GetSharedFolderId(game);
+        var saved = ReadExistingSettings().SavedFolders
+            .Where(folder => string.Equals(folder.Game, key, StringComparison.OrdinalIgnoreCase) && FolderIdPattern().IsMatch(folder.FolderId))
+            .ToList();
+
+        // A folder set up before folders were remembered is still offered, without a name.
+        if (FolderIdPattern().IsMatch(current) && !saved.Any(folder => folder.FolderId == current))
+        {
+            saved.Add(new SavedCloudFolder { Game = key, FolderId = current });
+        }
+
+        return saved
+            .OrderByDescending(folder => folder.FolderId == current)
+            .ThenByDescending(folder => folder.LastUsedUtc)
+            .ToArray();
+    }
 
     public async Task<CloudSetupTestResult> TestSharedFolderAsync(GameId game, string input, CancellationToken cancellationToken = default)
     {
@@ -36,6 +63,11 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
         if (string.IsNullOrWhiteSpace(folderId))
         {
             return new CloudSetupTestResult(false, "Paste a Google Drive shared folder link or folder ID first.");
+        }
+
+        if (!FolderIdPattern().IsMatch(folderId))
+        {
+            return new CloudSetupTestResult(false, "This does not look like a Google Drive folder link or folder ID. Copy the link from the folder's Share dialog.");
         }
 
         if (cloudProvider is not ISharedFolderCloudProvider sharedFolderProvider)
@@ -54,15 +86,13 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
         }
     }
 
-    public async Task SaveSharedFolderAsync(GameId game, string input, CancellationToken cancellationToken = default)
+    public async Task SaveSharedFolderAsync(GameId game, string input, string? folderName, CancellationToken cancellationToken = default)
     {
         var folderId = CloudProviderOptions.NormalizeSharedFolderInput(input);
-        if (string.IsNullOrWhiteSpace(folderId))
+        if (!FolderIdPattern().IsMatch(folderId))
         {
-            throw new InvalidOperationException("Shared folder ID cannot be empty.");
+            throw new InvalidOperationException("The shared folder ID is empty or invalid.");
         }
-
-        Directory.CreateDirectory(pathProvider.AppDataRoot);
 
         var settings = ReadExistingSettings();
         settings.SchemaVersion = 2;
@@ -77,12 +107,58 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
             settings.GoogleSharedFolderId = string.Empty;
         }
 
-        var tempPath = pathProvider.CloudProviderSettingsPath + ".tmp";
-        await File.WriteAllTextAsync(tempPath, JsonSerializer.Serialize(settings, JsonOptions), cancellationToken);
-        File.Move(tempPath, pathProvider.CloudProviderSettingsPath, overwrite: true);
+        RememberFolder(settings, game, folderId, folderName);
+        await WriteSettingsAsync(settings, cancellationToken);
 
         options.SetSharedFolderId(game, folderId);
         logger.Information(AppLogKeyword.CloudProvider, "Saved Google Drive shared folder setup for {Game}", game);
+    }
+
+    // Only removes the folder from the list on this PC; nothing in Google Drive changes.
+    public async Task ForgetSavedFolderAsync(GameId game, string folderId, CancellationToken cancellationToken = default)
+    {
+        var settings = ReadExistingSettings();
+        var removed = settings.SavedFolders.RemoveAll(folder =>
+            string.Equals(folder.Game, game.ToStorageKey(), StringComparison.OrdinalIgnoreCase) && folder.FolderId == folderId);
+        if (removed > 0)
+        {
+            await WriteSettingsAsync(settings, cancellationToken);
+        }
+    }
+
+    private static void RememberFolder(LocalCloudProviderSettings settings, GameId game, string folderId, string? folderName)
+    {
+        var key = game.ToStorageKey();
+        var existing = settings.SavedFolders.FirstOrDefault(folder =>
+            string.Equals(folder.Game, key, StringComparison.OrdinalIgnoreCase) && folder.FolderId == folderId);
+        if (existing is null)
+        {
+            existing = new SavedCloudFolder { Game = key, FolderId = folderId };
+            settings.SavedFolders.Add(existing);
+        }
+
+        var name = folderName?.Trim() ?? string.Empty;
+        if (name.Length > 0)
+        {
+            existing.Name = name.Length > MaxFolderNameLength ? name[..MaxFolderNameLength] : name;
+        }
+
+        existing.LastUsedUtc = DateTimeOffset.UtcNow;
+
+        var surplus = settings.SavedFolders
+            .Where(folder => string.Equals(folder.Game, key, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(folder => folder.LastUsedUtc)
+            .Skip(MaxSavedFoldersPerGame)
+            .ToHashSet();
+        settings.SavedFolders.RemoveAll(surplus.Contains);
+    }
+
+    private async Task WriteSettingsAsync(LocalCloudProviderSettings settings, CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(pathProvider.AppDataRoot);
+        var tempPath = pathProvider.CloudProviderSettingsPath + ".tmp";
+        await File.WriteAllTextAsync(tempPath, JsonSerializer.Serialize(settings, JsonOptions), cancellationToken);
+        File.Move(tempPath, pathProvider.CloudProviderSettingsPath, overwrite: true);
     }
 
     private LocalCloudProviderSettings ReadExistingSettings()
@@ -95,6 +171,7 @@ public sealed class CloudProviderSettingsService : ICloudSetupService
                 if (existing is not null)
                 {
                     existing.SharedFolders = new Dictionary<string, string>(existing.SharedFolders, StringComparer.OrdinalIgnoreCase);
+                    existing.SavedFolders ??= [];
                     return existing;
                 }
             }

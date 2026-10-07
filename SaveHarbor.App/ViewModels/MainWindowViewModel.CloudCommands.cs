@@ -28,20 +28,23 @@ public partial class MainWindowViewModel
     private async Task SetupCloudFolderAsync()
     {
         var game = _activeGame.Current;
-        var input = _dialogService.ConfigureCloudFolder(
+        var choice = _dialogService.ConfigureCloudFolder(
             game.DisplayName,
             _cloudSetupService.GetCurrentSharedFolderId(game.Id),
-            (candidate, cancellationToken) => _cloudSetupService.TestSharedFolderAsync(game.Id, candidate, cancellationToken));
+            _cloudSetupService.GetSavedFolders(game.Id),
+            (candidate, cancellationToken) => _cloudSetupService.TestSharedFolderAsync(game.Id, candidate, cancellationToken),
+            folderId => _cloudSetupService.ForgetSavedFolderAsync(game.Id, folderId));
 
-        if (input is null)
+        if (choice is null)
         {
             return;
         }
 
         await RunBusyAsync("Saving cloud folder setup...", async () =>
         {
-            await _cloudSetupService.SaveSharedFolderAsync(game.Id, input);
+            await _cloudSetupService.SaveSharedFolderAsync(game.Id, choice.Input, choice.FolderName);
             await RefreshCloudStatusAsync(showToast: false);
+            await RefreshCloudOverviewAsync();
 
             StatusText = "Cloud folder setup saved.";
             AddActivity("Success", StatusText);
@@ -72,6 +75,8 @@ public partial class MainWindowViewModel
             {
                 await RefreshCloudStatusAsync(showToast: false);
             }
+
+            await RefreshCloudOverviewAsync();
         });
     }
 
@@ -81,6 +86,7 @@ public partial class MainWindowViewModel
         await RunBusyAsync("Checking cloud status...", async () =>
         {
             await RefreshCloudStatusAsync(showToast: true);
+            await RefreshCloudOverviewAsync();
         });
     }
 
@@ -105,6 +111,7 @@ public partial class MainWindowViewModel
             var result = await _cloudSyncService.UploadCurrentAsync(SelectedWorld);
             await RefreshBackupStatsAsync();
             await RefreshCloudStatusAsync(showToast: false);
+            await RefreshCloudOverviewAsync();
 
             if (!result.IsSuccess)
             {
@@ -171,6 +178,7 @@ public partial class MainWindowViewModel
             {
                 await RefreshSelectedWorldFromDiskAsync();
                 await RefreshCloudStatusAsync(showToast: false);
+                await RefreshCloudOverviewAsync();
             }
 
             StatusText = result.Message;

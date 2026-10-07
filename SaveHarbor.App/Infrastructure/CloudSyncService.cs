@@ -73,134 +73,50 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
         await localSyncStateService.SaveAsync(localState, cancellationToken);
 
-        if (manifest is null || latestVersion is null)
+        var otherPlayerPlaying = IsActiveOtherPlayerLock(sessionLock);
+        var hasLocalChanges = SyncStateClassifier.NeedsLocalChangeCheck(localState.LocalBaseVersionNumber, latestVersion?.VersionNumber, otherPlayerPlaying)
+            && await DetectLocalChangesAsync(localState, world, cancellationToken) == true;
+        var state = SyncStateClassifier.Classify(localState.LocalBaseVersionNumber, latestVersion?.VersionNumber, hasLocalChanges, otherPlayerPlaying);
+
+        logger.Debug(
+            AppLogKeyword.CloudSync,
+            "Cloud status for world {WorldId}: {State}. LocalBase={LocalBaseVersion} Latest={LatestVersion} LocalChanges={LocalChanges}",
+            world.WorldId,
+            state,
+            localState.LocalBaseVersionNumber,
+            latestVersion?.VersionNumber,
+            hasLocalChanges);
+
+        var (title, detail) = DescribeStatus(state, localState.LocalBaseVersionNumber, latestVersion, sessionLock);
+        return new CloudSyncStatus(state, connection, manifest, latestVersion, sessionLock, localState, title, detail)
         {
-            logger.Debug(AppLogKeyword.CloudSync, "No cloud save exists for world {WorldId}", world.WorldId);
-            return new CloudSyncStatus(
-                CloudSyncState.ConnectedNoCloudSave,
-                connection,
-                manifest,
-                null,
-                sessionLock,
-                localState,
-                "No cloud save",
-                "This world has no shared cloud version yet. Upload current to create v1.");
-        }
-
-        if (IsActiveOtherPlayerLock(sessionLock))
-        {
-            logger.Warning(
-                AppLogKeyword.CloudSession,
-                "Active session lock by {PlayerName} for world {WorldId}",
-                sessionLock!.PlayerName,
-                world.WorldId);
-
-            return new CloudSyncStatus(
-                CloudSyncState.SomeonePlaying,
-                connection,
-                manifest,
-                latestVersion,
-                sessionLock,
-                localState,
-                "Someone playing",
-                $"{sessionLock!.PlayerName} is playing from cloud v{sessionLock.BasedOnVersionNumber}.");
-        }
-
-        if (localState.LocalBaseVersionNumber is null)
-        {
-            logger.Debug(AppLogKeyword.CloudSync, "Cloud is newer because local world {WorldId} has no base version", world.WorldId);
-            return new CloudSyncStatus(
-                CloudSyncState.CloudNewer,
-                connection,
-                manifest,
-                latestVersion,
-                sessionLock,
-                localState,
-                "Download needed",
-                $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. This local world has no cloud base version yet.");
-        }
-
-        var hasLocalChanges = await DetectLocalChangesAsync(localState, world, cancellationToken) == true;
-
-        if (localState.LocalBaseVersionNumber < latestVersion.VersionNumber)
-        {
-            logger.Debug(
-                AppLogKeyword.CloudSync,
-                "Cloud is newer for world {WorldId}. LocalBase={LocalBaseVersion} Latest={LatestVersion} LocalChanges={LocalChanges}",
-                world.WorldId,
-                localState.LocalBaseVersionNumber,
-                latestVersion.VersionNumber,
-                hasLocalChanges);
-
-            return hasLocalChanges
-                ? new CloudSyncStatus(
-                    CloudSyncState.Conflict,
-                    connection,
-                    manifest,
-                    latestVersion,
-                    sessionLock,
-                    localState,
-                    "Both changed",
-                    $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}, and you have played since v{localState.LocalBaseVersionNumber}. Downloading replaces your local progress (it is backed up first).")
-                { HasLocalChanges = true }
-                : new CloudSyncStatus(
-                    CloudSyncState.CloudNewer,
-                    connection,
-                    manifest,
-                    latestVersion,
-                    sessionLock,
-                    localState,
-                    "Cloud is newer",
-                    $"Cloud has v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. Local is based on v{localState.LocalBaseVersionNumber}.");
-        }
-
-        if (localState.LocalBaseVersionNumber > latestVersion.VersionNumber)
-        {
-            logger.Warning(
-                AppLogKeyword.CloudSync,
-                "Cloud sync conflict for world {WorldId}. LocalBase={LocalBaseVersion} Latest={LatestVersion}",
-                world.WorldId,
-                localState.LocalBaseVersionNumber,
-                latestVersion.VersionNumber);
-
-            return new CloudSyncStatus(
-                CloudSyncState.Conflict,
-                connection,
-                manifest,
-                latestVersion,
-                sessionLock,
-                localState,
-                "Sync conflict",
-                $"Local is based on v{localState.LocalBaseVersionNumber}, but cloud latest is v{latestVersion.VersionNumber}. Review before syncing.")
-            { HasLocalChanges = hasLocalChanges };
-        }
-
-        if (hasLocalChanges)
-        {
-            logger.Debug(AppLogKeyword.CloudSync, "World {WorldId} has local progress since version {VersionNumber}", world.WorldId, latestVersion.VersionNumber);
-            return new CloudSyncStatus(
-                CloudSyncState.LocalNewerUploadSafe,
-                connection,
-                manifest,
-                latestVersion,
-                sessionLock,
-                localState,
-                "Not shared yet",
-                $"You have played since v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}. Upload to share your progress with the group.")
-            { HasLocalChanges = true };
-        }
-
-        logger.Debug(AppLogKeyword.CloudSync, "World {WorldId} is in sync at version {VersionNumber}", world.WorldId, latestVersion.VersionNumber);
-        return new CloudSyncStatus(
-            CloudSyncState.UpToDate,
-            connection,
-            manifest,
-            latestVersion,
-            sessionLock,
-            localState,
-            "In sync",
-            $"Your world matches the latest cloud version: v{latestVersion.VersionNumber} by {latestVersion.UploadedBy}.");
+            HasLocalChanges = hasLocalChanges
+        };
     }
+
+    private static (string Title, string Detail) DescribeStatus(
+        CloudSyncState state,
+        int? localBase,
+        CloudVersionMetadata? latest,
+        CloudSessionLock? sessionLock) => state switch
+    {
+        CloudSyncState.ConnectedNoCloudSave =>
+            ("No cloud save", "This world has no shared cloud version yet. Upload current to create v1."),
+        CloudSyncState.SomeonePlaying =>
+            ("Someone playing", $"{sessionLock!.PlayerName} is playing from cloud v{sessionLock.BasedOnVersionNumber}."),
+        CloudSyncState.CloudNewer when localBase is null =>
+            ("Download needed", $"Cloud has v{latest!.VersionNumber} by {latest.UploadedBy}. This local world has no cloud base version yet."),
+        CloudSyncState.CloudNewer =>
+            ("Cloud is newer", $"Cloud has v{latest!.VersionNumber} by {latest.UploadedBy}. Local is based on v{localBase}."),
+        CloudSyncState.Conflict when localBase > latest!.VersionNumber =>
+            ("Sync conflict", $"Local is based on v{localBase}, but cloud latest is v{latest.VersionNumber}. Review before syncing."),
+        CloudSyncState.Conflict =>
+            ("Both changed", $"Cloud has v{latest!.VersionNumber} by {latest.UploadedBy}, and you have played since v{localBase}. Downloading replaces your local progress (it is backed up first)."),
+        CloudSyncState.LocalNewerUploadSafe =>
+            ("Not shared yet", $"You have played since v{latest!.VersionNumber} by {latest.UploadedBy}. Upload to share your progress with the group."),
+        _ =>
+            ("In sync", $"Your world matches the latest cloud version: v{latest!.VersionNumber} by {latest.UploadedBy}.")
+    };
 
     // A state saved before fingerprints existed gets one the first time its world is found unchanged, so later checks
     // compare file contents instead of write times.

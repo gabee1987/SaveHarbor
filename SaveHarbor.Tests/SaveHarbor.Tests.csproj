@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="System.IO" />
     <Using Include="Xunit" />
   </ItemGroup>

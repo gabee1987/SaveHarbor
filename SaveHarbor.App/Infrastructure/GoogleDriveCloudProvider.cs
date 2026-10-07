@@ -157,7 +157,7 @@ public sealed partial class GoogleDriveCloudProvider : ICloudProvider, ISharedFo
             var service = await GetOrCreateServiceAsync(interactive: true, cancellationToken);
             var folder = await GetAndValidateSharedRootFolderAsync(service, sharedFolderId, cancellationToken);
             await EnsureGameFolderAsync(service, game, sharedFolderId, writeMarker: false, cancellationToken);
-            return new CloudSetupTestResult(true, $"Connected. SaveHarbor can edit shared folder '{folder.Name}'.");
+            return new CloudSetupTestResult(true, $"Connected. SaveHarbor can edit shared folder '{folder.Name}'.", folder.Name);
         }
         catch (Exception exception)
         {

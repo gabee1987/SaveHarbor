@@ -46,6 +46,40 @@
                         CornerRadius="8"
                         Padding="12">
                     <StackPanel>
+                        <StackPanel x:Name="SavedFoldersPanel" Margin="0,0,0,14" Visibility="Collapsed">
+                            <TextBlock Text="{ui:UiText CloudSetup.SavedFolders}"
+                                       Style="{StaticResource MicroLabel}" />
+                            <Grid Margin="0,7,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="SavedFolderPicker"
+                                          MinHeight="40"
+                                          SelectionChanged="SavedFolderPicker_SelectionChanged"
+                                          ToolTip="{ui:UiText CloudSetup.SavedFoldersTooltip}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding FolderId}" Style="{StaticResource MutedText}" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button x:Name="ForgetButton"
+                                        Grid.Column="2"
+                                        Content="{ui:UiText CloudSetup.Forget}"
+                                        Style="{StaticResource SecondaryButton}"
+                                        MinWidth="80"
+                                        MinHeight="34"
+                                        IsEnabled="False"
+                                        ToolTip="{ui:UiText CloudSetup.ForgetTooltip}"
+                                        Click="ForgetButton_Click" />
+                            </Grid>
+                        </StackPanel>
+
                         <TextBlock Text="{ui:UiText CloudSetup.FolderLink}"
                                    Style="{StaticResource MicroLabel}" />
                         <TextBox x:Name="FolderInput"

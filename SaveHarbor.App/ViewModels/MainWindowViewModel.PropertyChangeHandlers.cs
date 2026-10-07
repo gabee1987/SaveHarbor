@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(SelectedWorldFileCount));
         OnPropertyChanged(nameof(SelectedWorldModifiedAge));
         RefreshSelectedWorldBackups();
+        NotifySyncComparison();
         _ = RefreshWorldFactsAsync();
 
         if (!suppressSelectedWorldCloudRefresh)
@@ -33,6 +34,8 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasSessionLock));
         OnPropertyChanged(nameof(IsOwnSession));
         OnPropertyChanged(nameof(IsOtherPlayerHosting));
+        NotifySyncComparison();
+        ApplySelectedStatusToBadges(value);
     }
 
     partial void OnLastBackupChanged(BackupInfo? value)

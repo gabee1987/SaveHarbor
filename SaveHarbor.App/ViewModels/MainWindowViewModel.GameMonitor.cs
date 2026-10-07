@@ -50,6 +50,7 @@ public partial class MainWindowViewModel
 
             var result = await _cloudSyncService.EndSessionAsync(world);
             await RefreshCloudStatusAsync(showToast: false);
+            await RefreshCloudOverviewAsync();
 
             hasObservedGameRunningDuringSession = false;
             StatusText = result.Message;

@@ -43,6 +43,10 @@
                 </TextBlock>
 
                 <WrapPanel Margin="0,12,0,0">
+                    <ContentControl Content="{Binding SelectedWorldBadge}"
+                                    Style="{DynamicResource DwSyncBadge}"
+                                    Margin="0,0,8,0"
+                                    ToolTip="{Binding SelectedSyncAdvice.Explanation}" />
                     <Border Style="{DynamicResource DwPill}"
                             Visibility="{Binding CloudStatus.LatestVersion, Converter={x:Static converters:NullToCollapsedConverter.Instance}}"
                             ToolTip="{ui:UiText Header.LatestTooltip}">

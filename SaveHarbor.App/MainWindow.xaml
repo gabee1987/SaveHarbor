@@ -45,6 +45,6 @@
 
         <controls:ToastHostView HorizontalAlignment="Right"
                                 VerticalAlignment="Bottom"
-                                Margin="0,0,20,20" />
+                                Margin="0,0,20,64" />
     </Grid>
 </Window>

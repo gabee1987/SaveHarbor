@@ -12,6 +12,11 @@ public interface ICloudSyncService
 
     Task<CloudSyncResult> DownloadLatestAvailableAsync(GameSaveRoot profile, CancellationToken cancellationToken = default);
 
+    // Downloads a shared world that is not on this PC yet; never overwrites a local world.
+    Task<CloudSyncResult> DownloadCloudWorldAsync(GameSaveRoot profile, string worldId, CancellationToken cancellationToken = default);
+
+    Task<CloudWorldOverview> GetOverviewAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, CancellationToken cancellationToken = default);
+
     Task<CloudSyncResult> UploadCurrentAsync(GameWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default);

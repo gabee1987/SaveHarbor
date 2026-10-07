@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
+using SaveHarbor.App.Domain;
 using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
@@ -76,19 +77,21 @@ public sealed class WpfDialogService : IDialogService
         return dialog.ShowDialog() == true ? dialog.FolderName : null;
     }
 
-    public string? ConfigureCloudFolder(
+    public CloudFolderChoice? ConfigureCloudFolder(
         string gameDisplayName,
         string currentFolderId,
-        Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync)
+        IReadOnlyList<SavedCloudFolder> savedFolders,
+        Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync,
+        Func<string, Task> forgetSavedFolderAsync)
     {
         var owner = FindOwner();
 
-        var window = new CloudFolderSetupWindow(gameDisplayName, currentFolderId, testAccessAsync)
+        var window = new CloudFolderSetupWindow(gameDisplayName, currentFolderId, savedFolders, testAccessAsync, forgetSavedFolderAsync)
         {
             Owner = owner
         };
 
-        return window.ShowDialog() == true ? window.FolderInputValue : null;
+        return window.ShowDialog() == true ? new CloudFolderChoice(window.FolderInputValue, window.TestedFolderName) : null;
     }
 
     private static bool? ShowDialog(

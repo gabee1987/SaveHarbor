@@ -61,7 +61,8 @@
                         <Border BorderBrush="{DynamicResource DwFrameInnerBrush}" BorderThickness="0,0,0,1">
                             <TabPanel IsItemsHost="True" />
                         </Border>
-                        <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" Margin="0,16,0,0" />
+                        <!-- The standard part name lets screen readers and UI automation reach the tab content. -->
+                        <ContentPresenter x:Name="PART_SelectedContentHost" Grid.Row="1" ContentSource="SelectedContent" Margin="0,16,0,0" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

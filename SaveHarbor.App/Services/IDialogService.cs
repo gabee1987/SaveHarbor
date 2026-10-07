@@ -1,3 +1,4 @@
+using SaveHarbor.App.Domain;
 using SaveHarbor.App.ViewModels;
 
 namespace SaveHarbor.App.Services;
@@ -11,8 +12,13 @@ public interface IDialogService
     string? SelectImportFile(string initialDirectory, string saveFileFilter);
     void ShowWorldInspector(WorldInspectorViewModel viewModel);
     string? SelectFolder(string title, string initialDirectory);
-    string? ConfigureCloudFolder(
+    CloudFolderChoice? ConfigureCloudFolder(
         string gameDisplayName,
         string currentFolderId,
-        Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync);
+        IReadOnlyList<SavedCloudFolder> savedFolders,
+        Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync,
+        Func<string, Task> forgetSavedFolderAsync);
 }
+
+// The tested folder link or ID, and the folder's name in Google Drive when the test reported it.
+public sealed record CloudFolderChoice(string Input, string? FolderName);

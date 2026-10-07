@@ -36,6 +36,7 @@ public partial class MainWindowViewModel
             Worlds.Clear();
             SelectedWorld = null;
             CloudStatus = null;
+            ClearCloudOverview();
             hasObservedGameRunningDuringSession = false;
             IsSettingsOpen = false;
 

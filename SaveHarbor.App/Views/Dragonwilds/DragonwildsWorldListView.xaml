@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
              xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+             xmlns:vm="clr-namespace:SaveHarbor.App.ViewModels"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <ContentControl Style="{DynamicResource DwFrame}" Padding="16">
         <Grid>
@@ -10,21 +11,10 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <ContentControl Style="{DynamicResource DwPanelHeading}" Content="{ui:SpacedText Dragonwilds.Worlds}" />
-
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="2,10,0,0">
-                <Button Content="{ui:UiText World.Refresh}"
-                        Command="{Binding RefreshCommand}"
-                        Style="{DynamicResource DwLinkButton}"
-                        Margin="0,0,16,0"
-                        ToolTip="{ui:UiText World.RefreshTooltip}" />
-                <Button Content="{ui:UiText World.OpenFolder}"
-                        Command="{Binding OpenWorldFolderCommand}"
-                        Style="{DynamicResource DwLinkButton}"
-                        ToolTip="{Binding LocalSaveRoot}" />
-            </StackPanel>
 
             <ListBox Grid.Row="1"
                      ItemsSource="{Binding Worlds}"
@@ -37,11 +27,26 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type domain:GameWorld}">
                         <StackPanel>
-                            <TextBlock Text="{Binding WorldName}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource InkBrush}"
-                                       TextTrimming="CharacterEllipsis" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding WorldName}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource InkBrush}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <!-- Sync state from the last cloud check; hidden while the cloud is not connected. -->
+                                <ContentControl Grid.Column="1" Style="{DynamicResource DwSyncBadge}" Margin="8,0,0,0">
+                                    <ContentControl.Content>
+                                        <MultiBinding Converter="{x:Static converters:WorldSyncBadgeConverter.Instance}">
+                                            <Binding Path="WorldId" />
+                                            <Binding Path="DataContext.WorldSyncBadges" RelativeSource="{RelativeSource AncestorType=ListBox}" />
+                                        </MultiBinding>
+                                    </ContentControl.Content>
+                                </ContentControl>
+                            </Grid>
                             <TextBlock Style="{DynamicResource DwMuted}" FontSize="11.5" Margin="0,3,0,0">
                                 <Run Text="{Binding LastModifiedAt, Mode=OneWay, Converter={x:Static converters:RelativeAgeConverter.Instance}}" />
                                 <Run Text=" · " />
@@ -63,6 +68,54 @@
                     <Binding Path="Worlds.Count" Converter="{x:Static converters:ZeroToVisibleConverter.Instance}" />
                 </TextBlock.Visibility>
             </TextBlock>
+
+            <!-- Shared worlds that are not on this PC yet. Downloading adds them; no local world is changed. -->
+            <StackPanel Grid.Row="2"
+                        Margin="0,12,0,0"
+                        Visibility="{Binding CloudOnlyWorlds.Count, Converter={x:Static converters:ZeroToCollapsedConverter.Instance}}">
+                <TextBlock Text="{ui:SpacedText Dragonwilds.CloudOnlyWorlds}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
+                <TextBlock Text="{ui:UiText Dragonwilds.CloudOnlyHint}" Style="{DynamicResource DwMuted}" FontSize="11.5" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,8" />
+                <ScrollViewer MaxHeight="170" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding CloudOnlyWorlds}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:CloudWorldEntry}">
+                                <Border Background="#33201915" BorderBrush="{DynamicResource DwRowBorderBrush}" BorderThickness="1" Margin="0,0,0,6" Padding="12,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding WorldName}" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Detail}" Style="{DynamicResource DwMuted}" FontSize="11.5" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Content="{ui:UiText Dragonwilds.DownloadWorld}"
+                                                Command="{Binding DataContext.DownloadCloudWorldCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{DynamicResource DwLinkButton}"
+                                                VerticalAlignment="Center"
+                                                Margin="10,0,0,0"
+                                                ToolTip="{ui:UiText Dragonwilds.DownloadWorldTooltip}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="2,10,0,0">
+                <Button Content="{ui:UiText World.Refresh}"
+                        Command="{Binding RefreshCommand}"
+                        Style="{DynamicResource DwLinkButton}"
+                        Margin="0,0,16,0"
+                        ToolTip="{ui:UiText World.RefreshTooltip}" />
+                <Button Content="{ui:UiText World.OpenFolder}"
+                        Command="{Binding OpenWorldFolderCommand}"
+                        Style="{DynamicResource DwLinkButton}"
+                        ToolTip="{Binding LocalSaveRoot}" />
+            </StackPanel>
         </Grid>
     </ContentControl>
 </UserControl>

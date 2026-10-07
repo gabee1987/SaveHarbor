@@ -57,6 +57,7 @@ public partial class MainWindowViewModel
         EndCloudSessionCommand.NotifyCanExecuteChanged();
         StartGameCommand.NotifyCanExecuteChanged();
         JoinGameCommand.NotifyCanExecuteChanged();
+        RunRecommendedSyncActionCommand.NotifyCanExecuteChanged();
         NotifySwitchGameState();
     }
 
