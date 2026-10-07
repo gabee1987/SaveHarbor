@@ -35,7 +35,7 @@ need to install anything.
 cd C:\Coding\SaveHarbor; dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o artifacts\friend-build; Compress-Archive -Path artifacts\friend-build\* -DestinationPath artifacts\SaveHarbor.zip -Force
 ```
 
-The result is `artifacts\SaveHarbor.zip` (about 30 MB). The `artifacts` folder is ignored by Git.
+The result is `artifacts\SaveHarbor.zip` (about 60 MB; .NET is included and the app is already compressed, so zipping shrinks it little). The `artifacts` folder is ignored by Git.
 
 | Option | Purpose |
 | --- | --- |
