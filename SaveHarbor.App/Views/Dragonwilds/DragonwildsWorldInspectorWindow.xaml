@@ -1,6 +1,7 @@
 <Window x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsWorldInspectorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
         xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
         xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
         xmlns:ui="clr-namespace:SaveHarbor.App.Localization"
@@ -124,10 +125,13 @@
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="240" />
                                                                 <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
                                                             </Grid.ColumnDefinitions>
                                                             <TextBlock Text="{Binding Label}" Style="{DynamicResource DwMuted}" TextTrimming="CharacterEllipsis"
                                                                        ToolTip="{Binding Label}" Margin="0,0,12,0" />
                                                             <TextBox Grid.Column="1" Text="{Binding Value, Mode=OneWay}" Style="{StaticResource InspectorValue}" />
+                                                            <Button Grid.Column="2" Style="{DynamicResource DwCopyButton}" VerticalAlignment="Top" Margin="8,-2,0,0"
+                                                                    Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Value}" ToolTip="{ui:UiText Paths.CopyValueTooltip}" />
                                                         </Grid>
                                                     </Border>
                                                 </DataTemplate>

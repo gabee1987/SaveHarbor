@@ -8,7 +8,7 @@ namespace SaveHarbor.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private const int RecentWorldBackupLimit = 5;
+    private const int WorldBackupListLimit = 100;
 
     private IReadOnlyList<BackupInfo> gameBackups = [];
 
@@ -17,6 +17,17 @@ public partial class MainWindowViewModel
     public ObservableCollection<WorldFact> SelectedWorldRules { get; } = [];
 
     public ObservableCollection<WorldBackupItem> SelectedWorldBackups { get; } = [];
+
+    // Backups of every other world, one group per world, including worlds no longer on this PC.
+    public ObservableCollection<WorldBackupGroup> OtherWorldBackupGroups { get; } = [];
+
+    public string SelectedWorldBackupSummary => SelectedWorldBackups.Count == 0
+        ? "No backups yet"
+        : $"{SelectedWorldBackups.Count} backup{(SelectedWorldBackups.Count == 1 ? string.Empty : "s")} · {DisplayFormatter.FormatBytes(SelectedWorldBackups.Sum(backup => backup.SizeBytes))}";
+
+    public string SelectedWorldBackupFolder => SelectedWorld is null
+        ? BackupRoot
+        : _backupService.GetWorldBackupFolder(_activeGame.Current.Id, SelectedWorld.WorldName);
 
     private async Task RefreshWorldFactsAsync()
     {
@@ -56,17 +67,59 @@ public partial class MainWindowViewModel
 
     private void RefreshSelectedWorldBackups()
     {
+        OnPropertyChanged(nameof(SelectedWorldBackupFolder));
         SelectedWorldBackups.Clear();
-        if (SelectedWorld is null)
+        if (SelectedWorld is not null)
         {
-            return;
+            foreach (var backup in BackupsOf(SelectedWorld).Take(WorldBackupListLimit))
+            {
+                SelectedWorldBackups.Add(ToBackupItem(backup));
+            }
         }
 
-        foreach (var backup in BackupsOf(SelectedWorld).Take(RecentWorldBackupLimit))
+        OnPropertyChanged(nameof(SelectedWorldBackupSummary));
+        RefreshOtherWorldBackupGroups();
+    }
+
+    private void RefreshOtherWorldBackupGroups()
+    {
+        var expanded = OtherWorldBackupGroups.Where(group => group.IsExpanded).Select(group => group.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selectedKey = SelectedWorld is null ? null : FileNameSanitizer.MakeSafeFileName(SelectedWorld.WorldName);
+        var localNames = Worlds.ToDictionary(world => FileNameSanitizer.MakeSafeFileName(world.WorldName), world => world.WorldName, StringComparer.OrdinalIgnoreCase);
+
+        var groups = gameBackups
+            .Select(backup => (Backup: backup, Parsed: BackupFileName.TryParse(backup.FileName, out var name, out _), Name: name))
+            .Where(item => item.Parsed && !string.Equals(item.Name, selectedKey, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var backups = group.Select(item => item.Backup).OrderByDescending(backup => backup.CreatedAt).ToArray();
+                var isLocal = localNames.TryGetValue(group.Key, out var worldName);
+                return new WorldBackupGroup(
+                    group.Key,
+                    worldName ?? group.Key,
+                    _backupService.GetWorldBackupFolder(_activeGame.Current.Id, group.Key),
+                    $"{backups.Length} backup{(backups.Length == 1 ? string.Empty : "s")} · {DisplayFormatter.FormatBytes(backups.Sum(backup => backup.SizeBytes))} · newest {DisplayFormatter.FormatAge(backups[0].CreatedAt)}",
+                    isLocal,
+                    backups.Take(WorldBackupListLimit).Select(ToBackupItem).ToArray())
+                {
+                    IsExpanded = expanded.Contains(group.Key)
+                };
+            })
+            .OrderBy(group => group.IsOnThisPc)
+            .ThenBy(group => group.DisplayName, StringComparer.OrdinalIgnoreCase);
+
+        OtherWorldBackupGroups.Clear();
+        foreach (var group in groups)
         {
-            BackupFileName.TryParse(backup.FileName, out _, out var reason);
-            SelectedWorldBackups.Add(new WorldBackupItem(backup.FilePath, backup.CreatedAt, DescribeBackupReason(reason), backup.SizeBytes));
+            OtherWorldBackupGroups.Add(group);
         }
+    }
+
+    private static WorldBackupItem ToBackupItem(BackupInfo backup)
+    {
+        BackupFileName.TryParse(backup.FileName, out _, out var reason);
+        return new WorldBackupItem(backup.FilePath, backup.CreatedAt, DescribeBackupReason(reason), backup.SizeBytes);
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
@@ -111,6 +164,8 @@ public partial class MainWindowViewModel
         BackupReasons.PreImport => "Before import",
         BackupReasons.Imported => "Imported file",
         BackupReasons.CloudUpload => "Shared to cloud",
+        BackupReasons.PreRemove => "Before removal from PC",
+        BackupReasons.CloudRemoved => "Removed from cloud",
         _ => reason
     };
 }

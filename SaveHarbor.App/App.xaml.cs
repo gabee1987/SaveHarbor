@@ -70,6 +70,7 @@ public partial class App : Application
                 services.AddSingleton<ICloudSetupService, CloudProviderSettingsService>();
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
                 services.AddSingleton<LegacyLayoutMigrator>();
+                services.AddSingleton<BackupFolderOrganizer>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
             })
@@ -85,6 +86,8 @@ public partial class App : Application
         base.OnStartup(e);
         await _host.StartAsync();
         var migrationReport = _host.Services.GetRequiredService<LegacyLayoutMigrator>().Run();
+        var organizerReport = _host.Services.GetRequiredService<BackupFolderOrganizer>()
+            .Run(_host.Services.GetRequiredService<IGameRegistry>().All.Select(game => game.Id));
         LogAppInformation(_loggingOptions, "SaveHarbor started");
 
         _host.Services.GetRequiredService<IThemeService>();
@@ -92,7 +95,7 @@ public partial class App : Application
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
 
-        if (migrationReport.Errors.Count > 0)
+        if (migrationReport.Errors.Count > 0 || organizerReport.Errors.Count > 0)
         {
             _host.Services.GetRequiredService<IToastService>().Warning(
                 "Data migration incomplete",

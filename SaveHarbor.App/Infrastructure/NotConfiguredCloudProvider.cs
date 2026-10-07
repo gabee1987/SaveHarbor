@@ -58,6 +58,11 @@ public sealed class NotConfiguredCloudProvider : ICloudProvider
         return Task.CompletedTask;
     }
 
+    public Task<CloudRemovalResult> RemoveWorldAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CloudRemovalResult(false, "Cloud provider is not configured."));
+    }
+
     public Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;

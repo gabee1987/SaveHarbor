@@ -1,6 +1,7 @@
 <UserControl x:Class="SaveHarbor.App.Views.Dragonwilds.DragonwildsSettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <Grid>
         <Border Background="{DynamicResource DwOverlayBrush}">
@@ -62,6 +63,7 @@
                                     <TextBlock Text="{Binding Settings.SaveFolder}" Style="{DynamicResource DwMuted}" Margin="0,3,0,0" ToolTip="{Binding Settings.SaveFolder}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Style="{DynamicResource DwCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.SaveFolder}" ToolTip="{ui:UiText Paths.CopyTooltip}" Margin="0,0,8,0" />
                                     <Button Content="{ui:SpacedText Settings.Reset}" Command="{Binding Settings.ResetSaveFolderCommand}" Style="{DynamicResource DwButton}"
                                             Margin="0,0,8,0" ToolTip="{ui:UiText Settings.ResetTooltip}"
                                             Visibility="{Binding Settings.HasCustomSaveFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
@@ -81,8 +83,11 @@
                                     <TextBlock Text="{ui:UiText Settings.BackupFolder}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
                                     <TextBlock Text="{Binding Settings.BackupFolder}" Style="{DynamicResource DwMuted}" Margin="0,3,0,0" ToolTip="{Binding Settings.BackupFolder}" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenBackupFolderCommand}"
-                                        Style="{DynamicResource DwButton}" VerticalAlignment="Center" ToolTip="{ui:UiText Settings.BackupFolderTooltip}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Style="{DynamicResource DwCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.BackupFolder}" ToolTip="{ui:UiText Paths.CopyTooltip}" Margin="0,0,8,0" />
+                                    <Button Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenBackupFolderCommand}"
+                                            Style="{DynamicResource DwButton}" ToolTip="{ui:UiText Settings.BackupFolderTooltip}" />
+                                </StackPanel>
                             </Grid>
                         </Border>
                         <Border Style="{DynamicResource DwSettingRow}">
@@ -95,7 +100,7 @@
                                     <TextBlock Text="{ui:UiText Settings.KeepBackups}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
                                     <TextBlock Text="{ui:UiText Settings.KeepBackupsHint}" Style="{DynamicResource DwMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
                                 </StackPanel>
-                                <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource DwComboBox}"
                                           ItemsSource="{Binding Settings.RetentionOptions}"
                                           SelectedItem="{Binding Settings.SelectedRetention}" />
                             </Grid>
@@ -124,7 +129,7 @@
                                     <TextBlock Text="{ui:UiText Settings.KeepSharedVersions}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
                                     <TextBlock Text="{ui:UiText Settings.KeepSharedVersionsHint}" Style="{DynamicResource DwMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
                                 </StackPanel>
-                                <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource DwComboBox}"
                                           ItemsSource="{Binding Settings.CloudRetentionOptions}"
                                           SelectedItem="{Binding Settings.SelectedCloudRetention}" />
                             </Grid>

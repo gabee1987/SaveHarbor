@@ -55,8 +55,9 @@ public sealed class SyncGuidanceTests
 
         var side = SyncAdvisor.DescribeLocal(world, Status(CloudSyncState.LocalNewerUploadSafe, 3, 3, changed: true));
 
-        Assert.Equal("v3 + new progress", side.Version);
+        Assert.Equal("v3", side.Version);
         Assert.Contains("not uploaded", side.Detail, StringComparison.Ordinal);
+        Assert.True(side.HasNews);
     }
 
     [Fact]

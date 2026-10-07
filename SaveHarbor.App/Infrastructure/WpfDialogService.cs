@@ -35,6 +35,19 @@ public sealed class WpfDialogService : IDialogService
             "WarnBrush") == true;
     }
 
+    // For actions that delete something: red accent and an explicit action name instead of "Continue".
+    public bool ConfirmDanger(string title, string message, string actionText)
+    {
+        return ShowDialog(
+            title,
+            UiTextCatalog.Get("Dialog.ConfirmRemoval"),
+            message,
+            "!",
+            actionText,
+            UiTextCatalog.Get("Dialog.Cancel"),
+            "DangerBrush") == true;
+    }
+
     public string? SelectZipFile(string initialDirectory)
     {
         var dialog = new OpenFileDialog
@@ -78,6 +91,7 @@ public sealed class WpfDialogService : IDialogService
     }
 
     public CloudFolderChoice? ConfigureCloudFolder(
+        GameId game,
         string gameDisplayName,
         string currentFolderId,
         IReadOnlyList<SavedCloudFolder> savedFolders,
@@ -86,7 +100,7 @@ public sealed class WpfDialogService : IDialogService
     {
         var owner = FindOwner();
 
-        var window = new CloudFolderSetupWindow(gameDisplayName, currentFolderId, savedFolders, testAccessAsync, forgetSavedFolderAsync)
+        var window = new CloudFolderSetupWindow(game, gameDisplayName, currentFolderId, savedFolders, testAccessAsync, forgetSavedFolderAsync)
         {
             Owner = owner
         };

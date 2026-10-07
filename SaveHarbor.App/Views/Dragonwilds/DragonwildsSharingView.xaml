@@ -5,14 +5,44 @@
              xmlns:vm="clr-namespace:SaveHarbor.App.ViewModels"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <UserControl.Resources>
-        <!-- One side of the comparison: which version, what happened since, and when. -->
+        <!-- One side of the comparison: which version, what happened since, and when. New progress is highlighted. -->
         <DataTemplate x:Key="SyncSideTemplate" DataType="{x:Type vm:SyncSide}">
-            <StackPanel>
-                <TextBlock Text="{Binding Version}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
-                <TextBlock Text="{Binding Detail}" Style="{DynamicResource DwMuted}" Margin="0,2,0,0" />
+            <StackPanel Margin="0,6,0,0">
+                <TextBlock Text="{Binding Version}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="24" FontWeight="Bold"
+                           Foreground="{DynamicResource DwGoldTextBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Detail}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,1,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasNews}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
                 <TextBlock Text="{Binding When}" Style="{DynamicResource DwMuted}" FontSize="11.5" Margin="0,1,0,0" />
             </StackPanel>
         </DataTemplate>
+
+        <!-- Corner ribbon on the side that holds the newer copy. -->
+        <Style x:Key="NewerRibbon" TargetType="ContentControl">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContentControl">
+                        <Border Background="{DynamicResource DwGoldFillBrush}" Padding="6,1" Margin="0,-2,-3,0">
+                            <TextBlock Text="{ui:SpacedText Dragonwilds.Newer}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource PrimaryButtonForegroundBrush}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -51,29 +81,72 @@
                 </ContentControl.ContentTemplate>
             </ContentControl>
 
-            <!-- This PC versus the cloud, side by side. The arrow points from the newer copy to the older one. -->
-            <Grid Margin="0,12,0,0" Visibility="{Binding LocalSide, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+            <!-- This PC versus the cloud, side by side. The medallion between them says how they relate; the side with
+                 the newer copy glows and carries a NEWER ribbon. -->
+            <Grid Margin="0,14,0,0" Visibility="{Binding LocalSide, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition Width="78" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <StackPanel ToolTip="{ui:UiText Dragonwilds.ThisPcTooltip}">
-                    <TextBlock Text="{ui:SpacedText Dragonwilds.ThisPc}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
-                    <ContentControl Content="{Binding LocalSide}" ContentTemplate="{StaticResource SyncSideTemplate}" Focusable="False" />
-                </StackPanel>
-                <TextBlock Grid.Column="1"
-                           Text="{Binding SelectedSyncAdvice.Direction}"
-                           FontFamily="Segoe UI Symbol"
-                           FontSize="22"
-                           Foreground="{DynamicResource DwGoldBrightBrush}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           ToolTip="{ui:UiText Dragonwilds.DirectionTooltip}" />
-                <StackPanel Grid.Column="2" ToolTip="{ui:UiText Header.LatestTooltip}">
-                    <TextBlock Text="{ui:SpacedText Dragonwilds.InTheCloud}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
-                    <ContentControl Content="{Binding CloudSide}" ContentTemplate="{StaticResource SyncSideTemplate}" Focusable="False" />
-                </StackPanel>
+
+                <Rectangle Grid.Column="1" Height="1" VerticalAlignment="Center" Fill="{DynamicResource DwGlowLineBrush}" />
+
+                <Border Style="{DynamicResource DwSideCard}" Tag="{Binding SelectedSyncAdvice.LocalIsNewer, FallbackValue=False}" ToolTip="{ui:UiText Dragonwilds.ThisPcTooltip}">
+                    <Grid>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource DwPcGeometry}" Stroke="{DynamicResource DwGoldBrush}" StrokeThickness="1.2" Width="16" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                <TextBlock Text="{ui:SpacedText Dragonwilds.ThisPc}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                            </StackPanel>
+                            <ContentControl Content="{Binding LocalSide}" ContentTemplate="{StaticResource SyncSideTemplate}" Focusable="False" />
+                            <Button Content="{ui:UiText Dragonwilds.RemoveFromPc}"
+                                    Command="{Binding RemoveLocalWorldCommand}"
+                                    Style="{DynamicResource DwDangerLink}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,9,0,0"
+                                    ToolTip="{ui:UiText Dragonwilds.RemoveFromPcTooltip}" />
+                        </StackPanel>
+                        <ContentControl Style="{StaticResource NewerRibbon}"
+                                        Visibility="{Binding SelectedSyncAdvice.LocalIsNewer, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                    </Grid>
+                </Border>
+
+                <ContentControl Grid.Column="1" Content="{Binding SelectedSyncAdvice}" Style="{DynamicResource DwOptionalContent}" VerticalAlignment="Center" ToolTip="{ui:UiText Dragonwilds.DirectionTooltip}">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate DataType="{x:Type vm:SyncAdvice}">
+                            <StackPanel>
+                                <Border Style="{DynamicResource DwToneBorder}" Width="46" Height="46" CornerRadius="23" BorderThickness="1.5" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Direction}" Style="{DynamicResource DwToneText}" FontFamily="Segoe UI Symbol" FontSize="21"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" />
+                                </Border>
+                                <TextBlock Text="{Binding Relation}" Style="{DynamicResource DwToneText}" FontSize="10.5" FontWeight="SemiBold"
+                                           TextAlignment="Center" TextWrapping="Wrap" Margin="2,6,2,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+
+                <Border Grid.Column="2" Style="{DynamicResource DwSideCard}" Tag="{Binding SelectedSyncAdvice.CloudIsNewer, FallbackValue=False}" ToolTip="{ui:UiText Header.LatestTooltip}">
+                    <Grid>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource DwCloudGeometry}" Stroke="{DynamicResource DwGoldBrush}" StrokeThickness="1.2" Width="17" Height="12" Stretch="Uniform" VerticalAlignment="Center" />
+                                <TextBlock Text="{ui:SpacedText Dragonwilds.InTheCloud}" Style="{DynamicResource DwLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                            </StackPanel>
+                            <ContentControl Content="{Binding CloudSide}" ContentTemplate="{StaticResource SyncSideTemplate}" Focusable="False" />
+                            <Button Content="{ui:UiText Dragonwilds.RemoveFromCloud}"
+                                    Command="{Binding RemoveCloudWorldCommand}"
+                                    Style="{DynamicResource DwDangerLink}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,9,0,0"
+                                    Visibility="{Binding CanRemoveSelectedFromCloud, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    ToolTip="{ui:UiText Dragonwilds.RemoveFromCloudTooltip}" />
+                        </StackPanel>
+                        <ContentControl Style="{StaticResource NewerRibbon}"
+                                        Visibility="{Binding SelectedSyncAdvice.CloudIsNewer, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                    </Grid>
+                </Border>
             </Grid>
 
             <TextBlock Margin="0,8,0,0"

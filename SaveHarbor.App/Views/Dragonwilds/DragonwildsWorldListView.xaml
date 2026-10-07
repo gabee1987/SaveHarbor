@@ -89,14 +89,21 @@
                                             <TextBlock Text="{Binding WorldName}" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextTrimming="CharacterEllipsis" />
                                             <TextBlock Text="{Binding Detail}" Style="{DynamicResource DwMuted}" FontSize="11.5" Margin="0,2,0,0" />
                                         </StackPanel>
-                                        <Button Grid.Column="1"
-                                                Content="{ui:UiText Dragonwilds.DownloadWorld}"
-                                                Command="{Binding DataContext.DownloadCloudWorldCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{DynamicResource DwLinkButton}"
-                                                VerticalAlignment="Center"
-                                                Margin="10,0,0,0"
-                                                ToolTip="{ui:UiText Dragonwilds.DownloadWorldTooltip}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                                            <Button Content="{ui:UiText Dragonwilds.DownloadWorld}"
+                                                    Command="{Binding DataContext.DownloadCloudWorldCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{DynamicResource DwLinkButton}"
+                                                    HorizontalAlignment="Right"
+                                                    ToolTip="{ui:UiText Dragonwilds.DownloadWorldTooltip}" />
+                                            <Button Content="{ui:UiText Dragonwilds.RemoveShort}"
+                                                    Command="{Binding DataContext.RemoveCloudWorldCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{DynamicResource DwDangerLink}"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,3,0,0"
+                                                    ToolTip="{ui:UiText Dragonwilds.RemoveFromCloudTooltip}" />
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

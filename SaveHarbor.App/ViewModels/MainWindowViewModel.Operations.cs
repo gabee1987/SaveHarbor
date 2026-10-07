@@ -48,6 +48,7 @@ public partial class MainWindowViewModel
         RestoreBackupCommand.NotifyCanExecuteChanged();
         OpenWorldFolderCommand.NotifyCanExecuteChanged();
         OpenWorldInspectorCommand.NotifyCanExecuteChanged();
+        RemoveLocalWorldCommand.NotifyCanExecuteChanged();
         SetupCloudFolderCommand.NotifyCanExecuteChanged();
         ConnectCloudCommand.NotifyCanExecuteChanged();
         CheckCloudCommand.NotifyCanExecuteChanged();

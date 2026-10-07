@@ -29,6 +29,7 @@ public partial class MainWindowViewModel
     {
         var game = _activeGame.Current;
         var choice = _dialogService.ConfigureCloudFolder(
+            game.Id,
             game.DisplayName,
             _cloudSetupService.GetCurrentSharedFolderId(game.Id),
             _cloudSetupService.GetSavedFolders(game.Id),

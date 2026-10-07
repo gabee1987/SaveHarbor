@@ -6,7 +6,8 @@ namespace SaveHarbor.App.ViewModels;
 public partial class MainWindowViewModel
 {
     private const int MaxVisibleToasts = 5;
-    private static readonly TimeSpan ToastTick = TimeSpan.FromMilliseconds(100);
+    // Short enough for the spark on the time bar to glide rather than jump.
+    private static readonly TimeSpan ToastTick = TimeSpan.FromMilliseconds(40);
     private static readonly TimeSpan ToastExitAnimation = TimeSpan.FromMilliseconds(460);
 
     public bool HasSeveralToasts => Toasts.Count > 1;

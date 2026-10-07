@@ -52,6 +52,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(LocalSide));
         OnPropertyChanged(nameof(CloudSide));
         OnPropertyChanged(nameof(SelectedWorldBadge));
+        OnPropertyChanged(nameof(CanRemoveSelectedFromCloud));
         RunRecommendedSyncActionCommand.NotifyCanExecuteChanged();
     }
 

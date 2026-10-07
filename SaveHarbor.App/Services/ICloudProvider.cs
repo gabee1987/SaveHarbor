@@ -28,6 +28,9 @@ public interface ICloudProvider
     // Removes one version archive and its metadata. Providers with a recycle bin move it there instead of deleting.
     Task RemoveVersionAsync(GameId game, string worldId, string archiveFileName, CancellationToken cancellationToken = default);
 
+    // Removes a world with all its versions and locks. Providers with a recycle bin move it there instead of deleting.
+    Task<CloudRemovalResult> RemoveWorldAsync(GameId game, string worldId, CancellationToken cancellationToken = default);
+
     Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default);
 
     Task ClearSessionLockAsync(GameId game, string worldId, string lockId, CancellationToken cancellationToken = default);

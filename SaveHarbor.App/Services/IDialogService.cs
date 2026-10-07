@@ -8,11 +8,13 @@ public interface IDialogService
     void ShowInfo(string title, string message);
     void ShowError(string title, string message);
     bool Confirm(string title, string message);
+    bool ConfirmDanger(string title, string message, string actionText);
     string? SelectZipFile(string initialDirectory);
     string? SelectImportFile(string initialDirectory, string saveFileFilter);
     void ShowWorldInspector(WorldInspectorViewModel viewModel);
     string? SelectFolder(string title, string initialDirectory);
     CloudFolderChoice? ConfigureCloudFolder(
+        GameId game,
         string gameDisplayName,
         string currentFolderId,
         IReadOnlyList<SavedCloudFolder> savedFolders,

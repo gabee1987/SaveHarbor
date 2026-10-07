@@ -7,6 +7,8 @@ public sealed class StubBackupService : IBackupService
 {
     public string GetBackupRoot(GameId game) => throw new NotSupportedException();
 
+    public string GetWorldBackupFolder(GameId game, string worldName) => throw new NotSupportedException();
+
     public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(GameId game, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 
@@ -23,5 +25,11 @@ public sealed class StubBackupService : IBackupService
         throw new NotSupportedException();
 
     public Task RestoreBackupAsync(string backupPath, GameWorld targetWorld, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+    public Task<BackupInfo> RemoveWorldAsync(GameWorld world, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+    public Task<BackupInfo> StoreArchiveCopyAsync(string archivePath, GameId game, string reason, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 }

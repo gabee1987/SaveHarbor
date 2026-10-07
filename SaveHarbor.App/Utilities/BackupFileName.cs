@@ -4,11 +4,19 @@ using System.Text.RegularExpressions;
 namespace SaveHarbor.App.Utilities;
 
 // Backup archives are named "<yyyyMMdd_HHmmss UTC>_<safe world name>_<reason>[-n].zip". The "-n" counter is only
-// added when a name is already taken, so an existing backup is never overwritten.
+// added when a name is already taken, so an existing backup is never overwritten. Each world's backups sit in their
+// own folder under the game's backup root, named after the world.
 public static partial class BackupFileName
 {
     public const string Extension = ".zip";
     private const string TimestampFormat = "yyyyMMdd_HHmmss";
+    private const string FallbackFolderName = "_unnamed-world";
+
+    public static string FolderName(string worldName)
+    {
+        var safeName = FileNameSanitizer.MakeSafeFileName(worldName).TrimEnd('.', ' ');
+        return SafePath.IsSafeSegment(safeName) ? safeName : FallbackFolderName;
+    }
 
     public static string Create(DateTimeOffset createdAt, string worldName, string reason, int attempt = 1) =>
         $"{createdAt.UtcDateTime.ToString(TimestampFormat, CultureInfo.InvariantCulture)}_{FileNameSanitizer.MakeSafeFileName(worldName)}_{reason}"

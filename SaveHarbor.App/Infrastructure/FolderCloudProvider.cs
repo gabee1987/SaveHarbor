@@ -192,6 +192,21 @@ public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvide
         return Task.CompletedTask;
     }
 
+    // Moved aside into "removed", like a recycle bin, rather than deleted.
+    public Task<CloudRemovalResult> RemoveWorldAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
+    {
+        var worldPath = GetWorldPath(game, worldId);
+        if (!Directory.Exists(worldPath))
+        {
+            return Task.FromResult(new CloudRemovalResult(true, "The world was already gone from the cloud."));
+        }
+
+        var removedRoot = Path.Combine(GetRootPath(game), "removed");
+        Directory.CreateDirectory(removedRoot);
+        Directory.Move(worldPath, Path.Combine(removedRoot, $"{worldId}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}"));
+        return Task.FromResult(new CloudRemovalResult(true, "Removed from the local test cloud."));
+    }
+
     public Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
     {
         EnsureGameFolder(game);

@@ -17,6 +17,9 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
 
     public string GetBackupRoot(GameId game) => pathProvider.GetBackupRoot(game);
 
+    public string GetWorldBackupFolder(GameId game, string worldName) =>
+        Path.Combine(GetBackupRoot(game), BackupFileName.FolderName(worldName));
+
     public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(GameId game, CancellationToken cancellationToken = default)
     {
         var backupRoot = GetBackupRoot(game);
@@ -27,7 +30,8 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
 
         return Task.Run<IReadOnlyList<BackupInfo>>(() =>
         {
-            return Directory.EnumerateFiles(backupRoot, "*", SearchOption.TopDirectoryOnly)
+            // Backups made before world folders existed may still sit directly in the root.
+            return Directory.EnumerateFiles(backupRoot, "*", SearchOption.AllDirectories)
                 .Where(path => path.EndsWith(BackupFileName.Extension, StringComparison.OrdinalIgnoreCase))
                 .Select(path =>
                 {
@@ -77,7 +81,7 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
 
     public async Task<BackupInfo> CreateBackupAsync(GameWorld world, string reason, CancellationToken cancellationToken = default)
     {
-        var backupRoot = GetBackupRoot(world.Game);
+        var backupRoot = GetWorldBackupFolder(world.Game, world.WorldName);
         Directory.CreateDirectory(backupRoot);
 
         var createdAt = DateTimeOffset.UtcNow;

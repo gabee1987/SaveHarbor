@@ -23,6 +23,9 @@ public sealed class FakeCloudProvider : ICloudProvider
     // The next N uploads fail.
     public int FailUploadTimes { get; set; }
 
+    // When set, downloads copy this archive to the requested path; otherwise they fail.
+    public string? ArchiveToServe { get; set; }
+
     public TimeSpan LockVerifyDelay => TimeSpan.Zero;
 
     public void SeedManifest(GameId game, CloudWorldManifest manifest)
@@ -103,7 +106,14 @@ public sealed class FakeCloudProvider : ICloudProvider
     public Task<CloudDownloadResult> DownloadVersionAsync(CloudDownloadRequest request, CancellationToken cancellationToken = default)
     {
         Calls.Add($"Download:{request.World.Game}:{request.World.WorldId}");
-        return Task.FromResult(new CloudDownloadResult(false, null, "Not supported by the fake provider."));
+        if (ArchiveToServe is null)
+        {
+            return Task.FromResult(new CloudDownloadResult(false, null, "Not supported by the fake provider."));
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(request.TargetArchivePath)!);
+        File.Copy(ArchiveToServe, request.TargetArchivePath, overwrite: true);
+        return Task.FromResult(new CloudDownloadResult(true, request.TargetArchivePath, "Downloaded."));
     }
 
     public Task<IReadOnlyList<CloudStoredVersion>> ListStoredVersionsAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
@@ -117,6 +127,15 @@ public sealed class FakeCloudProvider : ICloudProvider
         Calls.Add($"RemoveVersion:{archiveFileName}");
         StoredVersions.Remove(archiveFileName);
         return Task.CompletedTask;
+    }
+
+    public Task<CloudRemovalResult> RemoveWorldAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
+    {
+        Calls.Add($"RemoveWorld:{game}:{worldId}");
+        manifests.Remove((game, worldId));
+        locks.Remove((game, worldId));
+        StoredVersions.Clear();
+        return Task.FromResult(new CloudRemovalResult(true, "Removed."));
     }
 
     public async Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)

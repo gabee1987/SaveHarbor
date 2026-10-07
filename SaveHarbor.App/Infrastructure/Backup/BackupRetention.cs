@@ -6,8 +6,8 @@ namespace SaveHarbor.App.Infrastructure.Backup;
 
 // Decides which backups the "Keep backups" setting may delete. Losing a world must stay impossible, so beyond the
 // newest N backups of the game it never removes: the backup just made, the newest backup of every world, a recent
-// safety backup (made automatically before a restore or import, or the imported file itself), or any file whose
-// name it does not recognise.
+// safety backup (made automatically before a restore or import, or the imported file itself), any backup made when a
+// world was removed, or any file whose name it does not recognise.
 public static class BackupRetention
 {
     public static readonly TimeSpan SafetyBackupProtection = TimeSpan.FromDays(14);
@@ -17,6 +17,13 @@ public static class BackupRetention
         BackupReasons.PreRestore,
         BackupReasons.PreImport,
         BackupReasons.Imported
+    };
+
+    // The only remaining copy of a removed world: kept until the user deletes it.
+    public static readonly IReadOnlySet<string> RemovalReasons = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        BackupReasons.PreRemove,
+        BackupReasons.CloudRemoved
     };
 
     public static IReadOnlyList<BackupInfo> SelectForDeletion(IReadOnlyList<BackupInfo> backups, int keepCount, string justCreatedPath, DateTimeOffset now)
@@ -40,6 +47,7 @@ public static class BackupRetention
             var isNewestOfWorld = seenWorlds.Add(world);
             var isProtected = isNewestOfWorld
                 || string.Equals(Path.GetFullPath(backup.FilePath), Path.GetFullPath(justCreatedPath), StringComparison.OrdinalIgnoreCase)
+                || RemovalReasons.Contains(reason)
                 || (SafetyReasons.Contains(reason) && now - backup.CreatedAt < SafetyBackupProtection);
             if (index >= keepCount && !isProtected)
             {
