@@ -116,6 +116,7 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
             adapter.ValidatePayload(payloadRoot, targetWorld.WorldId);
             strategy.Restore(payloadRoot, targetWorld, manifest, cancellationToken);
         }, cancellationToken);
+        adapter.RememberWorldState(targetWorld.SavePath);
     }
 
     private async Task PruneOldBackupsAsync(GameId game, string justCreatedPath, CancellationToken cancellationToken)

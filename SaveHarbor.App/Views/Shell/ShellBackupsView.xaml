@@ -29,14 +29,14 @@
                 <Grid>
                     <!-- Age, reason and size sit together on the left; the spare width goes before the actions. -->
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="BackupAge" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="BackupReason" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding CreatedAt, Converter={x:Static converters:RelativeAgeConverter.Instance}}" Style="{DynamicResource SkinMuted}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding CreatedAt, Converter={x:Static converters:RelativeAgeConverter.Instance}}" Style="{DynamicResource SkinMuted}" VerticalAlignment="Center" Margin="0,0,12,0" />
                     <TextBlock Grid.Column="1" Text="{Binding Reason}" Foreground="{DynamicResource InkBrush}" FontSize="12.5" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="2" Text="{Binding SizeBytes, Converter={x:Static converters:ByteSizeConverter.Instance}}" Style="{DynamicResource SkinMuted}" VerticalAlignment="Center" Margin="10,0,0,0" />
                     <Button Grid.Column="4" Style="{DynamicResource SkinCopyButton}" Margin="8,0,0,0"

@@ -7,11 +7,12 @@ namespace SaveHarbor.Tests.Games;
 
 public sealed class WindroseSaveAdapterTests
 {
-    private static WindroseSaveAdapter CreateAdapter(string profilesRoot) =>
+    // Nothing these tests do writes app data, so it cannot show up as a profile folder.
+    private static WindroseSaveAdapter CreateAdapter(TempDirectory temp) =>
         new(new GameOptionsProvider(new Dictionary<GameId, GameOptions>
         {
-            [GameId.Windrose] = new() { SaveRoot = profilesRoot }
-        }));
+            [GameId.Windrose] = new() { SaveRoot = temp.Path }
+        }), new TestPathProvider(temp));
 
     [Fact]
     public async Task DiscoverWorldsAsync_ValidWorld_MapsWorldFields()
@@ -19,7 +20,7 @@ public sealed class WindroseSaveAdapterTests
         using var temp = new TempDirectory();
         SaveFixtures.CreateWindroseWorld(temp.Path, "12345", "folder1", "TEST_WORLD_ID", "Test World");
 
-        var worlds = await CreateAdapter(temp.Path).DiscoverWorldsAsync(TestContext.Current.CancellationToken);
+        var worlds = await CreateAdapter(temp).DiscoverWorldsAsync(TestContext.Current.CancellationToken);
 
         var world = Assert.Single(worlds);
         Assert.Equal(GameId.Windrose, world.Game);
@@ -34,7 +35,7 @@ public sealed class WindroseSaveAdapterTests
         using var temp = new TempDirectory();
         SaveFixtures.CreateWindroseWorld(temp.Path, "12345", "folder1", string.Empty, "Test World");
 
-        var worlds = await CreateAdapter(temp.Path).DiscoverWorldsAsync(TestContext.Current.CancellationToken);
+        var worlds = await CreateAdapter(temp).DiscoverWorldsAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("folder1", Assert.Single(worlds).WorldId);
     }
@@ -45,7 +46,7 @@ public sealed class WindroseSaveAdapterTests
         using var temp = new TempDirectory();
         Directory.CreateDirectory(Path.Combine(temp.Path, "12345", "RocksDB_v2", "0.10.0", "Worlds", "empty"));
 
-        var worlds = await CreateAdapter(temp.Path).DiscoverWorldsAsync(TestContext.Current.CancellationToken);
+        var worlds = await CreateAdapter(temp).DiscoverWorldsAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(worlds);
     }
@@ -55,7 +56,7 @@ public sealed class WindroseSaveAdapterTests
     {
         using var temp = new TempDirectory();
         SaveFixtures.CreateWindroseWorld(temp.Path, "12345", "folder1", "TEST_WORLD_ID", "Test World");
-        var adapter = CreateAdapter(temp.Path);
+        var adapter = CreateAdapter(temp);
         var world = Assert.Single(await adapter.DiscoverWorldsAsync(TestContext.Current.CancellationToken));
 
         var files = adapter.GetPayloadFiles(world);
@@ -71,7 +72,7 @@ public sealed class WindroseSaveAdapterTests
         SaveFixtures.CreateWindroseWorld(temp.Path, "12345", "folder1", "TEST_WORLD_ID", "Test World", "RocksDB");
         SaveFixtures.CreateWindroseWorld(temp.Path, "12345", "folder2", "TEST_WORLD_ID_2", "Test World 2", "RocksDB_v2");
 
-        var roots = await CreateAdapter(temp.Path).DiscoverSaveRootsAsync(TestContext.Current.CancellationToken);
+        var roots = await CreateAdapter(temp).DiscoverSaveRootsAsync(TestContext.Current.CancellationToken);
 
         var root = Assert.Single(roots);
         Assert.Contains("RocksDB_v2", root.WorldsPath);

@@ -107,6 +107,11 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (!ConfirmUploadDespiteHealth(SelectedWorld))
+        {
+            return;
+        }
+
         await RunBusyAsync("Uploading current world...", async () =>
         {
             var result = await _cloudSyncService.UploadCurrentAsync(SelectedWorld);

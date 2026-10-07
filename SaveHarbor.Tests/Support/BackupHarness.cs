@@ -22,9 +22,9 @@ public sealed class BackupHarness : IDisposable
             [GameId.Dragonwilds] = new() { SaveRoot = DragonwildsRoot }
         });
 
-        WindroseAdapter = new WindroseSaveAdapter(options);
-        DragonwildsAdapter = new DragonwildsSaveAdapter(options);
         Paths = new TestPathProvider(temp);
+        WindroseAdapter = new WindroseSaveAdapter(options, Paths);
+        DragonwildsAdapter = new DragonwildsSaveAdapter(options);
         Settings = new AppSettingsStore(Paths);
         Backups = new ZipBackupService(Paths, new StubGameRegistry(
             new StubGameDefinition(GameId.Windrose, WindroseAdapter),

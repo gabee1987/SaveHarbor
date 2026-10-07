@@ -162,6 +162,13 @@
   "Inspector.GameCopyHint": "If the world is damaged or a save went wrong, you can put this copy back. SaveHarbor shows how it compares and backs up your current copy first.",
   "Inspector.UseGameCopy": "USE THIS COPY…",
   "Inspector.ShowGameCopy": "Show file",
-  "Inspector.PrivacyNote": "The world password and owner ID are never read or shown.",
+  "Inspector.HealthTitle": "This world needs attention",
+  "Inspector.HealthHint": "See Save health below for what SaveHarbor found and what it means.",
+  "Inspector.KeepWorld": "Keep as it is",
+  "Inspector.KeepWorldTooltip": "You checked the world in the game and it is right: remember its current files as the good state.",
+  "Inspector.MoveLeftovers": "Move copies aside",
+  "Inspector.MoveLeftoversTooltip": "Moves the unfinished copies out of the game's save folder into SaveHarbor's data folder. Nothing is deleted.",
+  "Inspector.PrivacyNote.Dragonwilds": "The world password and owner ID are never read or shown.",
+  "Inspector.PrivacyNote.Windrose": "Only the world is shared. Characters and accounts stay on this PC and are only counted.",
   "Inspector.Close": "CLOSE"
 }

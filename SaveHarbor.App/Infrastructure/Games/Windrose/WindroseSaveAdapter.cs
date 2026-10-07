@@ -7,7 +7,7 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure.Games.Windrose;
 
-public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : IGameSaveAdapter
+public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider, IAppDataPathProvider pathProvider) : IGameSaveAdapter
 {
     public const string DescriptionFileName = "WorldDescription.json";
     private const long MaxDescriptionBytes = 1024 * 1024;
@@ -18,6 +18,8 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
     {
         PropertyNameCaseInsensitive = true
     };
+
+    private readonly WindroseSaveHealth health = new(pathProvider);
 
     public WorldPayloadKind PayloadKind => WorldPayloadKind.Directory;
 
@@ -169,6 +171,12 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider) : I
         SafePath.CombineUnderRoot(root.WorldsPath, worldId);
 
     public string? GetSaveFormatVersion(string worldPath) => WindrosePaths.FormatVersion(worldPath);
+
+    public void RememberWorldState(string worldPath) => health.RememberWorldState(worldPath);
+
+    public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world) => health.Check(world);
+
+    public IReadOnlyList<string> MoveLeftoversAside(GameWorld world) => health.MoveLeftoversAside(world);
 
     // The game finds a world by its folder name, which must equal "islandId" inside WorldDescription.json. A payload
     // whose island id differs would appear as a broken or duplicate world, so it is refused.

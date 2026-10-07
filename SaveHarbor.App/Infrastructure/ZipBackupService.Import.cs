@@ -32,6 +32,7 @@ public sealed partial class ZipBackupService
             adapter.ValidatePayload(payloadRoot, manifest.WorldId);
             importedPath = strategy.Import(payloadRoot, manifest, profile, adapter, overwriteExisting, cancellationToken);
         }, cancellationToken);
+        adapter.RememberWorldState(importedPath);
 
         return importedPath;
     }

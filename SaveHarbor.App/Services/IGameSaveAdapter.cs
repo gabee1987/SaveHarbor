@@ -40,4 +40,15 @@ public interface IGameSaveAdapter
     // Checks an extracted backup payload before it replaces or adds a world. Throws InvalidDataException when the
     // payload does not belong to the world it would become (the payload is untrusted).
     void ValidatePayload(string payloadRoot, string expectedWorldId);
+
+    // Remembers the world's current files as known good, after SaveHarbor wrote them or the user accepted them, so
+    // CheckHealth can tell later whether something else replaced the world.
+    void RememberWorldState(string worldPath);
+
+    // Problems with the world's save. Null when the game has no such checks; empty when everything looks fine.
+    IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world);
+
+    // Moves folders an interrupted SaveHarbor restore left next to the world out of the game's reach (never deletes
+    // them). Returns where each one went.
+    IReadOnlyList<string> MoveLeftoversAside(GameWorld world);
 }

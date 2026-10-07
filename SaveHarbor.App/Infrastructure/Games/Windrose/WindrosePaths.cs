@@ -18,6 +18,15 @@ public static class WindrosePaths
     public static bool IsSaveHarborFolder(string path) =>
         Path.GetFileName(path).Contains(SaveHarborFolderMarker, StringComparison.OrdinalIgnoreCase);
 
+    // Folders an interrupted SaveHarbor restore (before staging moved out of Worlds) left next to this world.
+    public static IReadOnlyList<string> LeftoverFolders(string worldPath)
+    {
+        var worldsFolder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(worldPath)));
+        return worldsFolder is not null && Directory.Exists(worldsFolder)
+            ? Directory.GetDirectories(worldsFolder, Path.GetFileName(Path.TrimEndingDirectorySeparator(worldPath)) + SaveHarborFolderMarker + "*")
+            : [];
+    }
+
     // The version folder ("0.10.0") above Worlds, or null when the path is not inside a Windrose profile layout.
     public static string? FormatVersion(string worldPath) => VersionDirectory(worldPath)?.Name;
 

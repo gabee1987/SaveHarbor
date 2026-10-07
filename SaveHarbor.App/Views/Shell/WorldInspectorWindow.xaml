@@ -67,7 +67,7 @@
                                Foreground="{DynamicResource SkinGoldTextBrush}"
                                TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
-                    <TextBlock Text="{ui:UiText Inspector.PrivacyNote}" Style="{DynamicResource SkinMuted}" Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding PrivacyNote}" Style="{DynamicResource SkinMuted}" Margin="0,4,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
                     <Button Content="{ui:SpacedText Inspector.ShowFile}" Command="{Binding ShowWorldFileCommand}" Style="{DynamicResource SkinButton}"
@@ -81,31 +81,60 @@
 
             <ContentControl Grid.Row="1" Style="{DynamicResource SkinOrnamentDivider}" Margin="0,16,0,14" />
 
-            <!-- Offered only when the game has written its own backup copy of this world. -->
-            <Border Grid.Row="2"
-                    Margin="0,0,0,14"
-                    Padding="16,12"
-                    CornerRadius="3"
-                    BorderThickness="1"
-                    Background="{DynamicResource SkinCardBrush}"
-                    BorderBrush="{DynamicResource SkinFrameBrush}"
-                    Visibility="{Binding GameBackupCopyPath, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Margin="0,0,16,0">
-                        <TextBlock Text="{ui:UiText Inspector.GameCopyTitle}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" FontWeight="SemiBold" />
-                        <TextBlock Text="{ui:UiText Inspector.GameCopyHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="{ui:UiText Inspector.ShowGameCopy}" Command="{Binding ShowGameBackupCopyCommand}" Style="{DynamicResource SkinLinkButton}"
-                                Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="{Binding GameBackupCopyPath}" />
-                        <Button Content="{ui:SpacedText Inspector.UseGameCopy}" Command="{Binding UseGameBackupCopyCommand}" Style="{DynamicResource SkinButton}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
+            <StackPanel Grid.Row="2">
+                <!-- Offered only when the save checks found something; the details are in the Save health section. -->
+                <Border Margin="0,0,0,14"
+                        Padding="16,12"
+                        CornerRadius="3"
+                        BorderThickness="1"
+                        Background="{DynamicResource SkinCardBrush}"
+                        BorderBrush="{DynamicResource ToneWarnBorderBrush}"
+                        Visibility="{Binding HasHealthProblems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Text="{ui:UiText Inspector.HealthTitle}" Foreground="{DynamicResource WarnBrush}" FontSize="13.5" FontWeight="SemiBold" />
+                            <TextBlock Text="{ui:UiText Inspector.HealthHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{ui:SpacedText Inspector.KeepWorld}" Command="{Binding KeepWorldAsItIsCommand}" Style="{DynamicResource SkinButton}"
+                                    ToolTip="{ui:UiText Inspector.KeepWorldTooltip}"
+                                    Visibility="{Binding IsWorldReplaced, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <Button Content="{ui:SpacedText Inspector.MoveLeftovers}" Command="{Binding MoveLeftoversAsideCommand}" Style="{DynamicResource SkinButton}"
+                                    Margin="8,0,0,0" ToolTip="{ui:UiText Inspector.MoveLeftoversTooltip}"
+                                    Visibility="{Binding HasLeftovers, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Offered only when the game has written its own backup copy of this world. -->
+                <Border Margin="0,0,0,14"
+                        Padding="16,12"
+                        CornerRadius="3"
+                        BorderThickness="1"
+                        Background="{DynamicResource SkinCardBrush}"
+                        BorderBrush="{DynamicResource SkinFrameBrush}"
+                        Visibility="{Binding GameBackupCopyPath, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Text="{ui:UiText Inspector.GameCopyTitle}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" FontWeight="SemiBold" />
+                            <TextBlock Text="{ui:UiText Inspector.GameCopyHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{ui:UiText Inspector.ShowGameCopy}" Command="{Binding ShowGameBackupCopyCommand}" Style="{DynamicResource SkinLinkButton}"
+                                    Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="{Binding GameBackupCopyPath}" />
+                            <Button Content="{ui:SpacedText Inspector.UseGameCopy}" Command="{Binding UseGameBackupCopyCommand}" Style="{DynamicResource SkinButton}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
 
             <ContentControl Grid.Row="3" Style="{DynamicResource SkinFrame}" Padding="22,16">
                 <Grid>

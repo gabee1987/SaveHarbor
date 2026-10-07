@@ -47,7 +47,7 @@ internal sealed class DirectoryPayloadStrategy(string stagingRoot) : IPayloadStr
         }
     }
 
-    private static void CopyDirectory(string source, string target, CancellationToken cancellationToken)
+    internal static void CopyDirectory(string source, string target, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(target);
 

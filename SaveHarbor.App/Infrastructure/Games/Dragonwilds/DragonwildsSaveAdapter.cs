@@ -175,6 +175,14 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
     {
     }
 
+    public void RememberWorldState(string worldPath)
+    {
+    }
+
+    public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world) => null;
+
+    public IReadOnlyList<string> MoveLeftoversAside(GameWorld world) => [];
+
     public string GetExpectedWorldPath(GameSaveRoot root, string worldId)
     {
         if (!SafePath.IsSafeSegment(worldId))

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Localization;
 using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.ViewModels;
@@ -34,6 +35,7 @@ public partial class MainWindowViewModel
         var world = SelectedWorld;
         SelectedWorldDetails.Clear();
         SelectedWorldRules.Clear();
+        SelectedWorldHealthProblem = null;
         if (world is null)
         {
             return;
@@ -41,6 +43,7 @@ public partial class MainWindowViewModel
 
         try
         {
+            RefreshSaveHealth(world);
             var facts = await _activeGame.Current.SaveAdapter.ReadWorldFactsAsync(world);
             if (!ReferenceEquals(world, SelectedWorld))
             {
@@ -123,7 +126,7 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedWorld))]
-    private void OpenWorldInspector()
+    private async Task OpenWorldInspectorAsync()
     {
         if (SelectedWorld is null)
         {
@@ -133,12 +136,15 @@ public partial class MainWindowViewModel
         var world = SelectedWorld;
         var inspector = new WorldInspectorViewModel(
             world,
+            UiTextCatalog.Get($"Inspector.PrivacyNote.{_activeGame.Current.Id}"),
             _activeGame.Current.SaveAdapter,
             _backupService.GetBackupRoot(_activeGame.Current.Id),
             () => DescribeBackupsOf(world),
-            ImportSaveFileAsync);
+            ImportSaveFileAsync,
+            MoveLeftoversAsideAsync);
         _ = inspector.LoadAsync();
         _dialogService.ShowWorldInspector(inspector, _activeGame.Current.SkinDictionary);
+        await RefreshWorldFactsAsync();
     }
 
     private IReadOnlyList<InspectionItem> DescribeBackupsOf(GameWorld world)

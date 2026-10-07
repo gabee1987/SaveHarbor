@@ -70,6 +70,14 @@
                             ToolTip="{Binding CloudSessionTooltip}">
                         <TextBlock Text="{ui:UiText Shell.YouAreHosting}" Foreground="{DynamicResource InfoBrush}" FontSize="12" FontWeight="SemiBold" />
                     </Border>
+                    <!-- A save problem (see All world info): the title here, the explanation on hover. -->
+                    <Border Style="{DynamicResource SkinPill}"
+                            Margin="0,0,8,0"
+                            BorderBrush="{DynamicResource ToneWarnBorderBrush}"
+                            Visibility="{Binding SelectedWorldHealthProblem, Converter={x:Static converters:NullToCollapsedConverter.Instance}}"
+                            ToolTip="{Binding SelectedWorldHealthProblem.Detail}">
+                        <TextBlock Text="{Binding SelectedWorldHealthProblem.Title}" Foreground="{DynamicResource WarnBrush}" FontSize="12" FontWeight="SemiBold" />
+                    </Border>
                     <Button Content="{ui:SpacedText Shell.AllWorldInfo}"
                             Command="{Binding OpenWorldInspectorCommand}"
                             Style="{DynamicResource SkinButton}"

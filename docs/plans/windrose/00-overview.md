@@ -60,6 +60,17 @@ inspected on this PC (names and sizes only).
 Each phase ends with a build, the full test suite, screenshots of both games, a manual test list and a one-line
 commit message suggestion (§4).
 
-## 4. Manual test lists and commit messages
+## 4. Save health (phase 4)
+
+- **Replaced world (F2).** After every restore, import or download SaveHarbor records the world's RocksDB file names
+  (and table sizes) under `sync-state\windrose\world-files\<hash of path>.json`. RocksDB never reuses a file number:
+  playing only adds higher numbers and deletes old files. A file at or below the highest recorded number that was not
+  recorded therefore means the folder was swapped for another copy. The selected world then shows a warning, All world
+  info explains it and offers "Keep as it is" (records the current files), and Upload asks for confirmation first.
+  A swapped-in copy whose numbers are all higher cannot be told apart from play, so no warning is not proof.
+- **Leftovers (F5).** `<islandId>.saveharbor-*` folders next to a world are reported and can be moved (never deleted)
+  to `%LOCALAPPDATA%\SaveHarbor\leftovers\windrose` while the game is closed.
+
+## 5. Manual test lists and commit messages
 
 Recorded per phase in the chat hand-over and summarised here once each phase is complete.

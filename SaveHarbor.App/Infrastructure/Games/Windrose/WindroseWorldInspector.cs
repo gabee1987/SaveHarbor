@@ -99,12 +99,6 @@ public static class WindroseWorldInspector
 
         var legacy = WindrosePaths.LegacyWorldFolder(world.SavePath);
         items.Add(new("Pre-0.10.0.5 copy", legacy is not null && Directory.Exists(legacy) ? legacy : "None"));
-
-        var worldsFolder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(world.SavePath));
-        var leftovers = worldsFolder is null || !Directory.Exists(worldsFolder)
-            ? 0
-            : Directory.EnumerateDirectories(worldsFolder, Path.GetFileName(world.SavePath) + WindrosePaths.SaveHarborFolderMarker + "*").Count();
-        items.Add(new("Unfinished SaveHarbor copies", leftovers == 0 ? "None" : $"{leftovers} — left by an interrupted restore"));
         return items;
     }
 
