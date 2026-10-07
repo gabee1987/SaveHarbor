@@ -70,6 +70,11 @@ public sealed partial class CloudProviderSettingsService : ICloudSetupService
             return new CloudSetupTestResult(false, "This does not look like a Google Drive folder link or folder ID. Copy the link from the folder's Share dialog.");
         }
 
+        if (GameUsingFolder(game, folderId) is { } otherGame)
+        {
+            return new CloudSetupTestResult(false, $"This folder is already set up for {otherGame}. Use a separate folder for each game.");
+        }
+
         if (cloudProvider is not ISharedFolderCloudProvider sharedFolderProvider)
         {
             return new CloudSetupTestResult(false, "The active cloud provider does not support shared folder setup.");
@@ -94,6 +99,11 @@ public sealed partial class CloudProviderSettingsService : ICloudSetupService
             throw new InvalidOperationException("The shared folder ID is empty or invalid.");
         }
 
+        if (GameUsingFolder(game, folderId) is { } otherGame)
+        {
+            throw new InvalidOperationException($"This folder is already set up for {otherGame}. Use a separate folder for each game.");
+        }
+
         var settings = ReadExistingSettings();
         settings.SchemaVersion = 2;
         settings.SharedFolders[game.ToStorageKey()] = folderId;
@@ -113,6 +123,11 @@ public sealed partial class CloudProviderSettingsService : ICloudSetupService
         options.SetSharedFolderId(game, folderId);
         logger.Information(AppLogKeyword.CloudProvider, "Saved Google Drive shared folder setup for {Game}", game);
     }
+
+    // Each game keeps its worlds in its own Drive folder. The marker written into the folder enforces this once the
+    // first world is uploaded; this check also stops two games sharing a folder that is still empty.
+    private GameId? GameUsingFolder(GameId game, string folderId) =>
+        Enum.GetValues<GameId>().Where(other => other != game && options.GetSharedFolderId(other) == folderId).Select(other => (GameId?)other).FirstOrDefault();
 
     // Only removes the folder from the list on this PC; nothing in Google Drive changes.
     public async Task ForgetSavedFolderAsync(GameId game, string folderId, CancellationToken cancellationToken = default)

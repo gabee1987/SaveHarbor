@@ -46,6 +46,19 @@ public sealed class SavedCloudFolderTests : IDisposable
     }
 
     [Fact]
+    public async Task FolderOfAnotherGame_IsRefused()
+    {
+        await service.SaveSharedFolderAsync(GameId.Windrose, FirstFolder, "TEST_FOLDER_A", Token);
+
+        var test = await service.TestSharedFolderAsync(GameId.Dragonwilds, FirstFolder, Token);
+
+        Assert.False(test.IsSuccess);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveSharedFolderAsync(GameId.Dragonwilds, FirstFolder, null, Token));
+        Assert.Equal(FirstFolder, options.GetSharedFolderId(GameId.Windrose));
+        Assert.Empty(service.GetSavedFolders(GameId.Dragonwilds));
+    }
+
+    [Fact]
     public async Task Forget_RemovesOnlyThatFolder()
     {
         await service.SaveSharedFolderAsync(GameId.Dragonwilds, FirstFolder, "TEST_FOLDER_A", Token);
