@@ -21,6 +21,7 @@ public partial class MainWindowViewModel
         await RunBusyAsync($"Scanning for {ActiveGameName} worlds...", async () =>
         {
             UpdateGameStatus();
+            var previousPath = SelectedWorld?.SavePath;
             Worlds.Clear();
 
             var worlds = await _activeGame.Current.SaveAdapter.DiscoverWorldsAsync();
@@ -29,10 +30,13 @@ public partial class MainWindowViewModel
                 Worlds.Add(world);
             }
 
+            knownWorldFolderFingerprint = await ReadWorldFolderFingerprintAsync();
             suppressSelectedWorldCloudRefresh = true;
             try
             {
-                SelectedWorld ??= Worlds.FirstOrDefault();
+                // A world deleted outside SaveHarbor (for example in the game's menu) must not stay selected.
+                SelectedWorld = Worlds.FirstOrDefault(world => string.Equals(world.SavePath, previousPath, StringComparison.OrdinalIgnoreCase))
+                    ?? Worlds.FirstOrDefault();
             }
             finally
             {

@@ -27,6 +27,7 @@ public partial class MainWindowViewModel : ObservableObject
     private bool suppressSelectedWorldCloudRefresh;
     private bool hasObservedGameRunningDuringSession;
     private bool isAutoEndingSession;
+    private string? knownWorldFolderFingerprint;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateBackupCommand))]
