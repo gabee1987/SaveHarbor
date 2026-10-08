@@ -46,27 +46,32 @@ A world folder that the game never opened has no `LOCK`, no files newer than the
 
 ## Testing without a second player
 
-A second profile or a deleted-and-redownloaded world stands in for a friend's PC.
+A deleted-and-downloaded world stands in for a friend's PC. Steam Cloud restores anything deleted outside the game
+(see `windrose-save-format`), so the deletion must happen **in Windrose**. SaveHarbor's Remove alone is not enough:
+the world reappears on the next launch.
 
-1. Close Windrose. In SaveHarbor (Windrose), check that the world shows no archive warning in All world info.
-2. Upload it.
-3. Simulate a fresh PC: delete the world in Windrose's own menu. This removes the folder and the archive; the upload
-   and the SaveHarbor backups are the safety copies.
-4. Refresh SaveHarbor, then download the world.
-5. Start Windrose. The world must be listed, with its progress.
-6. Play a few minutes, exit normally, and refresh SaveHarbor. If "archive differs" appears, the game does not rewrite
+1. Close Windrose. In SaveHarbor (Windrose), check that All world info shows no archive warning.
+2. Upload the world.
+3. Start Windrose, delete the world in its world list, then exit. The game deletes the folder and its archive, and
+   Steam removes the archive from the cloud on exit. The upload and SaveHarbor's backups are the safety copies.
+4. Start Windrose once more to confirm the world stays gone, then exit.
+5. Refresh SaveHarbor, then download the world. Both the world folder and `RocksDB_v2_Backups\Worlds\<id>\` are back.
+6. Start Windrose. The world must be listed, with its progress.
+7. Play a few minutes, exit normally, and refresh SaveHarbor. If "archive differs" appears, the game does not rewrite
    `Latest.zip` on exit, and the upload timing needs rethinking.
 
 Automated tests: `WindroseGameArchiveTests` uses a second profile (`67890`) as the friend's PC. It covers import,
-restore, untrusted archives, a missing archive and an out-of-date archive. `SaveFixtures.CreateWindroseGameArchive`
+restore, remove and download again, untrusted archives, a missing archive and an out-of-date archive. `SaveFixtures.CreateWindroseGameArchive`
 writes a matching archive.
 
 ## Known limits
 
 - A world created before the sharing PC ever ran 2.2.1 still shares fine, as long as that PC has the game's
   `Latest.zip`.
-- Steam Cloud also syncs `RocksDB_v2_Backups`, so another PC on the same Steam account may pull a different
-  `Latest.zip`. Save health's "replaced" warning catches this when the file numbers go down.
+- Steam Cloud syncs `RocksDB_v2_Backups`, so:
+  - a world removed only by SaveHarbor comes back on the next launch;
+  - another PC on the same Steam account may pull a different `Latest.zip`. Save health's "replaced" warning catches
+    this when the file numbers go down.
 
 ## Sources
 

@@ -17,6 +17,10 @@ public interface IGameDefinition
     // The game's skin for the shared main screen and its windows (styles, ornaments, effects).
     Uri SkinDictionary { get; }
     string? PostRestoreHint { get; }
+
+    // What removing a world from this PC cannot do for this game (for example Steam Cloud bringing it back), shown in
+    // the removal confirmation and the activity log. Null when there is nothing to add.
+    string? RemoveWorldNote { get; }
     string PlayHint { get; }
     IGameSaveAdapter SaveAdapter { get; }
 }

@@ -26,6 +26,12 @@ public sealed class WindroseGameDefinition(GameOptionsProvider optionsProvider, 
 
     public string? PostRestoreHint => null;
 
+    // Steam Cloud syncs RocksDB_v2_Backups and restores files deleted while the game is closed; only a deletion the game
+    // makes itself reaches Steam Cloud (docs/plans/windrose/00-overview.md finding F9).
+    public string? RemoveWorldNote =>
+        "Steam Cloud keeps Windrose's own copy of this world and puts it back the next time Windrose starts, so the game "
+        + "will list it again. To remove it from Windrose as well, delete it in Windrose's world list afterwards.";
+
     public string PlayHint => "Starts a cloud session first, then launches Windrose through Steam.";
 
     public IGameSaveAdapter SaveAdapter => saveAdapter;

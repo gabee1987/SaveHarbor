@@ -48,6 +48,10 @@ public interface IGameSaveAdapter
 
     void PlaceGameFiles(string gameFilesRoot, string worldPath);
 
+    // After a world was removed: moves the game's own files for it out of the game's reach (never deletes them), so
+    // the game cannot bring the world back from them. Returns where they went, or null when there was nothing.
+    string? MoveGameFilesAside(GameWorld world);
+
     // Remembers the world's current files as known good, after SaveHarbor wrote them or the user accepted them, so
     // CheckHealth can tell later whether something else replaced the world.
     void RememberWorldState(string worldPath);

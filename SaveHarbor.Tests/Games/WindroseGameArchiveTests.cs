@@ -47,9 +47,29 @@ public sealed class WindroseGameArchiveTests : IDisposable
         var importedPath = await harness.Backups.ImportBackupAsNewWorldAsync(backup.FilePath, await OtherPcAsync(), overwriteExisting: false, Token);
 
         Assert.True(File.Exists(ArchivePath("67890")));
+        Assert.True(File.GetLastWriteTimeUtc(ArchivePath("67890")) > DateTime.UtcNow.AddMinutes(-5)); // newest for Steam Cloud
         Assert.False(Directory.Exists(Path.Combine(importedPath, BackupPayloadLayout.GameFilesFolderName)));
         var imported = (await harness.WindroseAdapter.ReadWorldAsync(importedPath, Token))!;
         Assert.Empty(ArchiveIssues(imported));
+    }
+
+    // The one-PC test: remove the world, then bring it back from its backup as a download would.
+    [Fact]
+    public async Task RemovedWorld_LeavesNothingTheGameCouldLoad_AndComesBackWithItsArchive()
+    {
+        var world = await WorldAsync();
+
+        var backup = await harness.Backups.RemoveWorldAsync(world, Token);
+
+        Assert.False(Directory.Exists(world.SavePath));
+        Assert.False(Directory.Exists(Path.GetDirectoryName(ArchivePath("12345"))));
+        Assert.Single(Directory.GetFiles(Path.Combine(harness.Paths.AppDataRoot, "removed", "windrose"), "*_Latest.zip", SearchOption.AllDirectories));
+
+        var profile = (await harness.WindroseAdapter.DiscoverSaveRootsAsync(Token)).Single(root => root.RootId == "12345");
+        await harness.Backups.ImportBackupAsNewWorldAsync(backup.FilePath, profile, overwriteExisting: false, Token);
+
+        Assert.True(File.Exists(ArchivePath("12345")));
+        Assert.Empty(ArchiveIssues(world));
     }
 
     [Fact]

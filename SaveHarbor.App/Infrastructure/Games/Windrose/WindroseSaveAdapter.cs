@@ -176,6 +176,8 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider, IAp
 
     public void PlaceGameFiles(string gameFilesRoot, string worldPath) => WindroseGameArchive.Place(gameFilesRoot, worldPath);
 
+    public string? MoveGameFilesAside(GameWorld world) => health.MoveGameArchivesAside(world);
+
     public void RememberWorldState(string worldPath) => health.RememberWorldState(worldPath);
 
     public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world) => health.Check(world);

@@ -72,28 +72,29 @@ public sealed class WindroseSaveHealth(IAppDataPathProvider pathProvider)
     }
 
     // Moves leftover folders out of the game's Worlds folder into SaveHarbor's data folder. Returns where they went.
-    public IReadOnlyList<string> MoveLeftoversAside(GameWorld world)
+    public IReadOnlyList<string> MoveLeftoversAside(GameWorld world) =>
+        [.. WindrosePaths.LeftoverFolders(world.SavePath).Select(folder => MoveAside(folder, "leftovers"))];
+
+    // After the world was removed: the game would rebuild it from its archives, so they go to SaveHarbor's data folder.
+    // The latest archive is also inside the backup taken before the removal; the dated ones exist only here.
+    public string? MoveGameArchivesAside(GameWorld world) =>
+        WindrosePaths.GameBackupFolder(world.SavePath) is { } folder && Directory.Exists(folder) ? MoveAside(folder, "removed") : null;
+
+    private string MoveAside(string folder, string purpose)
     {
-        var destinationRoot = Path.Combine(pathProvider.AppDataRoot, "leftovers", GameId.Windrose.ToStorageKey());
+        var destinationRoot = Path.Combine(pathProvider.AppDataRoot, purpose, GameId.Windrose.ToStorageKey());
         Directory.CreateDirectory(destinationRoot);
-
-        var moved = new List<string>();
-        foreach (var folder in WindrosePaths.LeftoverFolders(world.SavePath))
+        var destination = Path.Combine(destinationRoot, $"{Path.GetFileName(folder)}-{DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)}");
+        if (string.Equals(Path.GetPathRoot(folder), Path.GetPathRoot(destination), StringComparison.OrdinalIgnoreCase))
         {
-            var destination = Path.Combine(destinationRoot, $"{Path.GetFileName(folder)}-{DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)}");
-            if (string.Equals(Path.GetPathRoot(folder), Path.GetPathRoot(destination), StringComparison.OrdinalIgnoreCase))
-            {
-                Directory.Move(folder, destination);
-            }
-            else
-            {
-                DirectoryPayloadStrategy.CopyDirectory(folder, destination, CancellationToken.None);
-                Directory.Delete(folder, recursive: true);
-            }
-
-            moved.Add(destination);
+            Directory.Move(folder, destination);
+        }
+        else
+        {
+            DirectoryPayloadStrategy.CopyDirectory(folder, destination, CancellationToken.None);
+            Directory.Delete(folder, recursive: true);
         }
 
-        return moved;
+        return destination;
     }
 }

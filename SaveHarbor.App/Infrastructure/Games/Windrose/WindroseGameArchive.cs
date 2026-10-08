@@ -106,6 +106,10 @@ public static partial class WindroseGameArchive
         var target = Path.Combine(folder, $"{Path.GetFileName(Path.TrimEndingDirectorySeparator(worldPath))}_{version}{LatestSuffix}");
         var temporary = target + ".saveharbor-tmp";
         File.Copy(staged, temporary, overwrite: true);
+
+        // Dated now, so Steam Cloud (which syncs this folder) sees this PC's newest change and uploads it instead of
+        // keeping an older cloud copy of the world (the same rule as for Dragonwilds saves).
+        File.SetLastWriteTimeUtc(temporary, DateTime.UtcNow);
         File.Move(temporary, target, overwrite: true);
     }
 

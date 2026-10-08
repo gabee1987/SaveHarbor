@@ -183,6 +183,9 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
     {
     }
 
+    // The game's spare copy is handled through GetGameBackupCopyPath when a world is removed.
+    public string? MoveGameFilesAside(GameWorld world) => null;
+
     public void RememberWorldState(string worldPath)
     {
     }

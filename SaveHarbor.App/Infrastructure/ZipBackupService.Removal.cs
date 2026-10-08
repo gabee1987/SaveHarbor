@@ -7,7 +7,8 @@ namespace SaveHarbor.App.Infrastructure;
 public sealed partial class ZipBackupService
 {
     // A world is only deleted after a backup of it has been written and read back successfully. The game's own spare
-    // copy (Dragonwilds' .sav.backup) is moved into the world's backup folder rather than deleted, so nothing is lost.
+    // copy (Dragonwilds' .sav.backup) is moved into the world's backup folder, and files the game could rebuild the
+    // world from (Windrose's archives) are moved out of its reach, rather than deleted, so nothing is lost.
     public async Task<BackupInfo> RemoveWorldAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         var adapter = gameRegistry.Get(world.Game).SaveAdapter;
@@ -40,6 +41,7 @@ public sealed partial class ZipBackupService
             Directory.Delete(world.SavePath, recursive: true);
         }
 
+        adapter.MoveGameFilesAside(world);
         return backup;
     }
 

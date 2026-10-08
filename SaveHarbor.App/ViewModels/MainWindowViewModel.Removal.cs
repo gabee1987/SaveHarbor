@@ -30,10 +30,11 @@ public partial class MainWindowViewModel
         var unsharedNote = SelectedWorldStatus?.HasLocalChanges == true
             ? "\n\nWARNING: You have played since your last upload. That progress will then exist only in the backup."
             : string.Empty;
+        var gameNote = _activeGame.Current.RemoveWorldNote is { } note ? $"\n\n{note}" : string.Empty;
 
         var confirmed = _dialogService.ConfirmDanger(
             $"Remove {world.WorldName} from this PC",
-            $"SaveHarbor will first back up this world and check the backup, then delete its save from the game folder:\n{world.SavePath}\n\n{cloudNote}{unsharedNote}\n\nTo bring it back later: Backups tab → {world.WorldName} → Restore as world.",
+            $"SaveHarbor will first back up this world and check the backup, then delete its save from the game folder:\n{world.SavePath}\n\n{cloudNote}{unsharedNote}{gameNote}\n\nTo bring it back later: Backups tab → {world.WorldName} → Restore as world.",
             "Remove from PC");
         if (!confirmed)
         {
@@ -49,6 +50,10 @@ public partial class MainWindowViewModel
             StatusText = $"Removed {world.WorldName} from this PC. Backup: {backup.FileName}";
             AddActivity("Success", StatusText);
             _toastService.Success("Removed from this PC", $"{world.WorldName} is kept as backup {backup.FileName}.");
+            if (_activeGame.Current.RemoveWorldNote is { } removeNote)
+            {
+                AddActivity("Info", removeNote);
+            }
         });
     }
 

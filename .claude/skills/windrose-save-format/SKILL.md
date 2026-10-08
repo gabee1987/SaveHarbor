@@ -41,6 +41,19 @@ So a shareable Windrose world is **the world folder plus its `Latest.zip`**. Sav
 `.saveharbor-game-files\` inside each backup payload. `WindroseGameArchive` handles staging, validation and placing it
 back; `DirectoryPayloadStrategy` never copies that folder into the world folder.
 
+## Steam Cloud
+
+Steam Cloud (app 3041230) syncs every `.zip` under `RocksDB_v2_Backups`: world, player and account archives. Nothing
+in `RocksDB_v2` is synced. Verified in `Steam\userdata\<accountId>\3041230\remotecache.vdf`; read paths only and never
+edit it.
+
+- A file deleted while the game is closed is downloaded again on the next launch. Only deletions the game makes reach
+  the cloud. SaveHarbor's Remove therefore cannot take a world out of the game's list; the user must also delete it
+  in Windrose (`RemoveWorldNote`).
+- Placed archives are dated now (`File.SetLastWriteTimeUtc`) so Steam treats them as this PC's newest change.
+- A different `Latest.zip` from another PC on the same Steam account can replace a world; the save-health ledger
+  reports it.
+
 ## Latest.zip contents (RocksDB BackupEngine checkpoint)
 
 ```
