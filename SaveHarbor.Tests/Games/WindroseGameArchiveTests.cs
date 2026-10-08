@@ -37,7 +37,7 @@ public sealed class WindroseGameArchiveTests : IDisposable
     }
 
     private IEnumerable<SaveHealthIssue> ArchiveIssues(GameWorld world) =>
-        harness.WindroseAdapter.CheckHealth(world)!.Select(notice => notice.Issue).Where(issue => issue is SaveHealthIssue.GameArchiveMissing or SaveHealthIssue.GameArchiveOutdated);
+        harness.WindroseAdapter.CheckHealth(world)!.Select(notice => notice.Issue).Where(issue => issue is SaveHealthIssue.GameArchiveMissing);
 
     [Fact]
     public async Task ImportOnAnotherPc_PutsTheGameArchiveWhereTheGameLoadsIt()
@@ -108,12 +108,38 @@ public sealed class WindroseGameArchiveTests : IDisposable
         Assert.Equal([SaveHealthIssue.GameArchiveMissing], ArchiveIssues(world));
     }
 
+    // On exit the game writes its archive and then compacts the database, so the folder no longer matches the archive.
+    // The game loads the archive, so the backup must hold the folder rebuilt from it, not the compacted folder.
     [Fact]
-    public async Task GameArchiveOlderThanTheWorldFolder_IsReported()
+    public async Task Backup_HoldsTheStateTheGameLoads_NotTheCompactedFolder()
     {
-        var world = await WorldAsync();
-        File.WriteAllText(Path.Combine(world.SavePath, "000009.sst"), "TEST_NEW_TABLE");
+        // Newer game archives also carry a second copy of the description under Checkpoint/.
+        var world = await WorldAsync(extraEntry: "Checkpoint/AdditionalRecordFiles/WorldDescription.json");
+        File.Delete(Path.Combine(world.SavePath, "000001.sst"));
+        File.WriteAllText(Path.Combine(world.SavePath, "000009.sst"), "TEST_COMPACTED_TABLE");
+        var backup = await harness.Backups.CreateBackupAsync(world, BackupReasons.CloudUpload, Token);
 
-        Assert.Equal([SaveHealthIssue.GameArchiveOutdated], ArchiveIssues(world));
+        var importedPath = await harness.Backups.ImportBackupAsNewWorldAsync(backup.FilePath, await OtherPcAsync(), overwriteExisting: false, Token);
+
+        Assert.Equal("TEST_TABLE", File.ReadAllText(Path.Combine(importedPath, "000001.sst")));
+        Assert.False(File.Exists(Path.Combine(importedPath, "000009.sst")));
+        Assert.True(File.Exists(Path.Combine(importedPath, "MANIFEST-000001")));
+        Assert.True(File.Exists(Path.Combine(importedPath, "CURRENT")));
+        var imported = (await harness.WindroseAdapter.ReadWorldAsync(importedPath, Token))!;
+        Assert.Empty(harness.WindroseAdapter.CheckHealth(imported)!);
+    }
+
+    // An archive that is not a complete checkpoint still travels, but the world folder is backed up as it is.
+    [Fact]
+    public async Task IncompleteGameArchive_KeepsTheWorldFolderAsItIs()
+    {
+        var world = await WorldAsync(extraEntry: "Checkpoint/shared_checksum/TEST_UNKNOWN_NAME.sst");
+        File.WriteAllText(Path.Combine(world.SavePath, "000009.sst"), "TEST_FOLDER_TABLE");
+
+        var backup = await harness.Backups.CreateBackupAsync(world, BackupReasons.Manual, Token);
+        File.Delete(Path.Combine(world.SavePath, "000009.sst"));
+        await harness.Backups.RestoreBackupAsync(backup.FilePath, world, Token);
+
+        Assert.Equal("TEST_FOLDER_TABLE", File.ReadAllText(Path.Combine(world.SavePath, "000009.sst")));
     }
 }

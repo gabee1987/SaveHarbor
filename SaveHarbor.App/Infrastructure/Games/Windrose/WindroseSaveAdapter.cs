@@ -172,7 +172,7 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider, IAp
 
     public string? GetSaveFormatVersion(string worldPath) => WindrosePaths.FormatVersion(worldPath);
 
-    public void StageGameFiles(GameWorld world, string gameFilesRoot) => WindroseGameArchive.Stage(world.SavePath, gameFilesRoot);
+    public void StageGameFiles(GameWorld world, string payloadRoot) => WindroseGameArchive.Stage(world.SavePath, payloadRoot);
 
     public void PlaceGameFiles(string gameFilesRoot, string worldPath) => WindroseGameArchive.Place(gameFilesRoot, worldPath);
 

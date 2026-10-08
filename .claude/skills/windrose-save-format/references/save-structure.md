@@ -69,11 +69,14 @@ private/1/CURRENT crc32 <n>
 ```
 
 The table numbers in `shared_checksum` (14-17 and 64-75) and the manifest (`000061`) match the world folder one for
-one. This is what `WindroseGameArchive.MatchesWorldFolder` checks.
+one right after the archive is written. After the game exits they no longer do (see below).
 
 ## Timing observed
 
 - The world archive had the same timestamp as the newest table in the folder while the game was running, so the game
   updates it while playing.
-- Whether it is also rewritten on exit is not confirmed yet. If save health reports "archive differs" after a normal
-  exit, it is not.
+- On exit (16:08) the game wrote `Latest.zip` with the same manifest as the folder. Then, while closing, it compacted
+  tables 75, 93, 109 and 129 into a new table 130, so the folder and the archive differ after every session.
+- On load (16:07:13, after a SaveHarbor download at 16:06:38) every older table got the same new timestamp: the game
+  rebuilt the whole folder from `Latest.zip`. It does this every time it loads a world, not only when the folder is
+  missing.

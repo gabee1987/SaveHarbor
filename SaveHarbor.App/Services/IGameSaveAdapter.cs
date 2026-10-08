@@ -42,9 +42,10 @@ public interface IGameSaveAdapter
     void ValidatePayload(string payloadRoot, string expectedWorldId);
 
     // Files the game keeps outside the world folder but needs to load the world (Windrose: its own checkpoint
-    // archive). StageGameFiles copies them into a backup; PlaceGameFiles puts them back after the world folder was
-    // written. ValidatePayload checks them first.
-    void StageGameFiles(GameWorld world, string gameFilesRoot);
+    // archive). StageGameFiles adds them to a staged backup payload (under BackupPayloadLayout.GameFilesFolderName)
+    // and may replace the staged world files with the state the game will load from them; PlaceGameFiles puts them
+    // back after the world folder was written. ValidatePayload checks them first.
+    void StageGameFiles(GameWorld world, string payloadRoot);
 
     void PlaceGameFiles(string gameFilesRoot, string worldPath);
 

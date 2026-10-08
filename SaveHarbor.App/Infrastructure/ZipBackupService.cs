@@ -190,7 +190,7 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
         try
         {
             var files = strategy.Stage(world, adapter, payloadRoot, cancellationToken);
-            adapter.StageGameFiles(world, Path.Combine(payloadRoot, BackupPayloadLayout.GameFilesFolderName));
+            adapter.StageGameFiles(world, payloadRoot);
 
             var manifest = new BackupManifest
             {

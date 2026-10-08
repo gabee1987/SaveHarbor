@@ -9,10 +9,7 @@ public enum SaveHealthIssue
     Leftovers,
 
     // The game has no archive of its own for the world, so it will not list it (Windrose).
-    GameArchiveMissing,
-
-    // The game's archive of the world holds a different state than the world folder; the game loads the archive.
-    GameArchiveOutdated
+    GameArchiveMissing
 }
 
 public sealed record SaveHealthNotice(SaveHealthIssue Issue, string Title, string Detail);

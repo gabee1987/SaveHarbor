@@ -39,8 +39,9 @@ Check in this order:
 2. **Folder name.** Does it differ from `islandId` in `WorldDescription.json`? Import refuses that (F3).
 3. **Version folder.** Does it differ between the PCs (`0.10.0`)? Restore and import refuse that (F4).
 4. **Profile.** Is it the wrong one? The world must be under the profile the game uses (newest `SaveProfiles\<id>`).
-5. **Archive differs.** Is the archive older than the folder? Then the game loads the archive's state; save health
-   shows "Windrose's archive of this world differs".
+5. **Expected, not a fault.** The world folder differs from the archive after every session: the game compacts the
+   database on exit. The game rebuilds the folder from the archive when it loads the world, and SaveHarbor's backups
+   hold that rebuilt state.
 
 A world folder that the game never opened has no `LOCK`, no files newer than the download, and no new game archive.
 
@@ -57,8 +58,8 @@ the world reappears on the next launch.
 4. Start Windrose once more to confirm the world stays gone, then exit.
 5. Refresh SaveHarbor, then download the world. Both the world folder and `RocksDB_v2_Backups\Worlds\<id>\` are back.
 6. Start Windrose. The world must be listed, with its progress.
-7. Play a few minutes, exit normally, and refresh SaveHarbor. If "archive differs" appears, the game does not rewrite
-   `Latest.zip` on exit, and the upload timing needs rethinking.
+7. Play a few minutes, exit normally, upload, and download again. No warning appears, and the progress from those
+   minutes is there.
 
 Automated tests: `WindroseGameArchiveTests` uses a second profile (`67890`) as the friend's PC. It covers import,
 restore, remove and download again, untrusted archives, a missing archive and an out-of-date archive. `SaveFixtures.CreateWindroseGameArchive`

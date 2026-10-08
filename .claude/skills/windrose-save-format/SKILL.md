@@ -62,13 +62,20 @@ Checkpoint/private/1/CURRENT, MANIFEST-<n>, OPTIONS-<n>, <n>.log
 Checkpoint/shared_checksum/<n>_s<dbSessionId>_<size>.sst
 Checkpoint/shared_checksum/<n>_<crc32c>_<size>.blob
 AdditionalRecordFiles/WorldDescription.json             identical to the folder's copy
+Checkpoint/AdditionalRecordFiles/WorldDescription.json  same file again (newer archives only)
 ```
 
 - SaveHarbor **cannot build this archive**. Table names embed the RocksDB session id stored inside each `.sst`. Always
   carry the game's own file.
-- Archive and folder match when the archive's `private/*/MANIFEST-<n>` exists in the folder and the archive's
-  `shared_checksum` numbers equal the folder's `<n>.sst` / `<n>.blob` numbers (`WindroseGameArchive.MatchesWorldFolder`).
-  Restore keeps the original file numbers.
+- The game rebuilds the world folder from `Latest.zip` **every time it loads the world**. It renames
+  `shared_checksum/<n>_<session>_<size>.sst` to `<n>.sst` (likewise `.blob`), copies `private/<id>/*` as they are, and
+  restores `WorldDescription.json`. On exit it writes the archive and then compacts the database, so the folder never
+  matches the archive afterwards. That is normal, and nothing is lost.
+- So the archive is the save. SaveHarbor backs up the archive plus the folder **rebuilt from it the same way**
+  (`WindroseGameArchive.Stage`), falling back to the copied folder only when the archive is not a complete
+  checkpoint.
+- Skip `Checkpoint/meta/` and `Checkpoint/AdditionalRecordFiles/` (a duplicate description in newer archives) when
+  rebuilding.
 - Treat a received archive as untrusted. It must be one file named `<worldId>_<version>_Latest.zip` with entries only
   under `Checkpoint/` or `AdditionalRecordFiles/`, no `..` segments, a bounded size and entry count, and an `islandId`
   equal to the world id.
