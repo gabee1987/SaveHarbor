@@ -41,6 +41,13 @@ public interface IGameSaveAdapter
     // payload does not belong to the world it would become (the payload is untrusted).
     void ValidatePayload(string payloadRoot, string expectedWorldId);
 
+    // Files the game keeps outside the world folder but needs to load the world (Windrose: its own checkpoint
+    // archive). StageGameFiles copies them into a backup; PlaceGameFiles puts them back after the world folder was
+    // written. ValidatePayload checks them first.
+    void StageGameFiles(GameWorld world, string gameFilesRoot);
+
+    void PlaceGameFiles(string gameFilesRoot, string worldPath);
+
     // Remembers the world's current files as known good, after SaveHarbor wrote them or the user accepted them, so
     // CheckHealth can tell later whether something else replaced the world.
     void RememberWorldState(string worldPath);

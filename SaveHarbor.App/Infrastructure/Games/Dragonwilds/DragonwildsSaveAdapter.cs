@@ -175,6 +175,14 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
     {
     }
 
+    public void StageGameFiles(GameWorld world, string gameFilesRoot)
+    {
+    }
+
+    public void PlaceGameFiles(string gameFilesRoot, string worldPath)
+    {
+    }
+
     public void RememberWorldState(string worldPath)
     {
     }

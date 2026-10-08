@@ -31,6 +31,7 @@ public sealed partial class ZipBackupService
         {
             adapter.ValidatePayload(payloadRoot, manifest.WorldId);
             importedPath = strategy.Import(payloadRoot, manifest, profile, adapter, overwriteExisting, cancellationToken);
+            adapter.PlaceGameFiles(Path.Combine(payloadRoot, BackupPayloadLayout.GameFilesFolderName), importedPath);
         }, cancellationToken);
         adapter.RememberWorldState(importedPath);
 

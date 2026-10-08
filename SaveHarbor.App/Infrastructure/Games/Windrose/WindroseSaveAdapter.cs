@@ -172,6 +172,10 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider, IAp
 
     public string? GetSaveFormatVersion(string worldPath) => WindrosePaths.FormatVersion(worldPath);
 
+    public void StageGameFiles(GameWorld world, string gameFilesRoot) => WindroseGameArchive.Stage(world.SavePath, gameFilesRoot);
+
+    public void PlaceGameFiles(string gameFilesRoot, string worldPath) => WindroseGameArchive.Place(gameFilesRoot, worldPath);
+
     public void RememberWorldState(string worldPath) => health.RememberWorldState(worldPath);
 
     public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world) => health.Check(world);
@@ -203,6 +207,8 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider, IAp
         {
             throw new InvalidDataException("This backup belongs to a different Windrose world. Restore it as its own world instead. Nothing was changed.");
         }
+
+        WindroseGameArchive.Validate(Path.Combine(payloadRoot, BackupPayloadLayout.GameFilesFolderName), expectedWorldId);
     }
 
     private static DateTimeOffset ConvertUnrealTimestamp(double creationTime)

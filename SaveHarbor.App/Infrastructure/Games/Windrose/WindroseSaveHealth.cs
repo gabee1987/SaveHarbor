@@ -38,6 +38,26 @@ public sealed class WindroseSaveHealth(IAppDataPathProvider pathProvider)
                 + "uploading it. If progress is missing, restore the SaveHarbor backup; if the world is fine, keep it as it is."));
         }
 
+        switch (WindroseGameArchive.MatchesWorldFolder(world.SavePath))
+        {
+            case null:
+                notices.Add(new(
+                    SaveHealthIssue.GameArchiveMissing,
+                    "Windrose cannot load this world",
+                    "Windrose only lists worlds that also have its own archive in RocksDB_v2_Backups, and this world has none. "
+                    + "A copy made by SaveHarbor before version 2.2.1 lacks it: ask whoever shared the world to upload it again with "
+                    + "SaveHarbor 2.2.1 or later, then download it again."));
+                break;
+            case false:
+                notices.Add(new(
+                    SaveHealthIssue.GameArchiveOutdated,
+                    "Windrose's archive of this world differs",
+                    "Windrose restores this world from its own archive when it starts, and that archive does not match the world "
+                    + "folder. Sharing now could hand on the archive's state. Open the world in Windrose and exit the game normally "
+                    + "so it writes a fresh archive, then upload."));
+                break;
+        }
+
         var leftovers = WindrosePaths.LeftoverFolders(world.SavePath).Count;
         if (leftovers > 0)
         {

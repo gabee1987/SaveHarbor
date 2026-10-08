@@ -23,7 +23,9 @@ public sealed class WindroseSaveHealthTests : IDisposable
         return world;
     }
 
-    private IReadOnlyList<SaveHealthNotice> Health(GameWorld world) => harness.WindroseAdapter.CheckHealth(world)!;
+    // The game archive checks have their own tests (WindroseGameArchiveTests).
+    private IReadOnlyList<SaveHealthNotice> Health(GameWorld world) =>
+        [.. harness.WindroseAdapter.CheckHealth(world)!.Where(notice => notice.Issue is SaveHealthIssue.WorldReplaced or SaveHealthIssue.Leftovers)];
 
     [Fact]
     public async Task WorldNeverWrittenBySaveHarbor_HasNoProblems()

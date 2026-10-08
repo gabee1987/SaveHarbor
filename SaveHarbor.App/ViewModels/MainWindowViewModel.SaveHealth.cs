@@ -15,13 +15,14 @@ public partial class MainWindowViewModel
         SelectedWorldHealthProblem = world is null ? null : _activeGame.Current.SaveAdapter.CheckHealth(world)?.FirstOrDefault();
     }
 
-    // Uploading a world the game swapped for another copy would hand that copy to the whole group, so it needs consent.
+    // Uploading a world the game swapped for another copy, or one the game would not load as it is, would hand that
+    // copy to the whole group, so it needs consent.
     private bool ConfirmUploadDespiteHealth(GameWorld world)
     {
-        var replaced = _activeGame.Current.SaveAdapter.CheckHealth(world)?.FirstOrDefault(notice => notice.Issue == SaveHealthIssue.WorldReplaced);
-        return replaced is null || _dialogService.ConfirmDanger(
+        var problem = _activeGame.Current.SaveAdapter.CheckHealth(world)?.FirstOrDefault(notice => notice.Issue is not SaveHealthIssue.Leftovers);
+        return problem is null || _dialogService.ConfirmDanger(
             "Upload this world?",
-            $"{replaced.Title}.\n\n{replaced.Detail}\n\nUploading shares this copy with your group.",
+            $"{problem.Title}.\n\n{problem.Detail}\n\nUploading shares this copy with your group.",
             "Upload anyway");
     }
 

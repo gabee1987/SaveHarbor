@@ -38,6 +38,7 @@ inspected on this PC (names and sizes only).
 | F4 | The database version folder (`0.10.0`) must match between PCs. | Must be recorded in each backup and checked before restore/import. |
 | F5 | SaveHarbor staged restores **inside** `Worlds\` (`<id>.saveharbor-staging-*`, `<id>.saveharbor-prev-*`). An interrupted restore left a second folder with the same `islandId` that the game would see. | Staging moves outside `Worlds\`. Leftovers are detected and cleaned safely. |
 | F6 | Process detection matched any process whose name *contains* `R5`. Real executables: `Windrose.exe`, `Windrose-Win64-Shipping.exe` (`WindroseServer.exe` is the dedicated server). | Exact names only. |
+| F8 | **The game loads a world from its own archive**, `RocksDB_v2_Backups\Worlds\<id>\<id>_<version>_Latest.zip` (a RocksDB backup-engine checkpoint: `Checkpoint/meta`, `Checkpoint/private`, `Checkpoint/shared_checksum`, plus `AdditionalRecordFiles/WorldDescription.json`), and rebuilds the `RocksDB_v2` folder from it on start. A world folder copied without that archive is not listed. Confirmed on 2026-10-08 with a world downloaded through SaveHarbor 2.2.0 ([hosting guide](https://winternode.com/help/games/windrose/setup/upload-a-world)). | Every backup carries the latest archive in `.saveharbor-game-files\` inside the payload; restore and import put it back. Its table file names hold a RocksDB session id, so SaveHarbor cannot build one itself. Save health reports a world without an archive, or with one that differs from the folder. |
 | F7 | `WorldDescription.json` carries the world settings (difficulty, multipliers, co-op options). | Shown as world details and rules, like Dragonwilds. |
 
 ## 2. Design principles
@@ -68,6 +69,9 @@ commit message suggestion (§4).
   recorded therefore means the folder was swapped for another copy. The selected world then shows a warning, All world
   info explains it and offers "Keep as it is" (records the current files), and Upload asks for confirmation first.
   A swapped-in copy whose numbers are all higher cannot be told apart from play, so no warning is not proof.
+- **Game archive (F8).** A world without the game's `Latest.zip` is reported ("Windrose cannot load this world"); an
+  archive whose manifest or table numbers differ from the world folder is reported as differing. Both ask for
+  confirmation before upload.
 - **Leftovers (F5).** `<islandId>.saveharbor-*` folders next to a world are reported and can be moved (never deleted)
   to `%LOCALAPPDATA%\SaveHarbor\leftovers\windrose` while the game is closed.
 

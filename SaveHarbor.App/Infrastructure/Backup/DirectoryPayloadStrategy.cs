@@ -55,23 +55,30 @@ internal sealed class DirectoryPayloadStrategy(string stagingRoot) : IPayloadStr
         {
             cancellationToken.ThrowIfCancellationRequested();
             var relativePath = Path.GetRelativePath(source, directory);
-            Directory.CreateDirectory(Path.Combine(target, relativePath));
+            if (!IsGameFiles(relativePath))
+            {
+                Directory.CreateDirectory(Path.Combine(target, relativePath));
+            }
         }
 
         foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (string.Equals(Path.GetFileName(file), "LOCK", StringComparison.OrdinalIgnoreCase))
+            var relativePath = Path.GetRelativePath(source, file);
+            if (string.Equals(Path.GetFileName(file), "LOCK", StringComparison.OrdinalIgnoreCase) || IsGameFiles(relativePath))
             {
                 continue;
             }
 
-            var relativePath = Path.GetRelativePath(source, file);
             var destination = Path.Combine(target, relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             File.Copy(file, destination, overwrite: true);
         }
     }
+
+    // The game's own files in a payload go back to where the game keeps them (IGameSaveAdapter.PlaceGameFiles).
+    private static bool IsGameFiles(string relativePath) =>
+        string.Equals(relativePath.Split(Path.DirectorySeparatorChar)[0], BackupPayloadLayout.GameFilesFolderName, StringComparison.OrdinalIgnoreCase);
 
     // The new folder is fully copied before the old one is touched. The old folder is moved aside, not deleted, until
     // the new one is in place, and is moved back if that fails. Both are kept outside the folder that holds the worlds:
