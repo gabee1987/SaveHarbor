@@ -109,16 +109,17 @@
         </Viewbox>
         <DataTemplate.Triggers>
             <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <!-- Each part repeats on its own, so the faster parts never wait for the slowest one. -->
                 <BeginStoryboard>
-                    <Storyboard RepeatBehavior="Forever">
+                    <Storyboard>
                         <DoubleAnimation Storyboard.TargetName="OuterRing" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:9" />
+                                         From="0" To="360" Duration="0:0:9" RepeatBehavior="Forever" />
                         <DoubleAnimation Storyboard.TargetName="Arcs" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="360" To="0" Duration="0:0:1.6" />
+                                         From="360" To="0" Duration="0:0:1.6" RepeatBehavior="Forever" />
                         <DoubleAnimation Storyboard.TargetName="Rune" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:6" />
+                                         From="0" To="360" Duration="0:0:6" RepeatBehavior="Forever" />
                         <DoubleAnimation Storyboard.TargetName="Sparks" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:3" />
+                                         From="0" To="360" Duration="0:0:3" RepeatBehavior="Forever" />
                     </Storyboard>
                 </BeginStoryboard>
                 <BeginStoryboard>

@@ -119,16 +119,13 @@
         </Viewbox>
         <DataTemplate.Triggers>
             <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <!-- Each part repeats on its own and turns at a steady speed, so the spinner never looks stalled. -->
                 <BeginStoryboard>
-                    <Storyboard RepeatBehavior="Forever">
+                    <Storyboard>
                         <DoubleAnimation Storyboard.TargetName="Wheel" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:3.2">
-                            <DoubleAnimation.EasingFunction>
-                                <SineEase EasingMode="EaseInOut" />
-                            </DoubleAnimation.EasingFunction>
-                        </DoubleAnimation>
+                                         From="0" To="360" Duration="0:0:2.4" RepeatBehavior="Forever" />
                         <DoubleAnimation Storyboard.TargetName="Ring" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="360" To="0" Duration="0:0:12" />
+                                         From="360" To="0" Duration="0:0:12" RepeatBehavior="Forever" />
                     </Storyboard>
                 </BeginStoryboard>
                 <BeginStoryboard>
