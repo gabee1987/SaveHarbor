@@ -76,6 +76,13 @@ See `multi-game-separation`.
   refuses a lock whose base is not the latest version. Status reasons: `NotConfigured`, `SignIn`, `Group`,
   `UpdateRequired` (`app_meta.min_supported_app_version`, cached 1 h), `Unreachable`. Group per game in
   `cloud-provider-settings.json` `ActiveGroups`; sign-out clears it.
+- SaveHarbor Cloud setup UI: `MainWindowViewModel.CloudSetup.cs` (`PromptCloudSetupIfNeededAsync`: provider choice,
+  then the group dialog once per run and game; `SetupCloudCommand` opens the active provider's setup).
+  `CloudGroupSetupViewModel` owns the dialog's steps (e-mail, code, group, invite code after creating). The Sharing
+  view's top line comes from `MainWindowViewModel.Sharing.cs`, the Settings rows from `SettingsViewModel.Sharing.cs`.
+- Storage maintenance (`ICloudStorageMaintenance`, SaveHarbor Cloud only): storage used is summed in the app (the API
+  has aggregates switched off); unused archives are objects no `world_versions.archive_path` names and older than one
+  hour, so a friend's upload that is still publishing is never removed.
 - Version ids use `CloudSyncService.VersionIdPart(player)` (ASCII letters, digits, `_ . -`), valid on every provider.
 - `FolderCloudProvider` (`DeveloperProviderOverride: LocalTest`) mirrors the layout under
   `%LOCALAPPDATA%\SaveHarbor\cloud-test` — use it for manual and automated tests.

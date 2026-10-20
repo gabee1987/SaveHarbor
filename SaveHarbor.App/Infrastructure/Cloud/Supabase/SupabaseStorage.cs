@@ -10,6 +10,8 @@ public sealed class SupabaseStorage(SupabaseHttp http, SupabaseAuthClient auth, 
     // Storage removes at most this many objects per request.
     public const int DeleteBatchSize = 100;
 
+    private const int ListPageSize = 1000;
+
     public Task UploadAsync(string objectPath, string filePath, CancellationToken cancellationToken = default) =>
         auth.WithAccessTokenAsync(
             async (token, callToken) =>
@@ -63,6 +65,28 @@ public sealed class SupabaseStorage(SupabaseHttp http, SupabaseAuthClient auth, 
                 },
                 callToken),
             cancellationToken);
+
+    // Everything directly inside a folder ("<group>/<game>/"), folders included, read in pages.
+    public async Task<IReadOnlyList<StorageObjectDto>> ListAsync(string prefix, CancellationToken cancellationToken = default)
+    {
+        var entries = new List<StorageObjectDto>();
+        while (true)
+        {
+            var page = await auth.WithAccessTokenAsync(
+                (token, callToken) => http.SendJsonAsync<List<StorageObjectDto>>(
+                    HttpMethod.Post,
+                    $"storage/v1/object/list/{Escape(options.Bucket)}",
+                    new { prefix, limit = ListPageSize, offset = entries.Count, sortBy = new { column = "name", order = "asc" } },
+                    token,
+                    callToken),
+                cancellationToken);
+            entries.AddRange(page);
+            if (page.Count < ListPageSize)
+            {
+                return entries;
+            }
+        }
+    }
 
     public async Task DeleteAsync(IReadOnlyList<string> objectPaths, CancellationToken cancellationToken = default)
     {

@@ -5,7 +5,7 @@ namespace SaveHarbor.App.Infrastructure;
 
 // The app's ICloudProvider: forwards every call to the provider chosen on this PC, so the services above it never hold
 // a provider the user has switched away from.
-public sealed class CloudProviderSelector : ICloudProvider, ISharedFolderCloudProvider, ICloudProviderSelector
+public sealed class CloudProviderSelector : ICloudProvider, ISharedFolderCloudProvider, ICloudStorageMaintenance, ICloudProviderSelector
 {
     private readonly CloudProviderOptions options;
     private readonly IAppSettingsStore settings;
@@ -48,6 +48,10 @@ public sealed class CloudProviderSelector : ICloudProvider, ISharedFolderCloudPr
     public string ActiveKind => options.ForcesLocalTest
         ? CloudProviderKind.LocalTest
         : NormalizeChoice(settings.Current.CloudProvider);
+
+    public IReadOnlyList<string> AvailableKinds => options.Supabase.IsConfigured
+        ? [CloudProviderKind.Supabase, CloudProviderKind.GoogleDrive]
+        : [CloudProviderKind.GoogleDrive];
 
     public string ProviderName => Active.ProviderName;
 
@@ -134,6 +138,21 @@ public sealed class CloudProviderSelector : ICloudProvider, ISharedFolderCloudPr
         Active is ISharedFolderCloudProvider sharedFolderProvider
             ? sharedFolderProvider.TestSharedFolderAsync(game, sharedFolderId, cancellationToken)
             : Task.FromResult(new CloudSetupTestResult(false, "The active cloud provider does not support shared folder setup."));
+
+    public Task<CloudStorageUsage?> GetStorageUsageAsync(GameId game, CancellationToken cancellationToken = default) =>
+        Active is ICloudStorageMaintenance maintenance
+            ? maintenance.GetStorageUsageAsync(game, cancellationToken)
+            : Task.FromResult<CloudStorageUsage?>(null);
+
+    public Task<CloudUnusedFiles> FindUnusedFilesAsync(GameId game, CancellationToken cancellationToken = default) =>
+        Active is ICloudStorageMaintenance maintenance
+            ? maintenance.FindUnusedFilesAsync(game, cancellationToken)
+            : Task.FromResult(CloudUnusedFiles.None);
+
+    public Task RemoveUnusedFilesAsync(GameId game, CloudUnusedFiles files, CancellationToken cancellationToken = default) =>
+        Active is ICloudStorageMaintenance maintenance
+            ? maintenance.RemoveUnusedFilesAsync(game, files, cancellationToken)
+            : Task.CompletedTask;
 
     // Only the providers a user can choose; LocalTest comes from the developer override alone.
     private static string NormalizeChoice(string? kind) =>

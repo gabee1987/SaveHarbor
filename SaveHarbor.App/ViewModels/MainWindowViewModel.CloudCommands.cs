@@ -6,87 +6,29 @@ namespace SaveHarbor.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private async Task PromptCloudFolderSetupIfNeededAsync()
-    {
-        // SaveHarbor Cloud shares through groups, not folders; its sign-in comes with the group setup.
-        if (_providerSelector.ActiveKind == CloudProviderKind.Supabase
-            || _cloudSetupService.HasSharedFolderConfigured(_activeGame.Current.Id))
-        {
-            return;
-        }
-
-        var confirmed = _dialogService.Confirm(
-            "Set up cloud sync",
-            "Google Drive sync needs one shared folder for your group.\n\nPaste and test the shared folder link now, or cancel and use the Setup button later.");
-
-        if (!confirmed)
-        {
-            return;
-        }
-
-        await SetupCloudFolderAsync();
-    }
-
-    private async void OnCloudProviderChanged(object? sender, EventArgs e)
-    {
-        try
-        {
-            CloudStatus = null;
-            ClearCloudOverview();
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
-        }
-        catch (Exception ex)
-        {
-            _errorHandler.Handle(ex, "Switch cloud provider", AppLogKeyword.Ui);
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private async Task SetupCloudFolderAsync()
-    {
-        // A shared folder is the Google Drive way of sharing, so setting one up before any provider is chosen
-        // chooses Google Drive.
-        if (_providerSelector.ActiveKind.Length == 0)
-        {
-            await _providerSelector.SwitchAsync(CloudProviderKind.GoogleDrive);
-        }
-
-        var game = _activeGame.Current;
-        var choice = _dialogService.ConfigureCloudFolder(
-            game.SkinDictionary,
-            game.DisplayName,
-            _cloudSetupService.GetCurrentSharedFolderId(game.Id),
-            _cloudSetupService.GetSavedFolders(game.Id),
-            (candidate, cancellationToken) => _cloudSetupService.TestSharedFolderAsync(game.Id, candidate, cancellationToken),
-            folderId => _cloudSetupService.ForgetSavedFolderAsync(game.Id, folderId));
-
-        if (choice is null)
-        {
-            return;
-        }
-
-        await RunBusyAsync("Saving cloud folder setup...", async () =>
-        {
-            await _cloudSetupService.SaveSharedFolderAsync(game.Id, choice.Input, choice.FolderName);
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
-
-            StatusText = "Cloud folder setup saved.";
-            AddActivity("Success", StatusText);
-            _toastService.Success("Cloud folder saved", "SaveHarbor will use this shared Google Drive folder.");
-        });
-    }
-
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task ConnectCloudAsync()
     {
+        if (_providerSelector.ActiveKind.Length == 0)
+        {
+            await SetupCloudAsync();
+            return;
+        }
+
+        // SaveHarbor Cloud signs in inside the group dialog, which opens once the busy state has ended.
+        var needsGroupSetup = false;
         await RunBusyAsync("Connecting cloud...", async () =>
         {
             var result = await _cloudSyncService.ConnectAsync(_activeGame.Current.Id);
 
             if (!result.IsSuccess)
             {
+                if (result.Status.NeedsSetup && _providerSelector.ActiveKind == CloudProviderKind.Supabase)
+                {
+                    needsGroupSetup = true;
+                    return;
+                }
+
                 StatusText = result.Message;
                 AddActivity("Warning", result.Message);
                 _toastService.Warning("Cloud not connected", result.Message);
@@ -104,6 +46,11 @@ public partial class MainWindowViewModel
 
             await RefreshCloudOverviewAsync();
         });
+
+        if (needsGroupSetup)
+        {
+            await SetupCloudGroupAsync();
+        }
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]

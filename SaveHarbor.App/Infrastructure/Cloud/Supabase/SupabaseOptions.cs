@@ -13,6 +13,9 @@ public sealed class SupabaseOptions
     // 45 MB, below the bucket's own limit so the app refuses before uploading.
     public long MaxArchiveBytes { get; set; } = 47185920;
 
+    // Storage of the free plan, shown as "312 MB of 1 GB" in Settings. 0 hides the limit.
+    public long FreePlanStorageBytes { get; set; } = 1073741824;
+
     public int HttpTimeoutSeconds { get; set; } = 30;
 
     public int TransferTimeoutSeconds { get; set; } = 300;

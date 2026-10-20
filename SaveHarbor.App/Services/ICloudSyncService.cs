@@ -6,6 +6,9 @@ public interface ICloudSyncService
 {
     Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default);
 
+    // Whether the active provider can share this game's worlds now, without signing in or opening a browser.
+    Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default);
+
     Task<CloudSyncStatus> RefreshStatusAsync(GameWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> DownloadLatestAsync(GameWorld world, CancellationToken cancellationToken = default);
@@ -29,4 +32,12 @@ public interface ICloudSyncService
     Task<CloudSyncResult> HeartbeatSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> EndSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // Null when the active provider does not report its storage (Google Drive).
+    Task<CloudStorageUsage?> GetStorageUsageAsync(GameId game, CancellationToken cancellationToken = default);
+
+    // Archives no shared version points to; RemoveUnusedFilesAsync deletes what FindUnusedFilesAsync found.
+    Task<CloudUnusedFiles> FindUnusedFilesAsync(GameId game, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> RemoveUnusedFilesAsync(GameId game, CloudUnusedFiles files, CancellationToken cancellationToken = default);
 }

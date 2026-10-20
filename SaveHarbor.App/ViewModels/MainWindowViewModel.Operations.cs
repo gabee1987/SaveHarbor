@@ -49,7 +49,8 @@ public partial class MainWindowViewModel
         OpenWorldFolderCommand.NotifyCanExecuteChanged();
         OpenWorldInspectorCommand.NotifyCanExecuteChanged();
         RemoveLocalWorldCommand.NotifyCanExecuteChanged();
-        SetupCloudFolderCommand.NotifyCanExecuteChanged();
+        SetupCloudCommand.NotifyCanExecuteChanged();
+        RunSharingActionCommand.NotifyCanExecuteChanged();
         ConnectCloudCommand.NotifyCanExecuteChanged();
         CheckCloudCommand.NotifyCanExecuteChanged();
         UploadCloudCommand.NotifyCanExecuteChanged();

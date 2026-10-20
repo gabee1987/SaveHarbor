@@ -108,3 +108,19 @@ public sealed class AuthUserDto
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
     [JsonPropertyName("email")] public string? Email { get; set; }
 }
+
+// An entry of a storage listing. Folders come back with no id and no metadata.
+public sealed class StorageObjectDto
+{
+    [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
+    [JsonPropertyName("id")] public string? Id { get; set; }
+    [JsonPropertyName("created_at")] public DateTimeOffset? CreatedAt { get; set; }
+    [JsonPropertyName("metadata")] public StorageObjectMetadataDto? Metadata { get; set; }
+
+    public bool IsFolder => Id is null;
+}
+
+public sealed class StorageObjectMetadataDto
+{
+    [JsonPropertyName("size")] public long Size { get; set; }
+}

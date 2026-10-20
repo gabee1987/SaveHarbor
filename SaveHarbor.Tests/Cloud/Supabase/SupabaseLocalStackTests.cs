@@ -72,6 +72,12 @@ public sealed partial class SupabaseLocalStackTests : IDisposable
             var manifest = await provider.GetWorldManifestAsync(GameId.Windrose, world.WorldId, Token);
             Assert.Equal(1, manifest!.LatestVersion!.VersionNumber);
 
+            // The new archive is in use (and too young to be called unused); the listing works as a member.
+            Assert.True((await provider.GetStorageUsageAsync(GameId.Windrose, Token))!.UsedBytes >= 4096);
+            Assert.DoesNotContain(
+                (await provider.FindUnusedFilesAsync(GameId.Windrose, Token)).Paths,
+                path => path.Contains(world.WorldId, StringComparison.Ordinal));
+
             var stale = await provider.UploadVersionAsync(new CloudUploadRequest(world, archive, new CloudVersionMetadata
             {
                 VersionNumber = 1,

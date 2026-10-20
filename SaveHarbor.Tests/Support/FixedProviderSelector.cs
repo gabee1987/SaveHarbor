@@ -7,6 +7,8 @@ public sealed class FixedProviderSelector(string activeKind = CloudProviderKind.
 {
     public string ActiveKind { get; private set; } = activeKind;
 
+    public IReadOnlyList<string> AvailableKinds { get; set; } = [CloudProviderKind.Supabase, CloudProviderKind.GoogleDrive];
+
     public event EventHandler? ActiveChanged;
 
     public Task SwitchAsync(string kind, CancellationToken cancellationToken = default)

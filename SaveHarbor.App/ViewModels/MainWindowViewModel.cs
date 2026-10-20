@@ -24,6 +24,8 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IPlayerIdentity _playerIdentity;
     private readonly IAppDataPathProvider _paths;
     private readonly ICloudProviderSelector _providerSelector;
+    private readonly ICloudGroupService _cloudGroups;
+    private readonly IDeviceIdentity _deviceIdentity;
     private readonly DispatcherTimer gameMonitorTimer;
     private bool suppressSelectedWorldCloudRefresh;
     private bool hasObservedGameRunningDuringSession;
@@ -77,7 +79,9 @@ public partial class MainWindowViewModel : ObservableObject
         IAppSettingsStore settingsStore,
         IPlayerIdentity playerIdentity,
         IAppDataPathProvider paths,
-        ICloudProviderSelector providerSelector)
+        ICloudProviderSelector providerSelector,
+        ICloudGroupService cloudGroups,
+        IDeviceIdentity deviceIdentity)
     {
         _activeGame = activeGame;
         _gameRegistry = gameRegistry;
@@ -94,6 +98,8 @@ public partial class MainWindowViewModel : ObservableObject
         _playerIdentity = playerIdentity;
         _paths = paths;
         _providerSelector = providerSelector;
+        _cloudGroups = cloudGroups;
+        _deviceIdentity = deviceIdentity;
 
         _toastService.ToastRequested += OnToastRequested;
         _activeGame.ActiveGameChanged += OnActiveGameChanged;

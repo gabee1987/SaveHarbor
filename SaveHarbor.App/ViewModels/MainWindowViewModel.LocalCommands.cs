@@ -12,7 +12,7 @@ public partial class MainWindowViewModel
     {
         await RefreshAsync();
         StartGameMonitor();
-        await PromptCloudFolderSetupIfNeededAsync();
+        await PromptCloudSetupIfNeededAsync();
     }
 
     [RelayCommand]

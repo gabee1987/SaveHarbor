@@ -6,6 +6,8 @@ namespace SaveHarbor.App.Infrastructure.Cloud.Supabase;
 // app needs. Every call runs as the signed-in player; ids placed in a URL are checked to be UUIDs first.
 public sealed partial class SupabaseRest(SupabaseHttp http, SupabaseAuthClient auth)
 {
+    private const int PageSize = 1000;
+
     public Task<SnapshotDto> GetSnapshotAsync(string groupId, string gameKey, CancellationToken cancellationToken = default) =>
         RpcAsync<SnapshotDto>("get_group_snapshot", new { p_group = groupId, p_game = gameKey }, cancellationToken);
 
@@ -71,6 +73,23 @@ public sealed partial class SupabaseRest(SupabaseHttp http, SupabaseAuthClient a
         await GetAsync<List<VersionDto>>(
             $"rest/v1/world_versions?select=id,group_id,version_number,version_id,archive_path&world_uuid=eq.{RequireUuid(worldUuid)}&order=version_number.desc&limit=500",
             cancellationToken);
+
+    // Path and size of every version in the group, read in pages because the API returns at most 1000 rows at once.
+    public async Task<IReadOnlyList<VersionDto>> ListGroupArchivesAsync(string groupId, CancellationToken cancellationToken = default)
+    {
+        var rows = new List<VersionDto>();
+        while (true)
+        {
+            var page = await GetAsync<List<VersionDto>>(
+                $"rest/v1/world_versions?select=id,archive_path,archive_size_bytes&group_id=eq.{RequireUuid(groupId)}&order=id.asc&limit={PageSize}&offset={rows.Count}",
+                cancellationToken);
+            rows.AddRange(page);
+            if (page.Count < PageSize)
+            {
+                return rows;
+            }
+        }
+    }
 
     public Task DeleteVersionRowAsync(string versionRowId, CancellationToken cancellationToken = default) =>
         auth.WithAccessTokenAsync(

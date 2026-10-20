@@ -16,7 +16,7 @@ Single WPF project `SaveHarbor.App` (solution `SaveHarbor.sln`). ~6.6k lines. No
 | `Infrastructure/` | Implementations: discovery, backup (zip), cloud providers, sync, launcher, process detection, logging, options | All file/network/process IO lives here |
 | `Utilities/` | Pure static helpers (hashing, formatting, filename sanitising) | Stateless |
 | `ViewModels/` | `MainWindowViewModel` split into partials by concern | CommunityToolkit.Mvvm source generators |
-| `Views/Controls`, `Views/Dialogs`, `Views/Behaviors` | Section user controls, dialogs, attached behaviours | Bind to the single main VM |
+| `Views/Controls`, `Views/Dialogs`, `Views/Behaviors` | Section user controls, dialogs, attached behaviours | Bind to the single main VM; `CloudGroupSetupWindow` binds its own `CloudGroupSetupViewModel` |
 | `Localization/` | `UiTextCatalog` + `{ui:UiText}` markup extension | Reads `Resources/Texts/ui-text.en.json` |
 | `Resources/Styles/` | `DarkTheme.xaml` (brushes + styles) | Only theme dictionary today |
 | `Configuration/` | Encrypted Google client secret (`.enc`, git-ignored) | Never commit secrets |
@@ -32,7 +32,8 @@ forwards to the provider chosen on this PC (`AppSettings.CloudProvider`: Google 
 HTTP, auth, REST and storage clients; options under `SaveHarbor:CloudProvider:Supabase`).
 
 Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds,
-start game monitor timer, prompt for Drive folder setup.
+start game monitor timer, `PromptCloudSetupIfNeededAsync` (provider choice when none is chosen and SaveHarbor Cloud is
+configured, then the SaveHarbor Cloud group dialog or the Drive folder prompt).
 
 ## Core flows
 

@@ -49,6 +49,27 @@ public sealed class CloudProviderSelectorTests : IDisposable
     }
 
     [Fact]
+    public void SaveHarborCloud_IsOfferedOnlyWhenTheBuildHasAProject()
+    {
+        Assert.Equal([CloudProviderKind.GoogleDrive], CreateSelector().AvailableKinds);
+
+        options.Supabase.Url = "https://TEST_REF.supabase.co";
+        options.Supabase.PublishableKey = "sb_publishable_TEST";
+
+        Assert.Equal([CloudProviderKind.Supabase, CloudProviderKind.GoogleDrive], CreateSelector().AvailableKinds);
+    }
+
+    [Fact]
+    public async Task StorageMaintenance_OfAProviderWithoutIt_ReportsNothing()
+    {
+        settings.Update(current => current.CloudProvider = CloudProviderKind.GoogleDrive);
+        var selector = CreateSelector();
+
+        Assert.Null(await selector.GetStorageUsageAsync(GameId.Windrose, Token));
+        Assert.Equal(0, (await selector.FindUnusedFilesAsync(GameId.Windrose, Token)).Count);
+    }
+
+    [Fact]
     public void ExistingSharedFolder_KeepsGoogleDrive()
     {
         options.SetSharedFolderId(GameId.Dragonwilds, "TEST_FOLDER_ID_12345");

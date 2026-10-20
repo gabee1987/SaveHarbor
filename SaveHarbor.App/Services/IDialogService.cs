@@ -20,7 +20,16 @@ public interface IDialogService
         IReadOnlyList<SavedCloudFolder> savedFolders,
         Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync,
         Func<string, Task> forgetSavedFolderAsync);
+
+    // The provider kind chosen, or null for "Decide later".
+    string? ChooseCloudProvider(Uri skinDictionary, IReadOnlyList<CloudProviderChoice> choices);
+
+    // The group chosen, or null when the dialog was closed before that (the player may still have signed in).
+    CloudGroupSetupResult? ConfigureCloudGroup(Uri skinDictionary, string gameDisplayName, CloudGroupSetupViewModel viewModel);
 }
+
+// One card of the provider choice; its texts are the CloudProviderChoice.<Kind>* keys.
+public sealed record CloudProviderChoice(string Kind, bool IsRecommended);
 
 // The tested folder link or ID, and the folder's name in Google Drive when the test reported it.
 public sealed record CloudFolderChoice(string Input, string? FolderName);
