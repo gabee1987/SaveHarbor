@@ -5,8 +5,8 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed partial class CloudSyncService
 {
-    // One listing of the shared folder serves every world, so the world list can show each world's state without a
-    // cloud round trip per world.
+    // One snapshot serves every world, so the world list can show each world's state, including who is playing it,
+    // without a cloud round trip per world.
     public async Task<CloudWorldOverview> GetOverviewAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, CancellationToken cancellationToken = default)
     {
         var connection = await cloudProvider.GetConnectionStatusAsync(game, cancellationToken);
@@ -16,7 +16,9 @@ public sealed partial class CloudSyncService
         }
 
         // Manifests come from friends: ids that could not be a world are dropped, and duplicates keep the newest.
-        var manifests = (await cloudProvider.ListWorldManifestsAsync(game, cancellationToken))
+        var snapshot = await cloudProvider.GetSnapshotAsync(game, cancellationToken);
+        var now = snapshot.ServerTimeUtc ?? Now;
+        var manifests = snapshot.Manifests
             .Where(manifest => manifest.LatestVersion is not null && SafePath.IsSafeSegment(manifest.WorldId))
             .GroupBy(manifest => manifest.WorldId, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.OrderByDescending(manifest => manifest.LatestVersion!.VersionNumber).First())
@@ -29,9 +31,10 @@ public sealed partial class CloudSyncService
             var latest = manifests.GetValueOrDefault(world.WorldId)?.LatestVersion;
             var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
             var localBase = localState.LocalBaseVersionNumber;
-            var hasLocalChanges = SyncStateClassifier.NeedsLocalChangeCheck(localBase, latest?.VersionNumber, otherPlayerPlaying: false)
+            var otherPlayerPlaying = IsActiveOtherPlayerLock(snapshot.LocksByWorldId.GetValueOrDefault(world.WorldId), now);
+            var hasLocalChanges = SyncStateClassifier.NeedsLocalChangeCheck(localBase, latest?.VersionNumber, otherPlayerPlaying)
                 && await DetectLocalChangesAsync(localState, world, cancellationToken) == true;
-            var state = SyncStateClassifier.Classify(localBase, latest?.VersionNumber, hasLocalChanges, otherPlayerPlaying: false);
+            var state = SyncStateClassifier.Classify(localBase, latest?.VersionNumber, hasLocalChanges, otherPlayerPlaying);
             summaries.Add(new WorldSyncSummary(world.WorldId, state, hasLocalChanges, localBase, latest));
         }
 

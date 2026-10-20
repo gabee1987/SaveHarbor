@@ -41,7 +41,7 @@ public sealed class CloudVersionRetentionTests : IDisposable
             LatestVersion = new CloudVersionMetadata { VersionNumber = 4, VersionId = "v4", UploadedBy = "TEST_USER" }
         });
         harness.Settings.Update(settings => settings.CloudVersionRetentionCount = 2);
-        var stateService = new LocalJsonSyncStateService(harness.Paths);
+        var stateService = new LocalJsonSyncStateService(harness.Paths, new FixedProviderSelector());
         var service = new CloudSyncService(
             provider,
             stateService,
@@ -49,7 +49,9 @@ public sealed class CloudVersionRetentionTests : IDisposable
             new StubGameRegistry(new StubGameDefinition(GameId.Dragonwilds, harness.DragonwildsAdapter)),
             new FixedPlayerIdentity(),
             harness.Settings,
-            new NullAppLogger());
+            new NullAppLogger(),
+            new FixedDeviceIdentity(),
+            new CloudProviderOptions());
         var world = await harness.ReadDragonwildsWorldAsync(harness.WriteDragonwildsWorld("TEST_WORLD.sav"));
         var state = await stateService.LoadAsync(world, TestContext.Current.CancellationToken);
         state.LocalBaseVersionNumber = 4;

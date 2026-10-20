@@ -8,7 +8,17 @@ public sealed class CloudProviderOptions
 {
     public const string SectionName = "SaveHarbor:CloudProvider";
 
-    public string Provider { get; set; } = CloudProviderKind.GoogleDrive;
+    // "LocalTest" forces the local folder provider for development; empty lets the user choose. Replaces the "Provider"
+    // key, which is still honoured for one release when it says "LocalTest".
+    public string DeveloperProviderOverride { get; set; } = string.Empty;
+
+    public bool ForcesLocalTest =>
+        string.Equals(DeveloperProviderOverride, CloudProviderKind.LocalTest, StringComparison.OrdinalIgnoreCase);
+
+    // How long a session lock lives without a heartbeat, and how often a running session renews it.
+    public int LockTtlSeconds { get; set; } = 1200;
+
+    public int HeartbeatIntervalSeconds { get; set; } = 300;
 
     public string GoogleAppFolderName { get; set; } = "SaveHarbor";
 
@@ -76,5 +86,13 @@ public sealed class CloudProviderOptions
 public static class CloudProviderKind
 {
     public const string GoogleDrive = "GoogleDrive";
+    public const string Supabase = "Supabase";
     public const string LocalTest = "LocalTest";
+
+    // Folder name for state kept per provider. Nothing chosen yet counts as Google Drive, the provider that folder setup
+    // leads to and that every install used before providers could be chosen.
+    public static string ToStorageKey(string? kind) =>
+        string.Equals(kind, Supabase, StringComparison.OrdinalIgnoreCase) ? "supabase"
+        : string.Equals(kind, LocalTest, StringComparison.OrdinalIgnoreCase) ? "localtest"
+        : "googledrive";
 }

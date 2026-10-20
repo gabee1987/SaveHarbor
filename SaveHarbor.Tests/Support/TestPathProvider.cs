@@ -19,6 +19,8 @@ public sealed class TestPathProvider(TempDirectory root) : IAppDataPathProvider
 
     public string GetSyncStateRoot(GameId game) => Path.Combine(LegacySyncStateRoot, game.ToStorageKey());
 
+    public string GetSyncStateRoot(GameId game, string providerKey) => Path.Combine(GetSyncStateRoot(game), providerKey);
+
     public string GetLocalTestCloudRoot(GameId game) => Path.Combine(LegacyLocalTestCloudRoot, game.ToStorageKey());
 
     public string CloudLogsPath => root.Combine("appdata", "cloud-logs");

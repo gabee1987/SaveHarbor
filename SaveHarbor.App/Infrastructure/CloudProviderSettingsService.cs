@@ -105,7 +105,7 @@ public sealed partial class CloudProviderSettingsService : ICloudSetupService
         }
 
         var settings = ReadExistingSettings();
-        settings.SchemaVersion = 2;
+        settings.SchemaVersion = 3;
         settings.SharedFolders[game.ToStorageKey()] = folderId;
         if (game == GameId.Windrose)
         {
@@ -187,6 +187,7 @@ public sealed partial class CloudProviderSettingsService : ICloudSetupService
                 {
                     existing.SharedFolders = new Dictionary<string, string>(existing.SharedFolders, StringComparer.OrdinalIgnoreCase);
                     existing.SavedFolders ??= [];
+                    existing.ActiveGroups = new Dictionary<string, string>(existing.ActiveGroups ?? [], StringComparer.OrdinalIgnoreCase);
                     return existing;
                 }
             }

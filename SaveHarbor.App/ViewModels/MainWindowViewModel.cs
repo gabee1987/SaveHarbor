@@ -23,10 +23,12 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IAppSettingsStore _settingsStore;
     private readonly IPlayerIdentity _playerIdentity;
     private readonly IAppDataPathProvider _paths;
+    private readonly ICloudProviderSelector _providerSelector;
     private readonly DispatcherTimer gameMonitorTimer;
     private bool suppressSelectedWorldCloudRefresh;
     private bool hasObservedGameRunningDuringSession;
     private bool isAutoEndingSession;
+    private bool isHeartbeating;
     private string? knownWorldFolderFingerprint;
 
     [ObservableProperty]
@@ -74,7 +76,8 @@ public partial class MainWindowViewModel : ObservableObject
         IAppLogger logger,
         IAppSettingsStore settingsStore,
         IPlayerIdentity playerIdentity,
-        IAppDataPathProvider paths)
+        IAppDataPathProvider paths,
+        ICloudProviderSelector providerSelector)
     {
         _activeGame = activeGame;
         _gameRegistry = gameRegistry;
@@ -90,9 +93,11 @@ public partial class MainWindowViewModel : ObservableObject
         _settingsStore = settingsStore;
         _playerIdentity = playerIdentity;
         _paths = paths;
+        _providerSelector = providerSelector;
 
         _toastService.ToastRequested += OnToastRequested;
         _activeGame.ActiveGameChanged += OnActiveGameChanged;
+        _providerSelector.ActiveChanged += OnCloudProviderChanged;
 
         foreach (var definition in _gameRegistry.All)
         {

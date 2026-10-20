@@ -39,6 +39,7 @@ public partial class App : Application
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
                 services.AddSingleton<IAppSettingsStore, AppSettingsStore>();
                 services.AddSingleton<IPlayerIdentity, PlayerIdentity>();
+                services.AddSingleton<IDeviceIdentity, DeviceIdentity>();
                 services.AddSingleton(serviceProvider => new GameOptionsProvider(
                     AppOptionsLoader.LoadGameOptions(),
                     serviceProvider.GetRequiredService<IAppSettingsStore>()));
@@ -60,16 +61,19 @@ public partial class App : Application
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
                 services.AddSingleton<FolderCloudProvider>();
                 services.AddSingleton<GoogleDriveCloudProvider>();
-                services.AddSingleton<ICloudProvider>(serviceProvider =>
-                {
-                    var options = serviceProvider.GetRequiredService<CloudProviderOptions>();
-                    return string.Equals(options.Provider, CloudProviderKind.LocalTest, StringComparison.OrdinalIgnoreCase)
-                        ? serviceProvider.GetRequiredService<FolderCloudProvider>()
-                        : serviceProvider.GetRequiredService<GoogleDriveCloudProvider>();
-                });
+                services.AddSingleton(serviceProvider => new CloudProviderSelector(
+                    serviceProvider.GetRequiredService<CloudProviderOptions>(),
+                    serviceProvider.GetRequiredService<IAppSettingsStore>(),
+                    serviceProvider.GetRequiredService<FolderCloudProvider>(),
+                    serviceProvider.GetRequiredService<GoogleDriveCloudProvider>(),
+                    () => new NotConfiguredCloudProvider("SaveHarbor Cloud", "SaveHarbor Cloud is not available in this version yet."),
+                    serviceProvider.GetRequiredService<IAppLogger>()));
+                services.AddSingleton<ICloudProviderSelector>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSelector>());
+                services.AddSingleton<ICloudProvider>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSelector>());
                 services.AddSingleton<ICloudSetupService, CloudProviderSettingsService>();
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
                 services.AddSingleton<LegacyLayoutMigrator>();
+                services.AddSingleton<SyncStateProviderScopeMigrator>();
                 services.AddSingleton<BackupFolderOrganizer>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
@@ -85,9 +89,10 @@ public partial class App : Application
     {
         base.OnStartup(e);
         await _host.StartAsync();
+        var games = _host.Services.GetRequiredService<IGameRegistry>().All.Select(game => game.Id).ToArray();
         var migrationReport = _host.Services.GetRequiredService<LegacyLayoutMigrator>().Run();
-        var organizerReport = _host.Services.GetRequiredService<BackupFolderOrganizer>()
-            .Run(_host.Services.GetRequiredService<IGameRegistry>().All.Select(game => game.Id));
+        var syncStateReport = _host.Services.GetRequiredService<SyncStateProviderScopeMigrator>().Run(games);
+        var organizerReport = _host.Services.GetRequiredService<BackupFolderOrganizer>().Run(games);
         LogAppInformation(_loggingOptions, "SaveHarbor started");
 
         _host.Services.GetRequiredService<IThemeService>();
@@ -95,7 +100,7 @@ public partial class App : Application
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
 
-        if (migrationReport.Errors.Count > 0 || organizerReport.Errors.Count > 0)
+        if (migrationReport.Errors.Count > 0 || syncStateReport.Errors.Count > 0 || organizerReport.Errors.Count > 0)
         {
             _host.Services.GetRequiredService<IToastService>().Warning(
                 "Data migration incomplete",

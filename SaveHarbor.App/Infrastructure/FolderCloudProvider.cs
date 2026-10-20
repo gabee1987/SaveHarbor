@@ -1,19 +1,36 @@
 using System.IO;
 using System.Text.Json;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Cloud;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvider, IPlayerIdentity playerIdentity) : ICloudProvider
+// lockVerifyDelay: how long acquiring waits before reading the lock back; tests pass TimeSpan.Zero.
+public sealed partial class FolderCloudProvider(
+    IAppDataPathProvider pathProvider,
+    IPlayerIdentity playerIdentity,
+    TimeSpan? lockVerifyDelay = null) : ICloudProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true
     };
 
+    private readonly TimeSpan verifyDelay = lockVerifyDelay ?? SharedFolderSessionLocks.DefaultVerifyDelay;
+
     public string ProviderName => "Local test cloud";
+
+    public CloudProviderCapabilities Capabilities { get; } = new(
+        HasSharedFolders: true,
+        HasGroups: false,
+        HasAtomicLocks: false,
+        SupportsHeartbeat: true,
+        SupportsRealtime: false,
+        HasRecycleBin: false,
+        MaxArchiveBytes: long.MaxValue,
+        DefaultRetentionCount: 0);
 
     public Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default)
     {
@@ -207,10 +224,24 @@ public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvide
         return Task.FromResult(new CloudRemovalResult(true, "Removed from the local test cloud."));
     }
 
-    public Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
+    public Task<CloudLockAttempt> TryAcquireSessionLockAsync(GameId game, CloudSessionLock requested, CancellationToken cancellationToken = default)
     {
-        EnsureGameFolder(game);
-        return WriteJsonAtomicAsync(GetSessionLockPath(game, sessionLock.WorldId), sessionLock, cancellationToken);
+        return SharedFolderSessionLocks.TryAcquireAsync(
+            token => GetSessionLockAsync(game, requested.WorldId, token),
+            (sessionLock, token) => WriteSessionLockAsync(game, sessionLock, token),
+            requested,
+            verifyDelay,
+            cancellationToken);
+    }
+
+    public Task<CloudSessionLock?> HeartbeatSessionLockAsync(GameId game, string worldId, string lockId, TimeSpan ttl, CancellationToken cancellationToken = default)
+    {
+        return SharedFolderSessionLocks.HeartbeatAsync(
+            token => GetSessionLockAsync(game, worldId, token),
+            (sessionLock, token) => WriteSessionLockAsync(game, sessionLock, token),
+            lockId,
+            ttl,
+            cancellationToken);
     }
 
     public Task ClearSessionLockAsync(GameId game, string worldId, string lockId, CancellationToken cancellationToken = default)
@@ -222,6 +253,12 @@ public sealed partial class FolderCloudProvider(IAppDataPathProvider pathProvide
         }
 
         return Task.CompletedTask;
+    }
+
+    private Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken)
+    {
+        EnsureGameFolder(game);
+        return WriteJsonAtomicAsync(GetSessionLockPath(game, sessionLock.WorldId), sessionLock, cancellationToken);
     }
 
     private string GetRootPath(GameId game)

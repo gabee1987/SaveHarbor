@@ -25,7 +25,7 @@ against temp-dir fixtures, sync state resolution, lock acquire/verify logic with
 
 ## Manual smoke test (LocalTest provider)
 
-Set `SaveHarbor:CloudProvider:Provider` to `LocalTest` in the **output** `appsettings.json`
+Set `SaveHarbor:CloudProvider:DeveloperProviderOverride` to `LocalTest` in the **output** `appsettings.json`
 (never commit that change), then for each game:
 1. App starts, correct theme, worlds listed.
 2. Upload v1 → `%LOCALAPPDATA%\SaveHarbor\cloud-test` contains manifest + version.

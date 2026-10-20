@@ -12,12 +12,13 @@ description: SaveHarbor cloud versioning model, manifest/lock JSON contracts, sy
 - Each upload creates an immutable **version**: zip + sidecar json (`CloudVersionMetadata`:
   monotonically increasing `VersionNumber`, `VersionId = yyyyMMdd_HHmmss_<player>_v<N>`,
   `ArchiveSha256`, `BasedOnVersionNumber/Id`).
-- **Local sync state** (`LocalSyncState`, `%LOCALAPPDATA%\SaveHarbor\sync-state\<worldId>.json`)
+- **Local sync state** (`LocalSyncState`, `%LOCALAPPDATA%\SaveHarbor\sync-state\<game>\<provider>\<worldId>.json`,
+  provider `googledrive` / `supabase` / `localtest`, because version numbers differ per provider)
   records `LocalBaseVersionNumber` = the cloud version the local files were last downloaded
   from or uploaded as.
-- **Session lock** (`CloudSessionLock`, `worlds/<id>/locks/active-session.json`): `LockId`,
-  `PlayerName`, `MachineName`, `StartedAtUtc`, `LastHeartbeatAtUtc`, `BasedOnVersion*`,
-  `ExpiresAtUtc` (= start + 6 h), `Status`.
+- **Session lock** (`CloudSessionLock`, `worlds/<id>/locks/active-session.json`, schema 2): `LockId`,
+  `PlayerName`, `MachineName`, `DeviceId` (empty in pre-2.3 locks), `StartedAtUtc`, `LastHeartbeatAtUtc`,
+  `BasedOnVersion*`, `ExpiresAtUtc` (= now + `LockTtlSeconds`, 20 min, renewed by the heartbeat), `Status`.
 
 ## State resolution (`CloudSyncService.RefreshStatusAsync`)
 
@@ -38,20 +39,19 @@ the last sync is **not** detected (only version numbers are compared).
 - Verify `ArchiveSha256` after download before touching local files.
 - Never upload or restore while the game process is running.
 - Upload only when `LocalBaseVersionNumber == LatestVersion.VersionNumber` (or no cloud version).
-- Only the lock owner (same `MachineName`) may clear a lock. Upload clears own lock.
+- Only the lock owner may clear a lock: same `DeviceId`, or same `MachineName` for a lock without one
+  (`CloudSessionLock.IsHeldBy`). Upload clears own lock.
 - Version numbers only increase; never overwrite an existing version file.
 
 ## Known weaknesses (fix in `fix/` or within the feature plan, see `docs/plans/dragonwilds/05-*`)
 
-1. **Non-atomic lock acquire** (read → write). Two friends pressing Play within seconds can both
-   "win". Mitigation without server CAS: write lock with new `LockId`, wait ~1.5–3 s, re-read; if
-   `LockId` differs, the other writer won → back off and report. Tie-break deterministically
-   (earliest `StartedAtUtc`, then lowest `LockId`).
-2. **No heartbeat**: `LastHeartbeatAtUtc` is never refreshed; sessions > 6 h appear expired and
-   can be stolen. Refresh heartbeat from the existing game-monitor tick (throttled, e.g. every
-   5 min) and extend `ExpiresAtUtc` to now + short TTL (e.g. 20 min) once heartbeats exist.
-3. **Lock identity = MachineName**: same user on two PCs is fine, but two users on one PC collide.
-   Acceptable for this group; document, don't over-engineer.
+1. **Shared-folder lock acquire is not atomic.** `TryAcquireSessionLockAsync` on Drive and LocalTest
+   (`SharedFolderSessionLocks`) writes, waits 1.5 s, and re-reads; the `LockId` left in the file wins. This narrows
+   the race but cannot close it. SaveHarbor Cloud acquires atomically on the server.
+2. **Heartbeat only while the game runs.** The game-monitor tick calls `HeartbeatSessionAsync`, which reaches the
+   cloud once per `HeartbeatIntervalSeconds` (5 min). A session started without launching the game expires after
+   20 min.
+3. **Pre-2.3 locks are matched by MachineName.** Two Windows users on one PC are told apart only once both run 2.3.
 4. **Game close does not upload**: auto-end only clears the lock, so progress is not shared unless
    the user uploads manually. The planned flow uploads then releases.
 5. **Stale lock UX**: expired foreign locks are silently ignored; the UI should say
@@ -67,7 +67,7 @@ See `multi-game-separation`.
 
 - `GoogleDriveCloudProvider` uses Drive v3 with `SupportsAllDrives`; folder lookups by name.
   Drive has no compare-and-swap for file content — hence the write-then-verify lock strategy.
-- `FolderCloudProvider` (`Provider: LocalTest`) mirrors the layout under
+- `FolderCloudProvider` (`DeveloperProviderOverride: LocalTest`) mirrors the layout under
   `%LOCALAPPDATA%\SaveHarbor\cloud-test` — use it for manual and automated tests.
 - Google Drive is an external cloud service; for any use beyond this hobby group it would need
   a privacy/compliance review (personal data: player names, machine names, emails).

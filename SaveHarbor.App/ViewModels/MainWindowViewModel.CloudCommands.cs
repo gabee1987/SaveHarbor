@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -24,9 +25,31 @@ public partial class MainWindowViewModel
         await SetupCloudFolderAsync();
     }
 
+    private async void OnCloudProviderChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            CloudStatus = null;
+            ClearCloudOverview();
+            await RefreshCloudStatusAsync(showToast: false);
+            await RefreshCloudOverviewAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorHandler.Handle(ex, "Switch cloud provider", AppLogKeyword.Ui);
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task SetupCloudFolderAsync()
     {
+        // A shared folder is the Google Drive way of sharing, so setting one up before any provider is chosen
+        // chooses Google Drive.
+        if (_providerSelector.ActiveKind.Length == 0)
+        {
+            await _providerSelector.SwitchAsync(CloudProviderKind.GoogleDrive);
+        }
+
         var game = _activeGame.Current;
         var choice = _dialogService.ConfigureCloudFolder(
             game.SkinDictionary,
@@ -114,7 +137,9 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync("Uploading current world...", async () =>
         {
-            var result = await _cloudSyncService.UploadCurrentAsync(SelectedWorld);
+            // The game may have saved since the last scan; the upload records the world's current save time and size.
+            await RefreshSelectedWorldFromDiskAsync();
+            var result = await _cloudSyncService.UploadCurrentAsync(SelectedWorld!);
             await RefreshBackupStatsAsync();
             await RefreshCloudStatusAsync(showToast: false);
             await RefreshCloudOverviewAsync();

@@ -44,7 +44,7 @@ public partial class MainWindowViewModel
 
     public string CloudSessionText => CloudStatus?.SessionLock is null
         ? "None"
-        : string.Equals(CloudStatus.SessionLock.MachineName, Environment.MachineName, StringComparison.OrdinalIgnoreCase)
+        : CloudStatus.IsOwnSession
             ? "You"
             : CloudStatus.SessionLock.PlayerName;
 

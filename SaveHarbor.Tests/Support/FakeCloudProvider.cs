@@ -10,6 +10,11 @@ public sealed class FakeCloudProvider : ICloudProvider
 
     public string ProviderName => "Fake cloud";
 
+    public CloudProviderCapabilities Capabilities { get; set; } = new(true, false, false, true, false, false, long.MaxValue, 0);
+
+    // Clock the snapshot reports; null like a shared folder.
+    public DateTimeOffset? ServerTimeUtc { get; set; }
+
     public bool IsConnected { get; set; } = true;
 
     public List<string> Calls { get; } = [];
@@ -17,16 +22,16 @@ public sealed class FakeCloudProvider : ICloudProvider
     // Version archive names in the fake cloud, oldest first. Uploads add to it.
     public List<string> StoredVersions { get; } = [];
 
-    // Runs after a lock is stored and before the write returns; simulates another client writing before our verify-read.
-    public Func<Task>? AfterLockWrite { get; set; }
+    // Decides lock acquisition instead of the default rule (a live lock of another device wins).
+    public Func<CloudSessionLock, CloudLockAttempt>? AcquireOutcome { get; set; }
+
+    public TimeSpan? LastHeartbeatTtl { get; private set; }
 
     // The next N uploads fail.
     public int FailUploadTimes { get; set; }
 
     // When set, downloads copy this archive to the requested path; otherwise they fail.
     public string? ArchiveToServe { get; set; }
-
-    public TimeSpan LockVerifyDelay => TimeSpan.Zero;
 
     public void SeedManifest(GameId game, CloudWorldManifest manifest)
     {
@@ -79,6 +84,19 @@ public sealed class FakeCloudProvider : ICloudProvider
     {
         Calls.Add($"GetSessionLock:{game}:{worldId}");
         return Task.FromResult(locks.GetValueOrDefault((game, worldId)));
+    }
+
+    public Task<CloudGroupSnapshot> GetSnapshotAsync(GameId game, CancellationToken cancellationToken = default)
+    {
+        Calls.Add($"GetSnapshot:{game}");
+        IReadOnlyList<CloudWorldManifest> gameManifests = manifests
+            .Where(pair => pair.Key.Game == game)
+            .Select(pair => pair.Value)
+            .ToArray();
+        var gameLocks = locks
+            .Where(pair => pair.Key.Game == game)
+            .ToDictionary(pair => pair.Key.WorldId, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+        return Task.FromResult(new CloudGroupSnapshot(ServerTimeUtc, gameManifests, gameLocks, []));
     }
 
     public Task<CloudUploadResult> UploadVersionAsync(CloudUploadRequest request, CancellationToken cancellationToken = default)
@@ -138,14 +156,36 @@ public sealed class FakeCloudProvider : ICloudProvider
         return Task.FromResult(new CloudRemovalResult(true, "Removed."));
     }
 
-    public async Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
+    public Task<CloudLockAttempt> TryAcquireSessionLockAsync(GameId game, CloudSessionLock requested, CancellationToken cancellationToken = default)
     {
-        Calls.Add($"WriteSessionLock:{game}:{sessionLock.WorldId}");
-        locks[(game, sessionLock.WorldId)] = sessionLock;
-        if (AfterLockWrite is not null)
+        Calls.Add($"TryAcquireSessionLock:{game}:{requested.WorldId}");
+        var key = (game, requested.WorldId);
+        var attempt = AcquireOutcome?.Invoke(requested)
+            ?? (locks.TryGetValue(key, out var current)
+                && current.IsLiveAt(requested.StartedAtUtc)
+                && !current.IsHeldBy(requested.DeviceId, requested.MachineName)
+                    ? new CloudLockAttempt(false, current)
+                    : new CloudLockAttempt(true, requested));
+        if (attempt.Acquired)
         {
-            await AfterLockWrite();
+            locks[key] = attempt.Current;
         }
+
+        return Task.FromResult(attempt);
+    }
+
+    public Task<CloudSessionLock?> HeartbeatSessionLockAsync(GameId game, string worldId, string lockId, TimeSpan ttl, CancellationToken cancellationToken = default)
+    {
+        Calls.Add($"HeartbeatSessionLock:{game}:{worldId}");
+        LastHeartbeatTtl = ttl;
+        if (!locks.TryGetValue((game, worldId), out var current) || current.LockId != lockId)
+        {
+            return Task.FromResult<CloudSessionLock?>(null);
+        }
+
+        current.LastHeartbeatAtUtc = DateTimeOffset.UtcNow;
+        current.ExpiresAtUtc = current.LastHeartbeatAtUtc + ttl;
+        return Task.FromResult<CloudSessionLock?>(current);
     }
 
     public Task ClearSessionLockAsync(GameId game, string worldId, string lockId, CancellationToken cancellationToken = default)

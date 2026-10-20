@@ -9,6 +9,7 @@ using Google.Apis.Services;
 using Google.Apis.Upload;
 using Google.Apis.Util.Store;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Cloud;
 using SaveHarbor.App.Services;
 using DriveFile = Google.Apis.Drive.v3.Data.File;
 
@@ -28,23 +29,37 @@ public sealed partial class GoogleDriveCloudProvider : ICloudProvider, ISharedFo
     private readonly IPlayerIdentity playerIdentity;
     private readonly IAppLogger logger;
     private readonly SemaphoreSlim connectionLock = new(1, 1);
+    private readonly TimeSpan verifyDelay;
 
     private DriveService? driveService;
     private string? accountEmail;
 
+    // lockVerifyDelay: how long acquiring waits before reading the lock back; tests pass TimeSpan.Zero.
     public GoogleDriveCloudProvider(
         IAppDataPathProvider pathProvider,
         CloudProviderOptions options,
         IPlayerIdentity playerIdentity,
-        IAppLogger logger)
+        IAppLogger logger,
+        TimeSpan? lockVerifyDelay = null)
     {
         this.pathProvider = pathProvider;
         this.options = options;
         this.playerIdentity = playerIdentity;
         this.logger = logger;
+        verifyDelay = lockVerifyDelay ?? SharedFolderSessionLocks.DefaultVerifyDelay;
     }
 
     public string ProviderName => "Google Drive";
+
+    public CloudProviderCapabilities Capabilities { get; } = new(
+        HasSharedFolders: true,
+        HasGroups: false,
+        HasAtomicLocks: false,
+        SupportsHeartbeat: true,
+        SupportsRealtime: false,
+        HasRecycleBin: true,
+        MaxArchiveBytes: long.MaxValue,
+        DefaultRetentionCount: 0);
 
     public async Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default)
     {
@@ -292,19 +307,6 @@ public sealed partial class GoogleDriveCloudProvider : ICloudProvider, ISharedFo
         }
 
         return new CloudDownloadResult(true, request.TargetArchivePath, $"Downloaded {request.World.WorldName} v{request.Version.VersionNumber}.");
-    }
-
-    public async Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
-    {
-        var service = RequireConnectedService();
-        await EnsureGameFolderAsync(service, game, writeMarker: true, cancellationToken);
-        var locksFolderId = await FindFolderPathAsync(service, game, ["worlds", sessionLock.WorldId, "locks"], createMissing: true, cancellationToken);
-        if (locksFolderId is null)
-        {
-            throw new InvalidOperationException("Google Drive lock folder could not be prepared.");
-        }
-
-        await UploadJsonByNameAsync(service, locksFolderId, "active-session.json", sessionLock, cancellationToken);
     }
 
     public async Task ClearSessionLockAsync(GameId game, string worldId, string lockId, CancellationToken cancellationToken = default)

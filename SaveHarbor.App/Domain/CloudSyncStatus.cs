@@ -14,4 +14,7 @@ public sealed record CloudSyncStatus(
 
     // The local world changed since it last matched its base cloud version (played without uploading).
     public bool HasLocalChanges { get; init; }
+
+    // The session lock belongs to this PC.
+    public bool IsOwnSession { get; init; }
 }

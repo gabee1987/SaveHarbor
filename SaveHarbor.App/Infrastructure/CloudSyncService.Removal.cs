@@ -28,7 +28,7 @@ public sealed partial class CloudSyncService
         }
 
         var sessionLock = await cloudProvider.GetSessionLockAsync(game, worldId, cancellationToken);
-        if (IsActiveOtherPlayerLock(sessionLock))
+        if (IsActiveOtherPlayerLock(sessionLock, Now))
         {
             return new CloudSyncResult(false, CloudSyncState.SomeonePlaying, $"{sessionLock!.PlayerName} is playing this world. It cannot be removed until they finish.");
         }

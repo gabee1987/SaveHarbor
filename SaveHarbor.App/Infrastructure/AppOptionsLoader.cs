@@ -64,9 +64,9 @@ public static class AppOptionsLoader
 
         var options = new CloudProviderOptions
         {
-            Provider = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.Provider)])
-                ? defaults.Provider
-                : section[nameof(CloudProviderOptions.Provider)]!,
+            DeveloperProviderOverride = ReadProviderOverride(section),
+            LockTtlSeconds = ReadInt(section[nameof(CloudProviderOptions.LockTtlSeconds)], defaults.LockTtlSeconds),
+            HeartbeatIntervalSeconds = ReadInt(section[nameof(CloudProviderOptions.HeartbeatIntervalSeconds)], defaults.HeartbeatIntervalSeconds),
             GoogleAppFolderName = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.GoogleAppFolderName)])
                 ? defaults.GoogleAppFolderName
                 : section[nameof(CloudProviderOptions.GoogleAppFolderName)]!,
@@ -115,6 +115,19 @@ public static class AppOptionsLoader
         }
 
         return options;
+    }
+
+    private static string ReadProviderOverride(IConfigurationSection section)
+    {
+        var value = section[nameof(CloudProviderOptions.DeveloperProviderOverride)];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            value = section["Provider"];
+        }
+
+        return string.Equals(value?.Trim(), CloudProviderKind.LocalTest, StringComparison.OrdinalIgnoreCase)
+            ? CloudProviderKind.LocalTest
+            : string.Empty;
     }
 
     public static IReadOnlyDictionary<GameId, GameOptions> LoadGameOptions()

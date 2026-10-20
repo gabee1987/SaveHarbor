@@ -24,7 +24,7 @@ public sealed class CloudWorldOverviewTests : IDisposable
         {
             [GameId.Dragonwilds] = new() { SaveRoot = saveRoot }
         }));
-        stateService = new LocalJsonSyncStateService(new TestPathProvider(temp));
+        stateService = new LocalJsonSyncStateService(new TestPathProvider(temp), new FixedProviderSelector());
         service = new CloudSyncService(
             provider,
             stateService,
@@ -32,7 +32,9 @@ public sealed class CloudWorldOverviewTests : IDisposable
             new StubGameRegistry(new StubGameDefinition(GameId.Dragonwilds, adapter)),
             new FixedPlayerIdentity(),
             new AppSettingsStore(new TestPathProvider(temp)),
-            new NullAppLogger());
+            new NullAppLogger(),
+            new FixedDeviceIdentity(),
+            new CloudProviderOptions());
     }
 
     public void Dispose() => temp.Dispose();

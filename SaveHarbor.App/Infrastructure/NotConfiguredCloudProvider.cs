@@ -3,20 +3,24 @@ using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class NotConfiguredCloudProvider : ICloudProvider
+// Stands in while no provider is chosen (needsSetup) or when the chosen one is not available in this build.
+public sealed class NotConfiguredCloudProvider(string providerName, string message, bool needsSetup = false) : ICloudProvider
 {
-    public string ProviderName => "Not configured";
+    public string ProviderName => providerName;
+
+    public CloudProviderCapabilities Capabilities => CloudProviderCapabilities.None;
 
     public Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(CloudConnectionStatus.NotConnected(ProviderName));
+        return Task.FromResult(CreateStatus());
     }
 
     public Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default)
     {
-        var status = CloudConnectionStatus.NotConnected(ProviderName);
-        return Task.FromResult(new CloudConnectionResult(false, status, "Google Drive sync is not implemented yet."));
+        return Task.FromResult(new CloudConnectionResult(false, CreateStatus(), message));
     }
+
+    private CloudConnectionStatus CreateStatus() => new(false, providerName, null, message, needsSetup);
 
     public Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
@@ -38,14 +42,19 @@ public sealed class NotConfiguredCloudProvider : ICloudProvider
         return Task.FromResult<CloudSessionLock?>(null);
     }
 
+    public Task<CloudGroupSnapshot> GetSnapshotAsync(GameId game, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CloudGroupSnapshot(null, [], new Dictionary<string, CloudSessionLock>(), []));
+    }
+
     public Task<CloudUploadResult> UploadVersionAsync(CloudUploadRequest request, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudUploadResult(false, null, "Cloud provider is not configured."));
+        return Task.FromResult(new CloudUploadResult(false, null, message));
     }
 
     public Task<CloudDownloadResult> DownloadVersionAsync(CloudDownloadRequest request, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudDownloadResult(false, null, "Cloud provider is not configured."));
+        return Task.FromResult(new CloudDownloadResult(false, null, message));
     }
 
     public Task<IReadOnlyList<CloudStoredVersion>> ListStoredVersionsAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
@@ -60,12 +69,17 @@ public sealed class NotConfiguredCloudProvider : ICloudProvider
 
     public Task<CloudRemovalResult> RemoveWorldAsync(GameId game, string worldId, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CloudRemovalResult(false, "Cloud provider is not configured."));
+        return Task.FromResult(new CloudRemovalResult(false, message));
     }
 
-    public Task WriteSessionLockAsync(GameId game, CloudSessionLock sessionLock, CancellationToken cancellationToken = default)
+    public Task<CloudLockAttempt> TryAcquireSessionLockAsync(GameId game, CloudSessionLock requested, CancellationToken cancellationToken = default)
     {
-        return Task.CompletedTask;
+        throw new InvalidOperationException(message);
+    }
+
+    public Task<CloudSessionLock?> HeartbeatSessionLockAsync(GameId game, string worldId, string lockId, TimeSpan ttl, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<CloudSessionLock?>(null);
     }
 
     public Task ClearSessionLockAsync(GameId game, string worldId, string lockId, CancellationToken cancellationToken = default)

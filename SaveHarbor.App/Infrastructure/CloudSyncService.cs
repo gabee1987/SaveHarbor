@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
@@ -13,6 +14,12 @@ public sealed partial class CloudSyncService : ICloudSyncService
     private readonly IPlayerIdentity playerIdentity;
     private readonly IAppSettingsStore settings;
     private readonly IAppLogger logger;
+    private readonly IDeviceIdentity deviceIdentity;
+    private readonly CloudProviderOptions options;
+    private readonly TimeProvider timeProvider;
+
+    // When this app last renewed each of its session locks (key: game and world id).
+    private readonly ConcurrentDictionary<string, DateTimeOffset> lastHeartbeats = new(StringComparer.OrdinalIgnoreCase);
 
     public CloudSyncService(
         ICloudProvider cloudProvider,
@@ -21,7 +28,10 @@ public sealed partial class CloudSyncService : ICloudSyncService
         IGameRegistry gameRegistry,
         IPlayerIdentity playerIdentity,
         IAppSettingsStore settings,
-        IAppLogger logger)
+        IAppLogger logger,
+        IDeviceIdentity deviceIdentity,
+        CloudProviderOptions options,
+        TimeProvider? timeProvider = null)
     {
         this.cloudProvider = cloudProvider;
         this.localSyncStateService = localSyncStateService;
@@ -30,6 +40,9 @@ public sealed partial class CloudSyncService : ICloudSyncService
         this.playerIdentity = playerIdentity;
         this.settings = settings;
         this.logger = logger;
+        this.deviceIdentity = deviceIdentity;
+        this.options = options;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default)
@@ -43,7 +56,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
         logger.Debug(AppLogKeyword.CloudSync, "Refreshing cloud status for world {WorldId} ({WorldName})", world.WorldId, world.WorldName);
 
         var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
-        localState.LastCloudCheckAtUtc = DateTimeOffset.UtcNow;
+        localState.LastCloudCheckAtUtc = Now;
 
         var connection = await cloudProvider.GetConnectionStatusAsync(world.Game, cancellationToken);
         if (!connection.IsConnected)
@@ -73,7 +86,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
         await localSyncStateService.SaveAsync(localState, cancellationToken);
 
-        var otherPlayerPlaying = IsActiveOtherPlayerLock(sessionLock);
+        var otherPlayerPlaying = IsActiveOtherPlayerLock(sessionLock, Now);
         var hasLocalChanges = SyncStateClassifier.NeedsLocalChangeCheck(localState.LocalBaseVersionNumber, latestVersion?.VersionNumber, otherPlayerPlaying)
             && await DetectLocalChangesAsync(localState, world, cancellationToken) == true;
         var state = SyncStateClassifier.Classify(localState.LocalBaseVersionNumber, latestVersion?.VersionNumber, hasLocalChanges, otherPlayerPlaying);
@@ -90,7 +103,8 @@ public sealed partial class CloudSyncService : ICloudSyncService
         var (title, detail) = DescribeStatus(state, localState.LocalBaseVersionNumber, latestVersion, sessionLock);
         return new CloudSyncStatus(state, connection, manifest, latestVersion, sessionLock, localState, title, detail)
         {
-            HasLocalChanges = hasLocalChanges
+            HasLocalChanges = hasLocalChanges,
+            IsOwnSession = IsOwnLock(sessionLock)
         };
     }
 

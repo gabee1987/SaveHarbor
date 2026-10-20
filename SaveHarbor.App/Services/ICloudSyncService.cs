@@ -24,5 +24,9 @@ public interface ICloudSyncService
 
     Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
 
+    // Renews this PC's session lock while the game runs. Cheap to call often: it only reaches the cloud once per
+    // heartbeat interval. Conflict when the lock was lost.
+    Task<CloudSyncResult> HeartbeatSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
+
     Task<CloudSyncResult> EndSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
 }
