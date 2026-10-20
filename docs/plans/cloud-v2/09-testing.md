@@ -49,7 +49,7 @@ Log-based (`AppLogKeyword.Ui`, `Debug`): first paint, snapshot RPC round trip, u
 - `version_cas.sql`: publish with expected 0 → number 1; publish again with expected 0 → raises `version_conflict`; expected 1 → number 2; trigger blocks a direct `update worlds set latest_version_number`.
 - `lock_race.sql`: acquire by user A → own id; acquire by user B → returns A's row; expire A (update `expires_at` as the test role) → B acquires; A heartbeat → `lock_lost`; B release → true; B release again → false. Uses `set local role authenticated; set local request.jwt.claims` to impersonate users.
 - `rls_isolation.sql`: user C (not a member) sees no rows in `group_summaries`, `worlds`, `world_versions`, `session_locks`, and cannot read `invite_code`; `anon` can read `app_meta` only.
-- Real concurrency (two sessions at once) is not expressible in pgTAP; `Testing/supabase/race.ps1` (manual, documented) fires two parallel `Invoke-RestMethod` calls to `acquire_session_lock` with two test users and asserts one winner.
+- Real concurrency (two sessions at once) is not expressible in pgTAP; `supabase/scripts/smoke-test.ps1` (local stack) fires two parallel `acquire_session_lock` requests per round for ten rounds and asserts exactly one winner each time, together with sign-in, upload, publish, download and clean-up over the real APIs.
 
 ## 5. Web page tests
 

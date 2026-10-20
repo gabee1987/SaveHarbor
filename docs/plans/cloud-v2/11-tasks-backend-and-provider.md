@@ -9,7 +9,7 @@ Read [10-implementation-handoff.md](10-implementation-handoff.md) first. Paths a
 No C# in this task. Nothing here runs against the hosted project; the owner applies it.
 
 ### T01.1 Folder and migration
-Create `supabase/migrations/20261014000000_initial.sql` with, in this order: extension; tables (`groups`, `group_members`, `worlds`, `world_versions`, `session_locks`, `app_meta`) exactly as plan 01 §2; `touch_updated_at` trigger; `is_group_member`; view `group_summaries`; RLS enable + policies (plan 01 §3); `worlds_guard_latest` trigger; functions `generate_invite_code`, `create_group`, `join_group`, `leave_group`, `rotate_invite_code`, `get_invite_code`, `rename_group`, `set_display_name`, `get_group_snapshot`, `publish_world_version`, `acquire_session_lock`, `heartbeat_session_lock`, `release_session_lock`, `remove_world` (plan 01 §4); storage policies on `storage.objects` for bucket `saves`; realtime publication. Every function: `security definer`, `set search_path = public`, `revoke all on function ... from public`, `grant execute ... to authenticated`.
+Create `supabase/migrations/20261020000000_initial.sql` with, in this order: extension; tables (`groups`, `group_members`, `worlds`, `world_versions`, `session_locks`, `app_meta`) exactly as plan 01 §2; `touch_updated_at` trigger; `is_group_member`; view `group_summaries`; RLS enable + policies (plan 01 §3); `worlds_guard_latest` trigger; functions `generate_invite_code`, `create_group`, `join_group`, `leave_group`, `rotate_invite_code`, `get_invite_code`, `rename_group`, `set_display_name`, `get_group_snapshot`, `publish_world_version`, `acquire_session_lock`, `heartbeat_session_lock`, `release_session_lock`, `remove_world` (plan 01 §4); storage policies on `storage.objects` for bucket `saves`; realtime publication. Every function: `security definer`, `set search_path = public`, `revoke all on function ... from public`, `grant execute ... to authenticated`.
 
 Shapes to get right:
 - `get_group_snapshot` returns `jsonb_build_object('server_time', now(), 'members', (...), 'worlds', (select coalesce(jsonb_agg(...), '[]'::jsonb) from worlds w where w.group_id = p_group and w.game = p_game))` where each world object embeds `latest` (`to_jsonb(v)` of the row with `version_number = w.latest_version_number`, or `null`) and `lock` (`to_jsonb(l)` or `null`).
@@ -30,7 +30,7 @@ Shapes to get right:
 ### T01.2 Seed and tests
 - `supabase/seed.sql`: two auth users (`test-a@example.invalid`, `test-b@example.invalid`) inserted the way the Supabase CLI docs show for local seeds; group `TEST_GROUP` with invite code `TESTCODE22`, both members.
 - `supabase/tests/version_cas.sql`, `lock_race.sql`, `rls_isolation.sql` as plan 09 §4, pgTAP style (`begin; select plan(n); ... select * from finish(); rollback;`), impersonating users with `set local role authenticated; select set_config('request.jwt.claims', '{"sub":"<uuid>","role":"authenticated"}', true);`.
-- `Testing/supabase/race.ps1`: manual two-user race script (parameters: url, key, two refresh tokens); prints both RPC results.
+- `supabase/scripts/smoke-test.ps1`: end-to-end check of the local stack, including a parallel two-user lock race (the `Testing` folder is git-ignored).
 
 ### T01.3 Docs
 `docs/runbooks/supabase.md` with the items from plan 07 §7 and the owner's one-time setup list from plan 01 §1 (dashboard settings, e-mail templates, bucket).

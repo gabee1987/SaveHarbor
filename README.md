@@ -26,6 +26,22 @@ dotnet run --project SaveHarbor.App -c Debug -- --game windrose
 
 If the build fails because `SaveHarbor.App.exe` is in use, close the running app first.
 
+## Local SaveHarbor Cloud (Supabase in Docker)
+
+The upcoming SaveHarbor Cloud backend runs completely on your PC for development and testing.
+It needs Docker Desktop and Node.js; the Supabase CLI is pinned in `package.json`.
+
+```powershell
+npm install                          # once
+npm run db:start                     # start the stack (first start downloads the images)
+npm run db:test                      # database tests
+pwsh supabase/scripts/smoke-test.ps1 # end-to-end check over the real APIs
+npm run db:stop                      # stop the stack
+```
+
+Studio runs at `http://127.0.0.1:54323` and sign-in codes arrive in Mailpit at `http://127.0.0.1:54324`.
+Details, test users and the hosted-project setup are in [docs/runbooks/supabase.md](docs/runbooks/supabase.md).
+
 ## Build a zip to share with friends
 
 One command creates a ready-to-run zip. .NET is included, so the recipient does not

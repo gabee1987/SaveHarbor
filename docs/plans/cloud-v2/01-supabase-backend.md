@@ -2,6 +2,16 @@
 
 Everything that lives in the Supabase project: schema, row-level security, RPC functions, storage bucket, auth configuration, migrations, and operational rules. The app code is in plan 03.
 
+> **As built at CP0 (2026-10-20).** The source of truth is now [supabase/migrations/20261020000000_initial.sql](../../../supabase/migrations/20261020000000_initial.sql); where this plan and the migration differ, the migration wins. Deviations from the text below:
+> - Invite codes are protected by **column privileges** (`groups.invite_code` is not granted to clients) instead of a security-definer view. `group_summaries` is a `security_invoker` view.
+> - `acquire_session_lock` has **no `p_player_name`** and `p_version` ignores `uploader_name`: the server takes both from the caller's group display name, so nobody can upload or lock under another name. The lock also refuses callers that are not on the latest version (`version_conflict`), and renewal requires the same **user and** device.
+> - `group_members` has no client write policies: joining, leaving, renaming and removing go through `join_group`, `leave_group`, `set_display_name` and the new `remove_member(p_group, p_user)`.
+> - `publish_world_version` checks that the archive exists in storage (`archive_missing`) and lies under `<group>/<game>/<world_id>/` (`invalid_input`).
+> - Retention may delete version rows except the latest (enforced by policy). An owner alone may leave only an empty group, which is then deleted (`group_not_empty` otherwise).
+> - Extra error codes: `not_signed_in`, `invalid_input`, `group_full` (50 members), `group_limit` (10 groups per creator), `group_not_empty`, `archive_missing`, `lock_held`.
+> - The `saves` bucket is created by the migration, so §1 step 6 is not a dashboard step any more.
+> - The local stack runs with a pinned CLI (`package.json`, `npm run db:start`); see [docs/runbooks/supabase.md](../../runbooks/supabase.md).
+
 ## 1. Project setup (owner, by hand, once)
 
 1. Create a **new dedicated project** in the Supabase dashboard. Region: an **EU region** (Frankfurt). Name it `saveharbor`. Record the project ref, the project URL (`https://<ref>.supabase.co`) and the **publishable (anon) key**. Never copy the `service_role` key into the repo.
@@ -16,11 +26,11 @@ Everything that lives in the Supabase project: schema, row-level security, RPC f
    Set the **Confirm signup** template to the same `{{ .Token }}` form (the first sign-in of a new address uses it). Subject: `SaveHarbor sign-in code`.
 4. Auth → Rate limits: keep defaults. Auth → Sessions: default; **do not** enable "single session per user" (a friend may use two PCs).
 5. Auth → SMTP: the built-in sender is rate-limited and meant for development. **[verify]** the current limit in the dashboard. For a 4–8 person group it is acceptable at first; plan 07 §6 notes a free SMTP option (Resend or Brevo free tier) if codes arrive late. Any such provider needs the same compliance note as Supabase.
-6. Storage → create bucket **`saves`**, private, file size limit 45 MB (below the 50 MB plan cap so the app's own check matches), allowed MIME types `application/zip`.
+6. Storage: the migration creates bucket **`saves`**; check in the dashboard that it is, private, file size limit 45 MB (below the 50 MB plan cap so the app's own check matches), allowed MIME types `application/zip`.
 7. Database → Extensions: enable `pgcrypto` (`gen_random_bytes`) if not already enabled.
 8. Install the Supabase CLI on the owner's PC (`winget install Supabase.Supabase` or `scoop install supabase`), run `supabase login`, then `supabase link --project-ref <ref>` from the repo root after §6 adds the `supabase/` folder. **The implementing agent must not install tools or link projects**; it writes the migration files and the owner applies them.
 
-## 2. Schema (migration `supabase/migrations/20261014000000_initial.sql`)
+## 2. Schema (migration `supabase/migrations/20261020000000_initial.sql`)
 
 Design rules: every table has RLS enabled; the app only talks to `public` tables and functions; identifiers are stable `uuid`s; game keys are the app's storage keys (`windrose`, `dragonwilds`); world ids are validated with the same character class as `SafePath.IsSafeSegment`.
 
@@ -152,7 +162,7 @@ All `security definer`, `set search_path = public`, `revoke all ... from public;
 | `set_display_name` | `(p_group uuid, p_display_name text)` | Own membership row. |
 | `get_group_snapshot` | `(p_group uuid, p_game text) returns jsonb` | Membership check, then one JSON document: `{ "server_time": ..., "members": [ {user_id, display_name, role} ], "worlds": [ { ...world row, "latest": version row or null, "lock": lock row or null } ] }`. Replaces listing manifests, reading each manifest and each lock. |
 | `publish_world_version` | `(p_group uuid, p_game text, p_world_id text, p_world_name text, p_expected_latest integer, p_version jsonb) returns world_versions` | Upsert the world row and `select ... for update`; if `latest_version_number <> p_expected_latest` raise `version_conflict`; `new_number = latest + 1`; insert the version from `p_version` (keys: `version_id, uploader_name, uploader_device, archive_path, archive_sha256, archive_size_bytes, source_world_modified_at, based_on_version_number, based_on_version_id`) with `version_number = new_number`, `uploaded_by = auth.uid()`; `perform set_config('saveharbor.rpc', 'on', true)`; update `latest_version_number`; return the row. The archive must already exist in storage (plan 03 §4). |
-| `acquire_session_lock` | `(p_world uuid, p_lock_id uuid, p_player_name text, p_device_id uuid, p_device_label text, p_based_on_number integer, p_based_on_id text, p_ttl_seconds integer) returns session_locks` | Membership check through the world's group. `insert ... on conflict (world_uuid) do update set <all columns> where session_locks.expires_at < now() or session_locks.device_id = excluded.device_id returning *`. If nothing is returned, return the existing row so the caller sees the holder. The caller compares `lock_id`; only its own id means success. TTL clamped to 60..3600 s. |
+| `acquire_session_lock` | `(p_world uuid, p_lock_id uuid, p_device_id uuid, p_device_label text, p_based_on_number integer, p_based_on_id text, p_ttl_seconds integer) returns session_locks` | Membership check through the world's group. `insert ... on conflict (world_uuid) do update set <all columns> where session_locks.expires_at < now() or session_locks.device_id = excluded.device_id returning *`. If nothing is returned, return the existing row so the caller sees the holder. The caller compares `lock_id`; only its own id means success. TTL clamped to 60..3600 s. |
 | `heartbeat_session_lock` | `(p_world uuid, p_lock_id uuid, p_ttl_seconds integer) returns session_locks` | `update ... set last_heartbeat_at = now(), expires_at = now() + ttl where world_uuid = p_world and lock_id = p_lock_id and user_id = auth.uid()`; raise `lock_lost` on zero rows. |
 | `release_session_lock` | `(p_world uuid, p_lock_id uuid) returns boolean` | Delete own lock by id; `true` when a row was deleted. Never deletes another user's lock. |
 | `remove_world` | `(p_world uuid)` | Member. Deletes the world row (cascades versions and lock). The client deletes storage objects **first** (plan 03 §7). |
@@ -177,7 +187,7 @@ Trigger `worlds_guard_latest` (before update on `worlds`): if `new.latest_versio
 supabase/
   config.toml            (from `supabase init`, run by the owner; committed)
   migrations/
-    20261014000000_initial.sql
+    20261020000000_initial.sql
   seed.sql               (local dev only: group TEST_GROUP with invite code TESTCODE22, user test@example.invalid)
   tests/
     lock_race.sql        (pgTAP, plan 09 §4)
