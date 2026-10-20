@@ -8,7 +8,9 @@ public partial class MainWindowViewModel
 {
     private async Task PromptCloudFolderSetupIfNeededAsync()
     {
-        if (_cloudSetupService.HasSharedFolderConfigured(_activeGame.Current.Id))
+        // SaveHarbor Cloud shares through groups, not folders; its sign-in comes with the group setup.
+        if (_providerSelector.ActiveKind == CloudProviderKind.Supabase
+            || _cloudSetupService.HasSharedFolderConfigured(_activeGame.Current.Id))
         {
             return;
         }

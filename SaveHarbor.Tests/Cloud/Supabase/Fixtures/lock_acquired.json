@@ -1,0 +1,6 @@
+{
+  "world_uuid": "22222222-2222-4222-8222-222222222222", "group_id": "11111111-1111-4111-8111-111111111111", "lock_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "user_id": "44444444-4444-4444-8444-444444444444",
+  "player_name": "TEST_USER", "device_id": "00000000-0000-4000-8000-000000012345", "device_label": "TEST_DEVICE",
+  "started_at": "2026-10-20T12:30:00+00:00", "last_heartbeat_at": "2026-10-20T12:30:00+00:00",
+  "expires_at": "2026-10-20T12:50:00+00:00", "based_on_version_number": 1, "based_on_version_id": "20261020_120000_TEST_USER_v1", "status": "playing"
+}

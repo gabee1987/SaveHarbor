@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
+using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
@@ -35,6 +36,8 @@ public partial class App : Application
                 services.AddSingleton(_pathProvider);
                 services.AddSingleton(_loggingOptions);
                 services.AddSingleton(_cloudProviderOptions);
+                services.AddSingleton(_cloudProviderOptions.Supabase);
+                services.AddSingleton(TimeProvider.System);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
                 services.AddSingleton<IAppSettingsStore, AppSettingsStore>();
@@ -61,16 +64,34 @@ public partial class App : Application
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
                 services.AddSingleton<FolderCloudProvider>();
                 services.AddSingleton<GoogleDriveCloudProvider>();
+                services.AddSingleton(serviceProvider => new SupabaseHttp(
+                    serviceProvider.GetRequiredService<SupabaseOptions>(),
+                    serviceProvider.GetRequiredService<IAppLogger>()));
+                services.AddSingleton<SupabaseSessionStore>();
+                services.AddSingleton<SupabaseAuthClient>();
+                services.AddSingleton<SupabaseRest>();
+                services.AddSingleton<SupabaseStorage>();
+                services.AddSingleton<SupabaseGroupService>();
+                services.AddSingleton<ICloudGroupService>(serviceProvider => serviceProvider.GetRequiredService<SupabaseGroupService>());
+                services.AddSingleton(serviceProvider => new SupabaseCloudProvider(
+                    serviceProvider.GetRequiredService<SupabaseOptions>(),
+                    serviceProvider.GetRequiredService<SupabaseAuthClient>(),
+                    serviceProvider.GetRequiredService<SupabaseRest>(),
+                    serviceProvider.GetRequiredService<SupabaseStorage>(),
+                    serviceProvider.GetRequiredService<ICloudGroupService>(),
+                    serviceProvider.GetRequiredService<IAppLogger>(),
+                    serviceProvider.GetRequiredService<TimeProvider>()));
                 services.AddSingleton(serviceProvider => new CloudProviderSelector(
                     serviceProvider.GetRequiredService<CloudProviderOptions>(),
                     serviceProvider.GetRequiredService<IAppSettingsStore>(),
                     serviceProvider.GetRequiredService<FolderCloudProvider>(),
                     serviceProvider.GetRequiredService<GoogleDriveCloudProvider>(),
-                    () => new NotConfiguredCloudProvider("SaveHarbor Cloud", "SaveHarbor Cloud is not available in this version yet."),
+                    () => serviceProvider.GetRequiredService<SupabaseCloudProvider>(),
                     serviceProvider.GetRequiredService<IAppLogger>()));
                 services.AddSingleton<ICloudProviderSelector>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSelector>());
                 services.AddSingleton<ICloudProvider>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSelector>());
-                services.AddSingleton<ICloudSetupService, CloudProviderSettingsService>();
+                services.AddSingleton<CloudProviderSettingsService>();
+                services.AddSingleton<ICloudSetupService>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSettingsService>());
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
                 services.AddSingleton<LegacyLayoutMigrator>();
                 services.AddSingleton<SyncStateProviderScopeMigrator>();

@@ -65,12 +65,23 @@ public static class SyncAdvisor
         _ => null
     };
 
+    // A provider that knows what is missing (SaveHarbor Cloud) says so in its own words.
+    private static SyncAdvice AdviseSetup(CloudConnectionStatus connection) => connection.Reason switch
+    {
+        CloudConnectionReason.SignIn => new SyncAdvice("Sign in to share", connection.Message, SyncAction.Connect, "Sign in", SyncTone.Neutral, "?") { Relation = "Not checked" },
+        CloudConnectionReason.Group => new SyncAdvice("Choose a group", connection.Message, SyncAction.Connect, "Choose group", SyncTone.Neutral, "?") { Relation = "Not checked" },
+        CloudConnectionReason.Unreachable => new SyncAdvice("Cloud unreachable", connection.Message, SyncAction.Connect, "Try again", SyncTone.Warning, "?") { Relation = "Not checked" },
+        CloudConnectionReason.UpdateRequired => new SyncAdvice("Update required", connection.Message, SyncAction.None, string.Empty, SyncTone.Warning, "!") { Relation = "Blocked" },
+        _ => new SyncAdvice("Cloud not connected", connection.Message, SyncAction.None, string.Empty, SyncTone.Neutral, "?") { Relation = "Not checked" }
+    };
+
     public static SyncAdvice Advise(CloudSyncStatus status)
     {
         var latest = status.LatestVersion;
         var localBase = status.LocalState.LocalBaseVersionNumber;
         return status.State switch
         {
+            CloudSyncState.NotConnected when status.Connection.Reason.Length > 0 => AdviseSetup(status.Connection),
             CloudSyncState.NotConnected => new SyncAdvice(
                 "Cloud not connected",
                 "Connect Google Drive to compare this world with your group's shared copy.",

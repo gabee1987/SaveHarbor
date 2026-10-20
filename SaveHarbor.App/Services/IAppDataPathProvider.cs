@@ -31,6 +31,9 @@ public interface IAppDataPathProvider
 
     string GoogleClientSecretsPath { get; }
 
+    // SaveHarbor Cloud sign-in, DPAPI-protected for the current Windows user.
+    string SupabaseSessionPath { get; }
+
     string CloudProviderSettingsPath { get; }
 
     string AppSettingsPath { get; }

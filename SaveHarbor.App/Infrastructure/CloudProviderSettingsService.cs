@@ -188,6 +188,7 @@ public sealed partial class CloudProviderSettingsService : ICloudSetupService
                     existing.SharedFolders = new Dictionary<string, string>(existing.SharedFolders, StringComparer.OrdinalIgnoreCase);
                     existing.SavedFolders ??= [];
                     existing.ActiveGroups = new Dictionary<string, string>(existing.ActiveGroups ?? [], StringComparer.OrdinalIgnoreCase);
+                    existing.KnownGroups ??= [];
                     return existing;
                 }
             }

@@ -8,4 +8,6 @@ public sealed class LocalCloudProviderSettings
     public List<SavedCloudFolder> SavedFolders { get; set; } = [];
     // v3: SaveHarbor Cloud group per game (storage key -> group id).
     public Dictionary<string, string> ActiveGroups { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    // v3: the signed-in account's groups as last listed.
+    public List<SavedCloudGroup> KnownGroups { get; set; } = [];
 }

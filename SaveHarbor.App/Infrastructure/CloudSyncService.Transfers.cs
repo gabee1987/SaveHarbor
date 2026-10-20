@@ -115,8 +115,7 @@ public sealed partial class CloudSyncService
         var backup = await backupService.CreateBackupAsync(world, BackupReasons.CloudUpload, cancellationToken);
         var archiveSha256 = await FileHashCalculator.ComputeSha256Async(backup.FilePath, cancellationToken);
         var nextVersionNumber = (status.LatestVersion?.VersionNumber ?? 0) + 1;
-        var safePlayer = FileNameSanitizer.MakeSafeFileName(playerIdentity.DisplayName);
-        var versionId = $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{safePlayer}_v{nextVersionNumber}";
+        var versionId = $"{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{VersionIdPart(playerIdentity.DisplayName)}_v{nextVersionNumber}";
 
         var version = new CloudVersionMetadata
         {
@@ -163,5 +162,13 @@ public sealed partial class CloudSyncService
 
         logger.Information(AppLogKeyword.CloudUpload, "Completed cloud upload for world {WorldId} version {VersionNumber}", world.WorldId, version.VersionNumber);
         return new CloudSyncResult(true, CloudSyncState.UpToDate, $"Uploaded {world.WorldName} v{version.VersionNumber}.");
+    }
+
+    // Version ids become file and object names on every provider; SaveHarbor Cloud accepts only ASCII letters, digits,
+    // '_', '.' and '-' in them.
+    public static string VersionIdPart(string playerName)
+    {
+        var part = new string(playerName.Select(character => char.IsAsciiLetterOrDigit(character) || character is '.' or '-' ? character : '_').ToArray()).Trim('_', '.');
+        return part.Length == 0 ? "player" : part;
     }
 }

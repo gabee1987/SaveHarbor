@@ -34,6 +34,19 @@ Set `SaveHarbor:CloudProvider:DeveloperProviderOverride` to `LocalTest` in the *
 5. Close game → upload happens, lock cleared.
 6. Switch game → other game's worlds/theme/cloud status; no cross-contamination of files.
 
+## SaveHarbor Cloud against the local Supabase stack
+
+With the local stack running (`npm run db:start`, Docker), one opt-in test drives `SupabaseCloudProvider` through the
+real APIs (sign-in code from Mailpit, upload, stale-upload refusal, lock, heartbeat, download, removal):
+
+```bash
+SAVEHARBOR_SUPABASE_LOCAL_KEY=$(npx supabase status -o env | grep '^PUBLISHABLE_KEY=' | cut -d= -f2 | tr -d '"')   dotnet test SaveHarbor.sln --no-build -- --filter-class "SaveHarbor.Tests.Cloud.Supabase.SupabaseLocalStackTests"
+```
+
+Without the variable the test is skipped. To run the app against the local stack, put `http://127.0.0.1:54321` and
+the local publishable key under `SaveHarbor:CloudProvider:Supabase` in the **output** `appsettings.json` and set
+`CloudProvider` to `Supabase` in `%LOCALAPPDATA%\SaveHarborpp-settings.json` (never commit either).
+
 ## Publish
 
 ```powershell

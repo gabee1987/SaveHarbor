@@ -71,7 +71,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
                 null,
                 localState,
                 "Cloud not connected",
-                "Connect a cloud provider before syncing this world.");
+                connection.Reason.Length > 0 ? connection.Message : "Connect a cloud provider before syncing this world.");
         }
 
         var manifest = await cloudProvider.GetWorldManifestAsync(world.Game, world.WorldId, cancellationToken);

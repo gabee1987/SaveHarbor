@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text.Json;
 using Google;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -32,9 +33,14 @@ public sealed class AppErrorHandler : IAppErrorHandler
 
     private static AppError CreateError(Exception exception, string operation, AppLogKeyword keyword)
     {
-        var code = MapCode(exception);
         var errorId = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        if (exception is SupabaseException cloudException)
+        {
+            var (cloudCode, cloudMessage) = SupabaseErrorMapper.Describe(cloudException);
+            return new AppError(errorId, cloudCode, keyword, operation, cloudMessage, exception.Message, SupabaseErrorMapper.IsRetryable(cloudException));
+        }
 
+        var code = MapCode(exception);
         return new AppError(
             errorId,
             code,

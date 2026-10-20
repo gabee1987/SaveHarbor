@@ -27,7 +27,9 @@ Single WPF project `SaveHarbor.App` (solution `SaveHarbor.sln`). ~6.6k lines. No
 (`AppLoggingOptions`, `CloudProviderOptions`, `GameLauncherOptions`), configures Serilog, and
 registers everything as **singletons**. `ICloudProvider` resolves to `CloudProviderSelector`, which
 forwards to the provider chosen on this PC (`AppSettings.CloudProvider`: Google Drive or SaveHarbor Cloud) or, with
-`DeveloperProviderOverride: LocalTest`, to `FolderCloudProvider`.
+`DeveloperProviderOverride: LocalTest`, to `FolderCloudProvider`. SaveHarbor Cloud lives in
+`Infrastructure/Cloud/Supabase/` (`SupabaseCloudProvider`, `SupabaseGroupService` as `ICloudGroupService`, and their
+HTTP, auth, REST and storage clients; options under `SaveHarbor:CloudProvider:Supabase`).
 
 Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds,
 start game monitor timer, prompt for Drive folder setup.

@@ -29,6 +29,8 @@ public sealed class TestPathProvider(TempDirectory root) : IAppDataPathProvider
 
     public string GoogleClientSecretsPath => root.Combine("appdata", "google-client-secret.json");
 
+    public string SupabaseSessionPath => root.Combine("appdata", "supabase-session.bin");
+
     public string CloudProviderSettingsPath => root.Combine("appdata", "cloud-provider-settings.json");
 
     public string AppSettingsPath => root.Combine("appdata", "app-settings.json");

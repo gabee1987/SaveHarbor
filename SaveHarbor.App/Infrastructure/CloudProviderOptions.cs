@@ -1,5 +1,6 @@
 using System.IO;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -19,6 +20,8 @@ public sealed class CloudProviderOptions
     public int LockTtlSeconds { get; set; } = 1200;
 
     public int HeartbeatIntervalSeconds { get; set; } = 300;
+
+    public SupabaseOptions Supabase { get; set; } = new();
 
     public string GoogleAppFolderName { get; set; } = "SaveHarbor";
 

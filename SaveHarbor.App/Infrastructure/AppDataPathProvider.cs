@@ -32,6 +32,8 @@ public sealed class AppDataPathProvider : IAppDataPathProvider
 
     public string GoogleClientSecretsPath => Path.Combine(AppDataRoot, "google-client-secret.json");
 
+    public string SupabaseSessionPath => Path.Combine(AppDataRoot, "supabase-session.bin");
+
     public string CloudProviderSettingsPath => Path.Combine(AppDataRoot, "cloud-provider-settings.json");
 
     public string AppSettingsPath => Path.Combine(AppDataRoot, "app-settings.json");

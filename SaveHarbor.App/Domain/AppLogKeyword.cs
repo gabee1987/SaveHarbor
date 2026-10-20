@@ -12,6 +12,7 @@ public enum AppLogKeyword
     CloudUpload,
     CloudDownload,
     CloudSession,
+    CloudAuth,
     GameLauncher,
     Ui
 }

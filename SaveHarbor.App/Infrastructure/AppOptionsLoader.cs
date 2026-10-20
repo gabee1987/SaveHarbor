@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
 using Serilog.Events;
 
@@ -70,7 +71,8 @@ public static class AppOptionsLoader
             GoogleAppFolderName = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.GoogleAppFolderName)])
                 ? defaults.GoogleAppFolderName
                 : section[nameof(CloudProviderOptions.GoogleAppFolderName)]!,
-            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath
+            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath,
+            Supabase = ReadSupabaseOptions(section.GetSection(nameof(CloudProviderOptions.Supabase)))
         };
 
         // A shared folder in appsettings.json predates multi-game support and belongs to Windrose.
@@ -115,6 +117,20 @@ public static class AppOptionsLoader
         }
 
         return options;
+    }
+
+    private static SupabaseOptions ReadSupabaseOptions(IConfigurationSection section)
+    {
+        var defaults = new SupabaseOptions();
+        return new SupabaseOptions
+        {
+            Url = section[nameof(SupabaseOptions.Url)]?.Trim().TrimEnd('/') ?? defaults.Url,
+            PublishableKey = section[nameof(SupabaseOptions.PublishableKey)]?.Trim() ?? defaults.PublishableKey,
+            Bucket = string.IsNullOrWhiteSpace(section[nameof(SupabaseOptions.Bucket)]) ? defaults.Bucket : section[nameof(SupabaseOptions.Bucket)]!.Trim(),
+            MaxArchiveBytes = long.TryParse(section[nameof(SupabaseOptions.MaxArchiveBytes)], out var maxBytes) && maxBytes > 0 ? maxBytes : defaults.MaxArchiveBytes,
+            HttpTimeoutSeconds = ReadInt(section[nameof(SupabaseOptions.HttpTimeoutSeconds)], defaults.HttpTimeoutSeconds),
+            TransferTimeoutSeconds = ReadInt(section[nameof(SupabaseOptions.TransferTimeoutSeconds)], defaults.TransferTimeoutSeconds)
+        };
     }
 
     private static string ReadProviderOverride(IConfigurationSection section)

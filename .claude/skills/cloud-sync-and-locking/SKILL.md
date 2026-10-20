@@ -67,6 +67,16 @@ See `multi-game-separation`.
 
 - `GoogleDriveCloudProvider` uses Drive v3 with `SupportsAllDrives`; folder lookups by name.
   Drive has no compare-and-swap for file content — hence the write-then-verify lock strategy.
+- `SupabaseCloudProvider` ("SaveHarbor Cloud", `Infrastructure/Cloud/Supabase/`): hand-written client over one
+  `SupabaseHttp`; `SupabaseAuthClient` (e-mail code, DPAPI session in `supabase-session.bin`, refresh 60 s before
+  expiry, one 401 retry); `SupabaseRest` (RPCs of `supabase/migrations`); `SupabaseStorage` (bucket `saves`, objects
+  `<group>/<game>/<worldId>/<versionId>.zip`). `ArchiveFileName` stays `<versionId>.zip`; the provider builds the object
+  path from the active group, and `SupabaseMapping` rejects rows whose `archive_path` differs. Upload = storage then
+  `publish_world_version` (compare-and-set; refused archive deleted again). Locks are atomic on the server, which also
+  refuses a lock whose base is not the latest version. Status reasons: `NotConfigured`, `SignIn`, `Group`,
+  `UpdateRequired` (`app_meta.min_supported_app_version`, cached 1 h), `Unreachable`. Group per game in
+  `cloud-provider-settings.json` `ActiveGroups`; sign-out clears it.
+- Version ids use `CloudSyncService.VersionIdPart(player)` (ASCII letters, digits, `_ . -`), valid on every provider.
 - `FolderCloudProvider` (`DeveloperProviderOverride: LocalTest`) mirrors the layout under
   `%LOCALAPPDATA%\SaveHarbor\cloud-test` — use it for manual and automated tests.
 - Google Drive is an external cloud service; for any use beyond this hobby group it would need
