@@ -17,30 +17,24 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IAppSettingsStore _settings;
     private readonly IActiveGameContext _activeGame;
     private readonly IDialogService _dialogService;
-    private readonly IPlayerIdentity _playerIdentity;
     private readonly IAppDataPathProvider _paths;
     private readonly Action _saveFolderChanged;
     private readonly Action _settingsChanged;
-    private readonly SettingsSharingServices _sharing;
 
     public SettingsViewModel(
         IAppSettingsStore settings,
         IActiveGameContext activeGame,
         IDialogService dialogService,
-        IPlayerIdentity playerIdentity,
         IAppDataPathProvider paths,
         Action saveFolderChanged,
-        Action settingsChanged,
-        SettingsSharingServices sharing)
+        Action settingsChanged)
     {
         _settings = settings;
         _activeGame = activeGame;
         _dialogService = dialogService;
-        _playerIdentity = playerIdentity;
         _paths = paths;
         _saveFolderChanged = saveFolderChanged;
         _settingsChanged = settingsChanged;
-        _sharing = sharing;
         Refresh();
     }
 
@@ -52,35 +46,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         new("Keep the newest 50", 50)
     ];
 
-    public IReadOnlyList<RetentionOption> CloudRetentionOptions { get; } =
-    [
-        new("Keep every version", 0),
-        new("Keep the newest 5", 5),
-        new("Keep the newest 10", 10),
-        new("Keep the newest 20", 20)
-    ];
-
     public string GameName => _activeGame.Current.DisplayName;
-
-    public string PlayerName
-    {
-        get => _settings.Current.PlayerName;
-        set
-        {
-            var normalized = PlayerIdentity.Normalize(value);
-            if (normalized == _settings.Current.PlayerName)
-            {
-                return;
-            }
-
-            _settings.Update(settings => settings.PlayerName = normalized);
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(EffectivePlayerName));
-            _settingsChanged();
-        }
-    }
-
-    public string EffectivePlayerName => _playerIdentity.DisplayName;
 
     public RetentionOption SelectedRetention
     {
@@ -93,21 +59,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             }
 
             _settings.Update(settings => settings.BackupRetentionCount = value.Count);
-            OnPropertyChanged();
-        }
-    }
-
-    public RetentionOption SelectedCloudRetention
-    {
-        get => CloudRetentionOptions.FirstOrDefault(option => option.Count == _settings.Current.CloudVersionRetentionCount) ?? CloudRetentionOptions[0];
-        set
-        {
-            if (value is null || value.Count == _settings.Current.CloudVersionRetentionCount)
-            {
-                return;
-            }
-
-            _settings.Update(settings => settings.CloudVersionRetentionCount = value.Count);
             OnPropertyChanged();
         }
     }
@@ -140,8 +91,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(SaveFolder));
         OnPropertyChanged(nameof(BackupFolder));
         OnPropertyChanged(nameof(HasCustomSaveFolder));
-        OnPropertyChanged(nameof(EffectivePlayerName));
-        RefreshSharing();
     }
 
     [RelayCommand]

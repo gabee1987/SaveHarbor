@@ -16,7 +16,8 @@ Single WPF project `SaveHarbor.App` (solution `SaveHarbor.sln`). ~6.6k lines. No
 | `Infrastructure/` | Implementations: discovery, backup (zip), cloud providers, sync, launcher, process detection, logging, options | All file/network/process IO lives here |
 | `Utilities/` | Pure static helpers (hashing, formatting, filename sanitising) | Stateless |
 | `ViewModels/` | `MainWindowViewModel` split into partials by concern | CommunityToolkit.Mvvm source generators |
-| `Views/Controls`, `Views/Dialogs`, `Views/Behaviors` | Section user controls, dialogs, attached behaviours | Bind to the single main VM; `CloudGroupSetupWindow` binds its own `CloudGroupSetupViewModel` |
+| `Views/Controls`, `Views/Dialogs`, `Views/Behaviors` | Section user controls, dialogs, attached behaviours | Bind to the single main VM |
+| `Views/Sharing`, `ViewModels/Sharing` | The Sharing page of Settings (`SharingView`, a fresh `SharingViewModel` each time Settings opens; closing Settings reads the cloud again after a change): provider choice, SaveHarbor Cloud sign-in, the group (members, invite code, storage), the Drive folder, the player's name | `SharingViewModel` with `CloudOnboardingViewModel`, `SharingGroupViewModel`, `SharingProfileViewModel`; styles in `SharingStyles.xaml` |
 | `Localization/` | `UiTextCatalog` + `{ui:UiText}` markup extension | Reads `Resources/Texts/ui-text.en.json` |
 | `Resources/Styles/` | `DarkTheme.xaml` (brushes + styles) | Only theme dictionary today |
 | `Configuration/` | Encrypted Google client secret (`.enc`, git-ignored) | Never commit secrets |
@@ -37,8 +38,8 @@ installer's and updater's hook arguments and exits for them, then creates `App`.
 <folder>` for a local feed); it is `Disabled` outside a Velopack install (`dotnet run`, an unzipped folder).
 
 Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds,
-start game monitor timer, `PromptCloudSetupIfNeededAsync` (provider choice when none is chosen and SaveHarbor Cloud is
-configured, then the SaveHarbor Cloud group dialog or the Drive folder prompt), and an update check 10 s later that
+start game monitor timer, `PromptCloudSetupIfNeededAsync` (Settings on the Sharing page when no provider is chosen and SaveHarbor
+Cloud is configured, or when SaveHarbor Cloud has no group yet; the Drive folder prompt for Google Drive), and an update check 10 s later that
 never blocks the UI (`MainWindowViewModel.Updates.cs`: banner, footer version, Settings "Check for updates").
 
 ## Core flows

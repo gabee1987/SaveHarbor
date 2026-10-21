@@ -2,8 +2,83 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
-             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:sharing="clr-namespace:SaveHarbor.App.Views.Sharing"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <UserControl.Resources>
+        <!-- Side menu on the left, the chosen page on the right. -->
+        <Style x:Key="SettingsTabs" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="176" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border BorderBrush="{DynamicResource LineSoftBrush}" BorderThickness="0,0,1,0" Padding="0,0,14,0">
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.TabNavigation="Once" />
+                            </Border>
+                            <ContentPresenter Grid.Column="1" ContentSource="SelectedContent" Margin="28,0,0,0" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsNavItem" TargetType="TabItem">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Grid Margin="0,0,0,4">
+                            <Border x:Name="Chrome" Background="Transparent" CornerRadius="4" Padding="14,10" />
+                            <Border x:Name="Marker" Width="3" HorizontalAlignment="Left" CornerRadius="1.5" Margin="0,8" Background="Transparent" />
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Header}" Margin="16,10,10,10" FontFamily="{DynamicResource AppDisplayFontFamily}"
+                                       FontSize="14.5" Foreground="{DynamicResource MutedBrush}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource InkBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource SkinGoldBrightBrush}" />
+                                <Setter TargetName="Marker" Property="Background" Value="{DynamicResource SkinGoldBrush}" />
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SkinSelectedRowBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SkinSelectedRowBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- One setting: an open line with a hairline below, no box. -->
+        <Style x:Key="SettingLine" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource LineSoftBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="0,14" />
+        </Style>
+        <Style x:Key="SettingTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="SettingHint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="18" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+        <Style x:Key="PageTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource AppDisplayFontFamily}" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="Foreground" Value="{DynamicResource SkinGoldTextBrush}" />
+            <Setter Property="Margin" Value="0,2,0,6" />
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Border Background="{DynamicResource SkinOverlayBrush}">
             <Border.InputBindings>
@@ -11,14 +86,8 @@
             </Border.InputBindings>
         </Border>
 
-        <ContentControl Style="{DynamicResource SkinFrame}"
-                        BorderBrush="{DynamicResource SkinGoldBrush}"
-                        Width="780"
-                        MaxHeight="680"
-                        Margin="24"
-                        Padding="30,24"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
+        <ContentControl Style="{DynamicResource SkinFrame}" BorderBrush="{DynamicResource SkinGoldBrush}" MaxWidth="1120" MaxHeight="820"
+                        Margin="24" Padding="30,24">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -28,297 +97,132 @@
 
                 <ContentControl Style="{DynamicResource SkinPageHeading}" Content="{ui:SpacedText Shell.Settings}" FontSize="26" Margin="0,0,0,18" />
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
-                    <StackPanel>
-                        <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Settings.Player}" />
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="260" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.PlayerName}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0">
-                                        <Run Text="{ui:UiText Settings.PlayerNameHint}" />
-                                        <Run Text="{Binding Settings.EffectivePlayerName, Mode=OneWay}" Foreground="{DynamicResource SkinGoldBrightBrush}" />
-                                    </TextBlock>
-                                </StackPanel>
-                                <TextBox Grid.Column="1" Style="{DynamicResource SkinTextBox}" MaxLength="32" VerticalAlignment="Center"
-                                         Text="{Binding Settings.PlayerName, UpdateSourceTrigger=LostFocus}" />
-                            </Grid>
-                        </Border>
+                <TabControl Grid.Row="1" Style="{StaticResource SettingsTabs}" ItemContainerStyle="{StaticResource SettingsNavItem}" SelectedIndex="{Binding Settings.SelectedPage}">
+                    <TabItem Header="{ui:UiText Settings.NavSharing}">
+                        <sharing:SharingView DataContext="{Binding Settings.Sharing}" />
+                    </TabItem>
 
-                        <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Settings.Saves}" Margin="0,12,0,14" />
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Foreground="{DynamicResource InkBrush}" FontSize="13.5">
-                                        <Run Text="{Binding Settings.GameName, Mode=OneWay}" />
-                                        <Run Text="{ui:UiText Settings.SaveFolderSuffix}" />
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding Settings.SaveFolder}" Style="{DynamicResource SkinMuted}" Margin="0,3,0,0" ToolTip="{Binding Settings.SaveFolder}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Style="{DynamicResource SkinCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.SaveFolder}" ToolTip="{ui:UiText Paths.CopyTooltip}" Margin="0,0,8,0" />
-                                    <Button Content="{ui:SpacedText Settings.Reset}" Command="{Binding Settings.ResetSaveFolderCommand}" Style="{DynamicResource SkinButton}"
-                                            Margin="0,0,8,0" ToolTip="{ui:UiText Settings.ResetTooltip}"
-                                            Visibility="{Binding Settings.HasCustomSaveFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <Button Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenSaveFolderCommand}" Style="{DynamicResource SkinButton}"
-                                            Margin="0,0,8,0" ToolTip="{ui:UiText Settings.OpenSaveFolderTooltip}" />
-                                    <Button Content="{ui:SpacedText Settings.Browse}" Command="{Binding Settings.BrowseSaveFolderCommand}" Style="{DynamicResource SkinButton}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.BackupFolder}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{Binding Settings.BackupFolder}" Style="{DynamicResource SkinMuted}" Margin="0,3,0,0" ToolTip="{Binding Settings.BackupFolder}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Style="{DynamicResource SkinCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.BackupFolder}" ToolTip="{ui:UiText Paths.CopyTooltip}" Margin="0,0,8,0" />
-                                    <Button Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenBackupFolderCommand}"
-                                            Style="{DynamicResource SkinButton}" ToolTip="{ui:UiText Settings.BackupFolderTooltip}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="230" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.KeepBackups}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{ui:UiText Settings.KeepBackupsHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                </StackPanel>
-                                <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource SkinComboBox}"
-                                          ItemsSource="{Binding Settings.RetentionOptions}"
-                                          SelectedItem="{Binding Settings.SelectedRetention}" />
-                            </Grid>
-                        </Border>
-
-                        <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Settings.Sharing}" Margin="0,12,0,14" />
-                        <Border Style="{DynamicResource SkinSettingRow}" Visibility="{Binding Settings.IsProviderChoiceVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="230" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.Provider}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{ui:UiText Settings.ProviderHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                </StackPanel>
-                                <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource SkinComboBox}"
-                                          AutomationProperties.Name="{ui:UiText Settings.Provider}"
-                                          ItemsSource="{Binding Settings.ProviderChoices}"
-                                          SelectedItem="{Binding Settings.SelectedProvider}" />
-                            </Grid>
-                        </Border>
-
-                        <StackPanel Visibility="{Binding Settings.ShowGroupSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Border Style="{DynamicResource SkinSettingRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,0,16,0">
-                                        <TextBlock Text="{ui:UiText Settings.SignedInAs}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                        <TextBlock Text="{Binding Settings.SignedInText}" Style="{DynamicResource SkinMuted}" Margin="0,3,0,0" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1" Content="{ui:SpacedText Settings.SignOut}" Command="{Binding Settings.SignOutCommand}" Style="{DynamicResource SkinButton}"
-                                            VerticalAlignment="Center" Visibility="{Binding Settings.IsSignedIn, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </Grid>
-                            </Border>
-                            <Border Style="{DynamicResource SkinSettingRow}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,0,16,0">
-                                        <TextBlock Foreground="{DynamicResource InkBrush}" FontSize="13.5">
-                                            <Run Text="{ui:UiText Settings.GroupFor}" />
+                    <TabItem Header="{ui:UiText Settings.NavSaves}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Text="{ui:UiText Settings.NavSaves}" Style="{StaticResource PageTitle}" />
+                                <Border Style="{StaticResource SettingLine}">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource SettingTitle}">
                                             <Run Text="{Binding Settings.GameName, Mode=OneWay}" />
+                                            <Run Text="{ui:UiText Settings.SaveFolderSuffix}" />
                                         </TextBlock>
-                                        <TextBlock Text="{Binding Settings.ActiveGroupName}" Style="{DynamicResource SkinMuted}" Margin="0,3,0,0" />
+                                        <TextBlock Text="{Binding Settings.SaveFolder}" Style="{StaticResource SettingHint}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   ToolTip="{Binding Settings.SaveFolder}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                            <Button Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenSaveFolderCommand}" Style="{DynamicResource SkinButton}"
+                                                    Margin="0,0,8,0" ToolTip="{ui:UiText Settings.OpenSaveFolderTooltip}" />
+                                            <Button Content="{ui:SpacedText Settings.Browse}" Command="{Binding Settings.BrowseSaveFolderCommand}" Style="{DynamicResource SkinButton}"
+                                                    Margin="0,0,8,0" ToolTip="{ui:UiText Settings.BrowseTooltip}" />
+                                            <Button Content="{ui:SpacedText Settings.Reset}" Command="{Binding Settings.ResetSaveFolderCommand}" Style="{DynamicResource SkinButton}"
+                                                    Margin="0,0,8,0" ToolTip="{ui:UiText Settings.ResetTooltip}"
+                                                    Visibility="{Binding Settings.HasCustomSaveFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <Button Style="{DynamicResource SkinCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.SaveFolder}"
+                                                    ToolTip="{ui:UiText Paths.CopyTooltip}" VerticalAlignment="Center" />
+                                        </StackPanel>
                                     </StackPanel>
-                                    <Button Grid.Column="1" Content="{Binding Settings.ChangeGroupText, Converter={x:Static converters:SpacedCapsConverter.Instance}}" Command="{Binding Settings.ChangeGroupCommand}" Style="{DynamicResource SkinButton}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
-                            <Border Style="{DynamicResource SkinSettingRow}" Visibility="{Binding Settings.HasActiveGroup, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                </Border>
+                                <Border Style="{StaticResource SettingLine}">
+                                    <StackPanel>
+                                        <TextBlock Text="{ui:UiText Settings.BackupFolder}" Style="{StaticResource SettingTitle}" />
+                                        <TextBlock Text="{Binding Settings.BackupFolder}" Style="{StaticResource SettingHint}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   ToolTip="{Binding Settings.BackupFolder}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                            <Button Content="{ui:SpacedText Settings.Open}" Command="{Binding Settings.OpenBackupFolderCommand}" Style="{DynamicResource SkinButton}"
+                                                    Margin="0,0,8,0" ToolTip="{ui:UiText Settings.BackupFolderTooltip}" />
+                                            <Button Style="{DynamicResource SkinCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.BackupFolder}"
+                                                    ToolTip="{ui:UiText Paths.CopyTooltip}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SettingLine}" BorderThickness="0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="230" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,20,0">
+                                            <TextBlock Text="{ui:UiText Settings.KeepBackups}" Style="{StaticResource SettingTitle}" />
+                                            <TextBlock Text="{ui:UiText Settings.KeepBackupsHint}" Style="{StaticResource SettingHint}" />
+                                        </StackPanel>
+                                        <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource SkinComboBox}" AutomationProperties.Name="{ui:UiText Settings.KeepBackups}"
+                                                  ItemsSource="{Binding Settings.RetentionOptions}" SelectedItem="{Binding Settings.SelectedRetention}" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="{ui:UiText Settings.NavAppearance}">
+                        <StackPanel>
+                            <TextBlock Text="{ui:UiText Settings.NavAppearance}" Style="{StaticResource PageTitle}" />
+                            <Border Style="{StaticResource SettingLine}" BorderThickness="0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,0,16,0">
-                                        <TextBlock Text="{ui:UiText Settings.InviteCode}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                        <TextBlock Text="{ui:UiText Settings.InviteCodeOwnerHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
-                                                   Visibility="{Binding Settings.IsGroupOwner, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        <TextBlock Text="{ui:UiText Settings.InviteCodeMemberHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
-                                                   Visibility="{Binding Settings.IsGroupMember, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        <TextBlock Text="{Binding Settings.InviteCode}" FontFamily="Consolas" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SkinGoldBrightBrush}" Margin="0,6,0,0"
-                                                   Visibility="{Binding Settings.HasInviteCode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <StackPanel Margin="0,0,20,0">
+                                        <TextBlock Text="{ui:UiText Settings.AmbientEffects}" Style="{StaticResource SettingTitle}" />
+                                        <TextBlock Text="{ui:UiText Settings.AmbientEffectsHint}" Style="{StaticResource SettingHint}" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
-                                                Visibility="{Binding Settings.IsGroupOwner, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Button Style="{DynamicResource SkinCopyButton}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Settings.InviteCode}"
-                                                ToolTip="{ui:UiText Settings.InviteCodeCopyTooltip}" Margin="0,0,8,0"
-                                                Visibility="{Binding Settings.HasInviteCode, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        <Button Content="{ui:SpacedText Settings.InviteCodeShow}" Command="{Binding Settings.ShowInviteCodeCommand}" Style="{DynamicResource SkinButton}" Margin="0,0,8,0"
-                                                Visibility="{Binding Settings.HasInviteCode, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}" />
-                                        <Button Content="{ui:SpacedText Settings.InviteCodeRotate}" Command="{Binding Settings.RotateInviteCodeCommand}" Style="{DynamicResource SkinButton}"
-                                                ToolTip="{ui:UiText Settings.InviteCodeRotateTooltip}" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                            <Border Style="{DynamicResource SkinSettingRow}" Visibility="{Binding Settings.HasActiveGroup, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,0,16,0">
-                                        <TextBlock Foreground="{DynamicResource InkBrush}" FontSize="13.5">
-                                            <Run Text="{ui:UiText Settings.StorageUsed}" />
-                                            <Run Text="{Binding Settings.StorageUsedText, Mode=OneWay}" Foreground="{DynamicResource SkinGoldBrightBrush}" />
-                                        </TextBlock>
-                                        <TextBlock Text="{ui:UiText Settings.StorageUsedHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1" Content="{ui:SpacedText Settings.CleanUp}" Command="{Binding Settings.CleanUpUnusedFilesCommand}" Style="{DynamicResource SkinButton}"
-                                            VerticalAlignment="Center" ToolTip="{ui:UiText Settings.CleanUpTooltip}" />
-                                </Grid>
-                            </Border>
-                            <Border Style="{DynamicResource SkinSettingRow}" Visibility="{Binding Settings.HasActiveGroup, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Margin="0,0,16,0">
-                                        <TextBlock Text="{ui:UiText Settings.LeaveGroup}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                        <TextBlock Text="{ui:UiText Settings.LeaveGroupHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1" Content="{ui:UiText Settings.LeaveGroupButton}" Command="{Binding Settings.LeaveGroupCommand}" Style="{DynamicResource SkinDangerLink}" VerticalAlignment="Center" />
+                                    <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Settings.AmbientEffects}"
+                                              AutomationProperties.Name="{ui:UiText Settings.AmbientEffects}" />
                                 </Grid>
                             </Border>
                         </StackPanel>
+                    </TabItem>
 
-                        <Border Style="{DynamicResource SkinSettingRow}" Visibility="{Binding Settings.ShowSharedFolderSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.SharedFolder}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{ui:UiText Settings.SharedFolderHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Content="{ui:SpacedText Settings.Change}" Command="{Binding SetupCloudCommand}"
-                                        Style="{DynamicResource SkinButton}" VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="260" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.DeviceLabel}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0">
-                                        <Run Text="{ui:UiText Settings.DeviceLabelHint}" />
-                                        <Run Text="{Binding Settings.EffectiveDeviceLabel, Mode=OneWay}" Foreground="{DynamicResource SkinGoldBrightBrush}" />
-                                    </TextBlock>
-                                </StackPanel>
-                                <TextBox Grid.Column="1" Style="{DynamicResource SkinTextBox}" MaxLength="32" VerticalAlignment="Center"
-                                         AutomationProperties.Name="{ui:UiText Settings.DeviceLabel}"
-                                         Text="{Binding Settings.DeviceLabel, UpdateSourceTrigger=LostFocus}" />
-                            </Grid>
-                        </Border>
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="230" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.KeepSharedVersions}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{ui:UiText Settings.KeepSharedVersionsHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
-                                               Visibility="{Binding Settings.ShowSharedFolderSettings, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <TextBlock Text="{ui:UiText Settings.KeepSharedVersionsHintCloud}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
-                                               Visibility="{Binding Settings.ShowGroupSettings, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-                                <ComboBox Grid.Column="1" VerticalAlignment="Center" Style="{DynamicResource SkinComboBox}"
-                                          ItemsSource="{Binding Settings.CloudRetentionOptions}"
-                                          SelectedItem="{Binding Settings.SelectedCloudRetention}" />
-                            </Grid>
-                        </Border>
-
-                        <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Settings.Appearance}" Margin="0,12,0,14" />
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.AmbientEffects}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{ui:UiText Settings.AmbientEffectsHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                </StackPanel>
-                                <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Settings.AmbientEffects}" />
-                            </Grid>
-                        </Border>
-
-                        <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Settings.Support}" Margin="0,12,0,14" />
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Foreground="{DynamicResource InkBrush}" FontSize="13.5">
-                                        <Run Text="{ui:UiText Settings.AppVersion}" />
-                                        <Run Text="{Binding AppVersionText, Mode=OneWay}" />
-                                    </TextBlock>
-                                    <TextBlock Text="{ui:UiText Settings.UpdatesHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                    <TextBlock Text="{ui:UiText Settings.UpdatesUnavailable}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
-                                               Visibility="{Binding UpdatesUnavailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Content="{ui:SpacedText Settings.CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}"
-                                        Style="{DynamicResource SkinButton}" VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
-                        <Border Style="{DynamicResource SkinSettingRow}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{ui:UiText Settings.Troubleshooting}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
-                                    <TextBlock Text="{ui:UiText Settings.TroubleshootingHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Content="{ui:SpacedText Settings.OpenLogs}" Command="{Binding Settings.OpenLogsFolderCommand}" Style="{DynamicResource SkinButton}" Margin="0,0,8,0" />
-                                    <Button Content="{ui:SpacedText Settings.OpenData}" Command="{Binding Settings.OpenDataFolderCommand}" Style="{DynamicResource SkinButton}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                    <TabItem Header="{ui:UiText Settings.NavAbout}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
+                            <StackPanel>
+                                <TextBlock Text="{ui:UiText Settings.NavAbout}" Style="{StaticResource PageTitle}" />
+                                <Border Style="{StaticResource SettingLine}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,20,0">
+                                            <TextBlock Style="{StaticResource SettingTitle}">
+                                                <Run Text="{ui:UiText Settings.AppVersion}" />
+                                                <Run Text="{Binding AppVersionText, Mode=OneWay}" />
+                                            </TextBlock>
+                                            <TextBlock Text="{ui:UiText Settings.UpdatesHint}" Style="{StaticResource SettingHint}" />
+                                            <TextBlock Text="{ui:UiText Settings.UpdatesUnavailable}" Style="{StaticResource SettingHint}"
+                                                       Visibility="{Binding UpdatesUnavailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="{ui:SpacedText Settings.CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}"
+                                                Style="{DynamicResource SkinButton}" VerticalAlignment="Center" ToolTip="{ui:UiText Settings.CheckForUpdatesTooltip}" />
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource SettingLine}" BorderThickness="0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,20,0">
+                                            <TextBlock Text="{ui:UiText Settings.Troubleshooting}" Style="{StaticResource SettingTitle}" />
+                                            <TextBlock Text="{ui:UiText Settings.TroubleshootingHint}" Style="{StaticResource SettingHint}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="{ui:SpacedText Settings.OpenLogs}" Command="{Binding Settings.OpenLogsFolderCommand}" Style="{DynamicResource SkinButton}"
+                                                    Margin="0,0,8,0" ToolTip="{ui:UiText Settings.OpenLogsTooltip}" />
+                                            <Button Content="{ui:SpacedText Settings.OpenData}" Command="{Binding Settings.OpenDataFolderCommand}" Style="{DynamicResource SkinButton}"
+                                                    ToolTip="{ui:UiText Settings.OpenDataTooltip}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
                     <Button Content="{ui:SpacedText Settings.Back}" Command="{Binding CloseSettingsCommand}" Style="{DynamicResource SkinButton}" />

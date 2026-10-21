@@ -71,7 +71,7 @@ public partial class MainWindowViewModel
         SharingHeroState.ChooseProvider => "Choose",
         SharingHeroState.SignIn => "Sign in",
         SharingHeroState.Group => "Set up group",
-        SharingHeroState.Connected => "Change",
+        SharingHeroState.Connected => "Manage",
         SharingHeroState.Unreachable => "Retry",
         SharingHeroState.UpdateRequired => "Update",
         _ => string.Empty
@@ -79,8 +79,8 @@ public partial class MainWindowViewModel
 
     public bool HasSharingAction => SharingActionText.Length > 0;
 
-    // "Change group" for SaveHarbor Cloud, "Change shared folder" otherwise.
-    public string SetupCloudLinkText => _providerSelector.ActiveKind == CloudProviderKind.Supabase ? "Change group" : "Change shared folder";
+    // Opens Settings on the Sharing page: the group for SaveHarbor Cloud, the shared folder for Google Drive.
+    public string SetupCloudLinkText => _providerSelector.ActiveKind == CloudProviderKind.Supabase ? "Manage group and friends" : "Manage shared folder";
 
     // A friend's lock: how long it still holds, or that it ran out and the world can be taken over.
     public string CloudLockText
@@ -109,11 +109,6 @@ public partial class MainWindowViewModel
         if (group is { MemberCount: > 0 })
         {
             parts.Add(group.MemberCount == 1 ? "1 member" : $"{group.MemberCount} members");
-        }
-
-        if (_cloudGroups.SignedInEmail is { Length: > 0 } email)
-        {
-            parts.Add($"signed in as {email}");
         }
 
         return string.Join(" · ", parts);
@@ -171,11 +166,8 @@ public partial class MainWindowViewModel
     {
         switch (SharingHero)
         {
-            case SharingHeroState.ChooseProvider:
-                await SetupCloudAsync();
-                break;
-            case SharingHeroState.SignIn or SharingHeroState.Group or SharingHeroState.Connected:
-                await SetupCloudGroupAsync();
+            case SharingHeroState.ChooseProvider or SharingHeroState.SignIn or SharingHeroState.Group or SharingHeroState.Connected:
+                await OpenSharingAsync();
                 break;
             case SharingHeroState.Unreachable:
                 await CheckCloudCommand.ExecuteAsync(null);

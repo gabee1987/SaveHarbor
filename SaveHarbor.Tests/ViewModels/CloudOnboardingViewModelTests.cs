@@ -5,16 +5,17 @@ using SaveHarbor.Tests.Support;
 
 namespace SaveHarbor.Tests.ViewModels;
 
-// The SaveHarbor Cloud dialog's steps: e-mail, code, group, and the invite code after creating a group.
-public sealed class CloudGroupSetupViewModelTests
+// The SaveHarbor Cloud sign-in, one step per screen: e-mail, code, the name friends see, then a group.
+public sealed class CloudOnboardingViewModelTests
 {
     private readonly FakeCloudGroupService groups = new();
     private readonly ManualTimeProvider clock = new(new DateTimeOffset(2026, 10, 20, 12, 0, 0, TimeSpan.Zero));
+    private readonly List<string> savedNames = [];
 
-    private CloudGroupSetupViewModel Create(bool otherGameHasGroup = false) =>
-        new(groups, new FixedPlayerIdentity(), new AppErrorHandler(new NullAppLogger()), GameId.Windrose, otherGameHasGroup, clock);
+    private CloudOnboardingViewModel Create(bool otherGameHasGroup = false) =>
+        new(groups, new FixedPlayerIdentity(), new AppErrorHandler(new NullAppLogger()), GameId.Windrose, otherGameHasGroup, savedNames.Add, clock);
 
-    private async Task<CloudGroupSetupViewModel> SignedInAtGroupStepAsync()
+    private async Task<CloudOnboardingViewModel> SignedInAsync()
     {
         var setup = Create();
         setup.Email = "test@example.invalid";
@@ -24,13 +25,26 @@ public sealed class CloudGroupSetupViewModelTests
         return setup;
     }
 
+    private async Task<CloudOnboardingViewModel> AtGroupStepAsync()
+    {
+        var setup = await SignedInAsync();
+        if (setup.IsNameStep)
+        {
+            setup.ConfirmNameCommand.Execute(null);
+        }
+
+        return setup;
+    }
+
     [Fact]
     public void SignedOut_StartsWithTheEmail()
     {
         var setup = Create();
 
-        Assert.Equal(CloudGroupSetupStep.Email, setup.Step);
+        Assert.Equal(CloudOnboardingStep.Email, setup.Step);
+        Assert.Equal(1, setup.StepNumber);
         Assert.Equal("TEST_USER", setup.DisplayName);
+        Assert.Equal("T", setup.DisplayInitial);
         Assert.False(setup.SendCodeCommand.CanExecute(null));
     }
 
@@ -44,9 +58,9 @@ public sealed class CloudGroupSetupViewModelTests
 
         await setup.InitializeAsync();
 
-        Assert.Equal(CloudGroupSetupStep.Group, setup.Step);
-        Assert.True(setup.ShowSignedInHeader);
-        Assert.Equal("3 member(s) · member", Assert.Single(setup.Groups).Detail);
+        Assert.Equal(CloudOnboardingStep.Group, setup.Step);
+        Assert.True(setup.IsChooseMode);
+        Assert.Equal("3 members · member", Assert.Single(setup.Groups).Detail);
     }
 
     [Fact]
@@ -57,10 +71,11 @@ public sealed class CloudGroupSetupViewModelTests
 
         await setup.SendCodeCommand.ExecuteAsync(null);
 
-        Assert.Equal(CloudGroupSetupStep.Code, setup.Step);
-        Assert.Contains("Check spam", setup.Message);
+        Assert.Equal(CloudOnboardingStep.Code, setup.Step);
+        Assert.Equal(2, setup.StepNumber);
+        Assert.Contains("spam", setup.Message);
         Assert.False(setup.MessageIsError);
-        Assert.Equal(CloudGroupSetupViewModel.ResendDelaySeconds, setup.ResendAvailableIn);
+        Assert.Equal(CloudOnboardingViewModel.ResendDelaySeconds, setup.ResendAvailableIn);
         Assert.False(setup.ResendCommand.CanExecute(null));
     }
 
@@ -74,7 +89,7 @@ public sealed class CloudGroupSetupViewModelTests
         clock.Advance(TimeSpan.FromSeconds(12));
         setup.UpdateResendCountdown();
         Assert.Equal(18, setup.ResendAvailableIn);
-        Assert.Equal("Resend code in 18 s", setup.ResendText);
+        Assert.Equal("Send a new code in 18 s", setup.ResendText);
 
         clock.Advance(TimeSpan.FromSeconds(18));
         setup.UpdateResendCountdown();
@@ -92,7 +107,7 @@ public sealed class CloudGroupSetupViewModelTests
 
         await setup.SendCodeCommand.ExecuteAsync(null);
 
-        Assert.Equal(CloudGroupSetupStep.Email, setup.Step);
+        Assert.Equal(CloudOnboardingStep.Email, setup.Step);
         Assert.True(setup.MessageIsError);
     }
 
@@ -106,7 +121,7 @@ public sealed class CloudGroupSetupViewModelTests
 
         await setup.VerifyCommand.ExecuteAsync(null);
 
-        Assert.Equal(CloudGroupSetupStep.Code, setup.Step);
+        Assert.Equal(CloudOnboardingStep.Code, setup.Step);
         Assert.Equal(string.Empty, setup.Code);
         Assert.Equal("This code is wrong or has expired. Request a new code.", setup.Message);
         Assert.True(setup.MessageIsError);
@@ -125,30 +140,63 @@ public sealed class CloudGroupSetupViewModelTests
     }
 
     [Fact]
-    public async Task RightCode_ListsTheGroups()
+    public async Task NewPlayer_ConfirmsTheirNameBeforeTheGroup()
     {
-        groups.ServerGroups.Add(new CloudGroupSummary(SupabaseHarness.GroupId, "TEST_GROUP", "owner", 2, DateTimeOffset.UnixEpoch));
+        var setup = await SignedInAsync();
+        Assert.Equal(CloudOnboardingStep.Name, setup.Step);
+        Assert.Equal(3, setup.StepNumber);
 
-        var setup = await SignedInAtGroupStepAsync();
+        setup.DisplayName = "  ";
+        Assert.False(setup.ConfirmNameCommand.CanExecute(null));
 
-        Assert.Equal(CloudGroupSetupStep.Group, setup.Step);
-        Assert.True(setup.HasGroups);
-        Assert.Equal("TEST_GROUP", Assert.Single(setup.Groups).Name);
-        Assert.Equal("test@example.invalid", setup.SignedInEmail);
+        setup.DisplayName = "TEST_FRIEND";
+        setup.ConfirmNameCommand.Execute(null);
+
+        Assert.Equal(["TEST_FRIEND"], savedNames);
+        Assert.Equal(CloudOnboardingStep.Group, setup.Step);
+        Assert.True(setup.IsChooseMode);
+        Assert.Equal(4, setup.StepNumber);
     }
 
     [Fact]
-    public async Task Join_NormalisesTheCodeUsesTheGroupAndCloses()
+    public async Task ReturningPlayer_GoesStraightToTheirGroups()
     {
-        var setup = await SignedInAtGroupStepAsync();
-        var closed = false;
-        setup.CloseRequested += (_, _) => closed = true;
+        groups.ServerGroups.Add(new CloudGroupSummary(SupabaseHarness.GroupId, "TEST_GROUP", "owner", 2, DateTimeOffset.UnixEpoch));
+
+        var setup = await SignedInAsync();
+
+        Assert.Equal(CloudOnboardingStep.Group, setup.Step);
+        Assert.True(setup.HasGroups);
+        Assert.Equal("TEST_GROUP", Assert.Single(setup.Groups).Name);
+        Assert.Empty(savedNames);
+    }
+
+    [Fact]
+    public async Task GroupModes_ShowOneWayInAtATime()
+    {
+        var setup = await AtGroupStepAsync();
+
+        setup.ChooseGroupModeCommand.Execute(GroupSetupMode.Join);
+        Assert.True(setup.IsJoinMode);
+        Assert.False(setup.IsChooseMode);
+
+        setup.ChooseGroupModeCommand.Execute(GroupSetupMode.Choose);
+        Assert.True(setup.IsChooseMode);
+    }
+
+    [Fact]
+    public async Task Join_NormalisesTheCodeUsesTheGroupAndCompletes()
+    {
+        var setup = await AtGroupStepAsync();
+        var completed = false;
+        setup.Completed += (_, _) => completed = true;
+        setup.ChooseGroupModeCommand.Execute(GroupSetupMode.Join);
         setup.InviteCode = "test code-22";
 
         await setup.JoinCommand.ExecuteAsync(null);
 
         Assert.Equal(FakeCloudGroupService.InviteCode, groups.LastJoinCode);
-        Assert.True(closed);
+        Assert.True(completed);
         Assert.Equal(new CloudGroupSetupResult(SupabaseHarness.GroupId, "TEST_GROUP"), setup.Result);
         Assert.Equal(SupabaseHarness.GroupId, groups.GetActiveGroupId(GameId.Windrose));
     }
@@ -156,34 +204,38 @@ public sealed class CloudGroupSetupViewModelTests
     [Fact]
     public async Task Join_UnknownCode_SaysSoAndStays()
     {
-        var setup = await SignedInAtGroupStepAsync();
+        var setup = await AtGroupStepAsync();
+        setup.ChooseGroupModeCommand.Execute(GroupSetupMode.Join);
         setup.InviteCode = "TESTCODE99";
 
         await setup.JoinCommand.ExecuteAsync(null);
 
-        Assert.Equal(CloudGroupSetupStep.Group, setup.Step);
+        Assert.True(setup.IsJoinMode);
         Assert.Equal("No group has this invite code. Check it with the group owner.", setup.Message);
         Assert.Null(setup.Result);
     }
 
     [Fact]
-    public async Task Create_ShowsTheInviteCodeBeforeClosing()
+    public async Task Create_ShowsTheInviteCodeBeforeCompleting()
     {
-        var setup = await SignedInAtGroupStepAsync();
-        var closed = false;
-        setup.CloseRequested += (_, _) => closed = true;
+        var setup = await AtGroupStepAsync();
+        var completed = false;
+        setup.Completed += (_, _) => completed = true;
+        setup.ChooseGroupModeCommand.Execute(GroupSetupMode.Create);
         setup.GroupName = "TEST_GROUP";
 
         await setup.CreateCommand.ExecuteAsync(null);
 
-        Assert.Equal(CloudGroupSetupStep.Created, setup.Step);
+        Assert.Equal(CloudOnboardingStep.Created, setup.Step);
+        Assert.Equal(4, setup.StepNumber);
+        Assert.Equal("TEST_GROUP", setup.CreatedGroupName);
         Assert.Equal(FakeCloudGroupService.InviteCode, setup.CreatedInviteCode);
-        Assert.False(closed);
+        Assert.False(completed);
 
-        // Closing the dialog now still counts: the group is in use.
+        // Leaving now still counts: the group is in use.
         Assert.NotNull(setup.Result);
         setup.FinishCommand.Execute(null);
-        Assert.True(closed);
+        Assert.True(completed);
     }
 
     [Fact]
@@ -197,7 +249,7 @@ public sealed class CloudGroupSetupViewModelTests
     public async Task UseGroup_ForThisGameOnly_LeavesTheOtherGame()
     {
         groups.ServerGroups.Add(new CloudGroupSummary(SupabaseHarness.GroupId, "TEST_GROUP", "member", 2, DateTimeOffset.UnixEpoch));
-        var setup = await SignedInAtGroupStepAsync();
+        var setup = await AtGroupStepAsync();
         setup.ApplyToAllGames = false;
 
         await setup.UseGroupCommand.ExecuteAsync(setup.Groups[0]);
@@ -208,16 +260,15 @@ public sealed class CloudGroupSetupViewModelTests
     }
 
     [Fact]
-    public async Task SignOut_GoesBackToTheEmail()
+    public void ShowGroupStep_OpensTheChosenWayIn()
     {
-        groups.ServerGroups.Add(new CloudGroupSummary(SupabaseHarness.GroupId, "TEST_GROUP", "member", 2, DateTimeOffset.UnixEpoch));
-        var setup = await SignedInAtGroupStepAsync();
+        groups.IsSignedIn = true;
+        var setup = Create();
 
-        await setup.SignOutCommand.ExecuteAsync(null);
+        setup.ShowGroupStep(GroupSetupMode.Create);
 
-        Assert.Equal(CloudGroupSetupStep.Email, setup.Step);
-        Assert.Empty(setup.Groups);
-        Assert.False(groups.IsSignedIn);
+        Assert.Equal(CloudOnboardingStep.Group, setup.Step);
+        Assert.True(setup.IsCreateMode);
     }
 
     [Fact]
@@ -229,7 +280,7 @@ public sealed class CloudGroupSetupViewModelTests
 
         setup.UseDifferentEmailCommand.Execute(null);
 
-        Assert.Equal(CloudGroupSetupStep.Email, setup.Step);
+        Assert.Equal(CloudOnboardingStep.Email, setup.Step);
         Assert.Equal(0, setup.ResendAvailableIn);
         Assert.DoesNotContain("verify", groups.Calls);
     }

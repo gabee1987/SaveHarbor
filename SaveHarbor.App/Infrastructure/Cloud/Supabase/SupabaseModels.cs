@@ -75,6 +75,14 @@ public sealed class GroupSummaryDto
     [JsonPropertyName("my_role")] public string? MyRole { get; set; }
 }
 
+public sealed class GroupMemberDto
+{
+    [JsonPropertyName("user_id")] public string UserId { get; set; } = string.Empty;
+    [JsonPropertyName("display_name")] public string DisplayName { get; set; } = string.Empty;
+    [JsonPropertyName("role")] public string Role { get; set; } = string.Empty;
+    [JsonPropertyName("joined_at")] public DateTimeOffset JoinedAt { get; set; }
+}
+
 public sealed class AppMetaDto
 {
     [JsonPropertyName("key")] public string Key { get; set; } = string.Empty;

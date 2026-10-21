@@ -79,10 +79,12 @@ See `multi-game-separation`.
   refuses a lock whose base is not the latest version. Status reasons: `NotConfigured`, `SignIn`, `Group`,
   `UpdateRequired` (`app_meta.min_supported_app_version`, cached 1 h), `Unreachable`. Group per game in
   `cloud-provider-settings.json` `ActiveGroups`; sign-out clears it.
-- SaveHarbor Cloud setup UI: `MainWindowViewModel.CloudSetup.cs` (`PromptCloudSetupIfNeededAsync`: provider choice,
-  then the group dialog once per run and game; `SetupCloudCommand` opens the active provider's setup).
-  `CloudGroupSetupViewModel` owns the dialog's steps (e-mail, code, group, invite code after creating). The Sharing
-  view's top line comes from `MainWindowViewModel.Sharing.cs`, the Settings rows from `SettingsViewModel.Sharing.cs`.
+- Sharing UI: the Sharing page of Settings (`Views/Sharing/SharingView`, `ViewModels/Sharing`), opened by `OpenSharingAsync` in
+  `MainWindowViewModel.CloudSetup.cs` (first start, a game without a group once per run, the Sharing view's action,
+  Settings › Sharing). `CloudOnboardingViewModel` owns the sign-in steps (e-mail, code, name, group, invite code after
+  creating); `SharingGroupViewModel` the group screen (members via `ListMembersAsync`, invite code, storage);
+  `SharingProfileViewModel` the one player name (also sent to every group with `SetDisplayNameAsync`), the PC name and
+  versions kept. The Sharing view's top line comes from `MainWindowViewModel.Sharing.cs`.
 - Storage maintenance (`ICloudStorageMaintenance`, SaveHarbor Cloud only): storage used is summed in the app (the API
   has aggregates switched off); unused archives are objects no `world_versions.archive_path` names and older than one
   hour, so a friend's upload that is still publishing is never removed.

@@ -1,0 +1,207 @@
+<!-- SaveHarbor Cloud sign-in, one question per screen. DataContext: CloudOnboardingViewModel. -->
+<UserControl x:Class="SaveHarbor.App.Views.Sharing.SharingSignInView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+             xmlns:controls="clr-namespace:SaveHarbor.App.Views.Controls"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:vm="clr-namespace:SaveHarbor.App.ViewModels"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <UserControl.Resources>
+        <Style x:Key="Links" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,16,0,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="560" VerticalAlignment="Center" Margin="0,8">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,26"
+                        Visibility="{Binding IsCreatedStep, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}">
+                <Border Style="{DynamicResource SharingStepDot}" Tag="{Binding StepNumber, Converter={x:Static converters:AtLeastConverter.Instance}, ConverterParameter=1}" />
+                <Border Style="{DynamicResource SharingStepDot}" Tag="{Binding StepNumber, Converter={x:Static converters:AtLeastConverter.Instance}, ConverterParameter=2}" />
+                <Border Style="{DynamicResource SharingStepDot}" Tag="{Binding StepNumber, Converter={x:Static converters:AtLeastConverter.Instance}, ConverterParameter=3}" />
+                <Border Style="{DynamicResource SharingStepDot}" Tag="{Binding StepNumber, Converter={x:Static converters:AtLeastConverter.Instance}, ConverterParameter=4}" />
+            </StackPanel>
+
+            <!-- 1. E-mail -->
+            <StackPanel Visibility="{Binding IsEmailStep, Converter={StaticResource BooleanToVisibilityConverter}}" MaxWidth="440">
+                <TextBlock Text="{ui:UiText Sharing.EmailTitle}" Style="{DynamicResource SharingStepTitle}" />
+                <TextBlock Text="{ui:UiText Sharing.EmailText}" Style="{DynamicResource SharingStepText}" />
+                <TextBox x:Name="EmailInput" Style="{DynamicResource SkinTextBox}" FontSize="16" MinHeight="46" Margin="0,22,0,0" MaxLength="254"
+                         AutomationProperties.Name="{ui:UiText Sharing.EmailLabel}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SendCodeCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
+                <Button Content="{ui:UiText Sharing.EmailSend}" Command="{Binding SendCodeCommand}" Style="{DynamicResource SkinPlayButton}"
+                        FontSize="15" MinHeight="46" Margin="0,14,0,0" />
+            </StackPanel>
+
+            <!-- 2. Code -->
+            <StackPanel Visibility="{Binding IsCodeStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{ui:UiText Sharing.CodeTitle}" Style="{DynamicResource SharingStepTitle}" />
+                <TextBlock Style="{DynamicResource SharingStepText}">
+                    <Run Text="{ui:UiText Sharing.CodeTextBefore}" />
+                    <Run Text="{Binding Email, Mode=OneWay}" Foreground="{DynamicResource InkBrush}" />
+                </TextBlock>
+                <controls:CodeDigitsBox x:Name="CodeInput" Margin="0,24,0,0" Code="{Binding Code}" CompleteCommand="{Binding VerifyCommand}" />
+                <Button Content="{ui:UiText Sharing.CodeSignIn}" Command="{Binding VerifyCommand}" Style="{DynamicResource SkinPlayButton}"
+                        FontSize="15" MinHeight="46" Margin="0,22,0,0" MaxWidth="400" />
+                <StackPanel Style="{StaticResource Links}">
+                    <Button Content="{Binding ResendText}" Command="{Binding ResendCommand}" Style="{DynamicResource SkinLinkButton}" />
+                    <TextBlock Text="·" Foreground="{DynamicResource SubtleBrush}" Margin="12,0" />
+                    <Button Content="{ui:UiText Sharing.CodeDifferentEmail}" Command="{Binding UseDifferentEmailCommand}" Style="{DynamicResource SkinLinkButton}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- 3. Name -->
+            <StackPanel Visibility="{Binding IsNameStep, Converter={StaticResource BooleanToVisibilityConverter}}" MaxWidth="440">
+                <Border Style="{DynamicResource SharingAvatar}" Width="64" Height="64" CornerRadius="32" Tag="True" HorizontalAlignment="Center" Margin="0,0,0,16">
+                    <TextBlock Text="{Binding DisplayInitial}" Style="{DynamicResource SharingAvatarText}" FontSize="28" />
+                </Border>
+                <TextBlock Text="{ui:UiText Sharing.NameTitle}" Style="{DynamicResource SharingStepTitle}" />
+                <TextBlock Text="{ui:UiText Sharing.NameText}" Style="{DynamicResource SharingStepText}" />
+                <TextBox x:Name="NameInput" Style="{DynamicResource SkinTextBox}" FontSize="16" MinHeight="46" Margin="0,22,0,0" MaxLength="32"
+                         AutomationProperties.Name="{ui:UiText Sharing.NameLabel}" Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding ConfirmNameCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
+                <Button Content="{ui:UiText Sharing.NameContinue}" Command="{Binding ConfirmNameCommand}" Style="{DynamicResource SkinPlayButton}"
+                        FontSize="15" MinHeight="46" Margin="0,14,0,0" />
+            </StackPanel>
+
+            <!-- 4. Group: the two ways in, then only the field of the chosen one. -->
+            <StackPanel Visibility="{Binding IsGroupStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Visibility="{Binding IsChooseMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{ui:UiText Sharing.GroupTitle}" Style="{DynamicResource SharingStepTitle}" />
+                    <TextBlock Text="{ui:UiText Sharing.GroupText}" Style="{DynamicResource SharingStepText}" />
+
+                    <StackPanel Margin="0,22,0,0" Visibility="{Binding HasGroups, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{ui:UiText Sharing.GroupYours}" Style="{DynamicResource SharingFieldLabel}" />
+                        <ItemsControl ItemsSource="{Binding Groups}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:CloudGroupOption}">
+                                    <Button Style="{DynamicResource SharingChoiceCard}" Margin="0,0,0,8" AutomationProperties.Name="{Binding Name}"
+                                            Command="{Binding DataContext.UseGroupCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Style="{DynamicResource SharingAvatar}">
+                                                <TextBlock Text="{Binding Initial}" Style="{DynamicResource SharingAvatarText}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding Detail}" Style="{DynamicResource SharingHint}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{ui:UiText Sharing.GroupUse}" Foreground="{DynamicResource SkinGoldBrightBrush}"
+                                                       FontFamily="{DynamicResource AppDisplayFontFamily}" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <Grid Margin="0,22,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{DynamicResource SharingChoiceCard}" Command="{Binding ChooseGroupModeCommand}" CommandParameter="{x:Static vm:GroupSetupMode.Join}"
+                                AutomationProperties.Name="{ui:UiText Sharing.JoinCardTitle}">
+                            <StackPanel>
+                                <TextBlock Text="{ui:UiText Sharing.JoinCardTitle}" Style="{DynamicResource SharingCardTitle}" FontSize="17" Margin="0,0,0,6" />
+                                <TextBlock Text="{ui:UiText Sharing.JoinCardText}" Style="{DynamicResource SharingHint}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" Style="{DynamicResource SharingChoiceCard}" Command="{Binding ChooseGroupModeCommand}" CommandParameter="{x:Static vm:GroupSetupMode.Create}"
+                                AutomationProperties.Name="{ui:UiText Sharing.CreateCardTitle}">
+                            <StackPanel>
+                                <TextBlock Text="{ui:UiText Sharing.CreateCardTitle}" Style="{DynamicResource SharingCardTitle}" FontSize="17" Margin="0,0,0,6" />
+                                <TextBlock Text="{ui:UiText Sharing.CreateCardText}" Style="{DynamicResource SharingHint}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <CheckBox Content="{ui:UiText Sharing.BothGames}" IsChecked="{Binding ApplyToAllGames}" Foreground="{DynamicResource MutedBrush}"
+                              HorizontalAlignment="Center" Margin="0,18,0,0" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsJoinMode, Converter={StaticResource BooleanToVisibilityConverter}}" MaxWidth="440">
+                    <TextBlock Text="{ui:UiText Sharing.JoinTitle}" Style="{DynamicResource SharingStepTitle}" />
+                    <TextBlock Text="{ui:UiText Sharing.JoinText}" Style="{DynamicResource SharingStepText}" />
+                    <TextBox x:Name="InviteInput" Style="{DynamicResource SkinTextBox}" FontSize="22" FontFamily="Consolas" MinHeight="52" Margin="0,22,0,0"
+                             MaxLength="16" CharacterCasing="Upper" TextAlignment="Center" AutomationProperties.Name="{ui:UiText Sharing.InviteLabel}"
+                             Text="{Binding InviteCode, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding JoinCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Content="{ui:UiText Sharing.JoinButton}" Command="{Binding JoinCommand}" Style="{DynamicResource SkinPlayButton}"
+                            FontSize="15" MinHeight="46" Margin="0,14,0,0" />
+                    <Button Content="{ui:UiText Sharing.Back}" Command="{Binding ChooseGroupModeCommand}" CommandParameter="{x:Static vm:GroupSetupMode.Choose}"
+                            Style="{DynamicResource SkinLinkButton}" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsCreateMode, Converter={StaticResource BooleanToVisibilityConverter}}" MaxWidth="440">
+                    <TextBlock Text="{ui:UiText Sharing.CreateTitle}" Style="{DynamicResource SharingStepTitle}" />
+                    <TextBlock Text="{ui:UiText Sharing.CreateText}" Style="{DynamicResource SharingStepText}" />
+                    <TextBox x:Name="GroupNameInput" Style="{DynamicResource SkinTextBox}" FontSize="16" MinHeight="46" Margin="0,22,0,0" MaxLength="60"
+                             AutomationProperties.Name="{ui:UiText Sharing.GroupNameLabel}" Text="{Binding GroupName, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding CreateCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Content="{ui:UiText Sharing.CreateButton}" Command="{Binding CreateCommand}" Style="{DynamicResource SkinPlayButton}"
+                            FontSize="15" MinHeight="46" Margin="0,14,0,0" />
+                    <Button Content="{ui:UiText Sharing.Back}" Command="{Binding ChooseGroupModeCommand}" CommandParameter="{x:Static vm:GroupSetupMode.Choose}"
+                            Style="{DynamicResource SkinLinkButton}" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- After creating a group: its invite code, large and ready to copy. -->
+            <StackPanel Visibility="{Binding IsCreatedStep, Converter={StaticResource BooleanToVisibilityConverter}}" MaxWidth="480">
+                <ContentControl Style="{DynamicResource SkinOrnamentDivider}" HorizontalAlignment="Center" Margin="0,0,0,14" />
+                <TextBlock Style="{DynamicResource SharingStepTitle}">
+                    <Run Text="{Binding CreatedGroupName, Mode=OneWay}" />
+                    <Run Text="{ui:UiText Sharing.CreatedTitleSuffix}" />
+                </TextBlock>
+                <TextBlock Text="{ui:UiText Sharing.CreatedText}" Style="{DynamicResource SharingStepText}" />
+                <Border Style="{DynamicResource SharingCard}" Margin="0,22,0,0" Padding="20,18" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding CreatedInviteCode}" FontFamily="Consolas" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource SkinGoldTextBrush}"
+                                   VerticalAlignment="Center" AutomationProperties.Name="{ui:UiText Sharing.InviteLabel}" />
+                        <Button Content="{ui:SpacedText Sharing.Copy}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding CreatedInviteCode}"
+                                Style="{DynamicResource SkinButton}" Margin="18,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Button Content="{ui:UiText Sharing.CreatedOpen}" Command="{Binding FinishCommand}" Style="{DynamicResource SkinPlayButton}"
+                        FontSize="15" MinHeight="46" Margin="0,22,0,0" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding Message}" TextAlignment="Center" TextWrapping="Wrap" LineHeight="18" Margin="0,18,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding MessageIsError}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource WarnBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Message}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <controls:IndeterminateProgressLineView IsActive="{Binding IsBusy}" Margin="0,14,0,0" MaxWidth="440" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,141 @@
+<!-- The group the active game shares through. DataContext: SharingViewModel (Group, Profile and the commands). -->
+<UserControl x:Class="SaveHarbor.App.Views.Sharing.SharingGroupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:sharing="clr-namespace:SaveHarbor.App.Views.Sharing"
+             xmlns:vm="clr-namespace:SaveHarbor.App.ViewModels"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.3*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <!-- Who is in the group -->
+                <Border Style="{DynamicResource SharingCard}">
+                    <StackPanel>
+                        <TextBlock Text="{ui:UiText Sharing.MembersTitle}" Style="{DynamicResource SharingCardTitle}" Margin="0,0,0,2" />
+                        <TextBlock Text="{Binding Group.ScopeLine}" Style="{DynamicResource SharingHint}" Margin="0,0,0,12" />
+                        <ItemsControl ItemsSource="{Binding Group.Members}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:SharingMember}">
+                                    <Grid Width="190" Margin="0,0,8,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{DynamicResource SharingAvatar}" Tag="{Binding IsYou}">
+                                            <TextBlock Text="{Binding Initial}" Style="{DynamicResource SharingAvatarText}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                            <TextBlock Text="{Binding Detail}" Style="{DynamicResource SharingHint}" FontSize="11.5" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{ui:UiText Sharing.MembersAlone}" Style="{DynamicResource SharingHint}" Margin="0,0,0,4"
+                                   Visibility="{Binding Group.IsAlone, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <TextBlock Text="{ui:UiText Sharing.MembersLoading}" Style="{DynamicResource SharingHint}"
+                                   Visibility="{Binding Group.IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding Group.LoadError}" Foreground="{DynamicResource WarnBrush}" TextWrapping="Wrap"
+                                   Visibility="{Binding Group.HasLoadError, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- How much of the free storage the group uses -->
+                <Border Style="{DynamicResource SharingCard}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{ui:UiText Sharing.StorageTitle}" Style="{DynamicResource SharingCardTitle}" />
+                        <Grid x:Name="StorageTrack" Height="8" Visibility="{Binding Group.HasStorageQuota, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Border Background="{DynamicResource LineSoftBrush}" CornerRadius="4" />
+                            <Border Background="{DynamicResource SkinGoldFillBrush}" CornerRadius="4" HorizontalAlignment="Left">
+                                <Border.Width>
+                                    <MultiBinding Converter="{x:Static converters:FractionOfWidthConverter.Instance}">
+                                        <Binding Path="Group.StorageFraction" />
+                                        <Binding Path="ActualWidth" ElementName="StorageTrack" />
+                                    </MultiBinding>
+                                </Border.Width>
+                            </Border>
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <TextBlock Text="{Binding Group.StorageText}" Style="{DynamicResource SharingText}" />
+                            <Button Content="{ui:UiText Sharing.CleanUp}" Command="{Binding CleanUpCommand}" Style="{DynamicResource SkinLinkButton}"
+                                    HorizontalAlignment="Right" ToolTip="{ui:UiText Sharing.CleanUpTooltip}" />
+                        </Grid>
+                        <TextBlock Text="{ui:UiText Sharing.StorageHint}" Style="{DynamicResource SharingHint}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Everything else, quieter -->
+                <Border Style="{DynamicResource SharingCard}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{ui:UiText Sharing.MoreTitle}" Style="{DynamicResource SharingCardTitle}" />
+                        <TextBlock Text="{ui:UiText Sharing.SwitchGroupLabel}" Style="{DynamicResource SharingFieldLabel}"
+                                   Visibility="{Binding Group.HasOtherGroups, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <ItemsControl ItemsSource="{Binding Group.OtherGroups}" Focusable="False"
+                                      Visibility="{Binding Group.HasOtherGroups, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:CloudGroupOption}">
+                                    <Button Style="{DynamicResource SkinButton}" Margin="0,0,8,10" Content="{Binding Name}"
+                                            Command="{Binding DataContext.SwitchGroupCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                            ToolTip="{ui:UiText Sharing.SwitchGroupTooltip}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <WrapPanel>
+                            <Button Content="{ui:UiText Sharing.JoinAnother}" Command="{Binding JoinAnotherGroupCommand}" Style="{DynamicResource SkinLinkButton}" Margin="0,0,22,8" />
+                            <Button Content="{ui:UiText Sharing.CreateAnother}" Command="{Binding CreateAnotherGroupCommand}" Style="{DynamicResource SkinLinkButton}" Margin="0,0,22,8" />
+                            <Button Content="{ui:UiText Sharing.UseDriveInstead}" Command="{Binding SwitchProviderCommand}" CommandParameter="GoogleDrive"
+                                    Style="{DynamicResource SkinLinkButton}" Margin="0,0,22,8"
+                                    Visibility="{Binding CanSwitchToDrive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <Button Content="{ui:UiText Sharing.LeaveGroup}" Command="{Binding LeaveGroupCommand}" Style="{DynamicResource SkinDangerLink}" Margin="0,0,0,8"
+                                    ToolTip="{ui:UiText Sharing.LeaveGroupTooltip}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <!-- Bringing friends in -->
+                <Border Style="{DynamicResource SharingCard}" BorderBrush="{DynamicResource SkinGoldBrush}">
+                    <StackPanel>
+                        <TextBlock Text="{ui:UiText Sharing.InviteTitle}" Style="{DynamicResource SharingCardTitle}" />
+                        <StackPanel Visibility="{Binding Group.IsOwner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid>
+                                <TextBlock Text="{Binding Group.InviteCode}" FontFamily="Consolas" FontSize="26" FontWeight="Bold"
+                                           Foreground="{DynamicResource SkinGoldTextBrush}" VerticalAlignment="Center"
+                                           AutomationProperties.Name="{ui:UiText Sharing.InviteLabel}" />
+                                <Button Content="{ui:SpacedText Sharing.Copy}" Command="{x:Static behaviors:ClipboardCommands.Copy}" CommandParameter="{Binding Group.InviteCode}"
+                                        Style="{DynamicResource SkinButton}" HorizontalAlignment="Right" ToolTip="{ui:UiText Sharing.CopyTooltip}" />
+                            </Grid>
+                            <TextBlock Text="{ui:UiText Sharing.InviteOwnerHint}" Style="{DynamicResource SharingHint}" Margin="0,10,0,0" />
+                            <Button Content="{ui:UiText Sharing.InviteRotate}" Command="{Binding RotateInviteCodeCommand}" Style="{DynamicResource SkinLinkButton}"
+                                    HorizontalAlignment="Left" Margin="0,10,0,0" ToolTip="{ui:UiText Sharing.InviteRotateTooltip}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding Group.MemberInviteHint}" Style="{DynamicResource SharingText}"
+                                   Visibility="{Binding Group.IsOwner, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}" />
+                    </StackPanel>
+                </Border>
+
+                <sharing:SharingProfileCard Margin="0,16,0,0" ShowAccount="True" />
+            </StackPanel>
+
+        </Grid>
+    </ScrollViewer>
+</UserControl>

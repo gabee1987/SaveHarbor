@@ -21,10 +21,16 @@ public sealed class SupabaseOptions
     public int TransferTimeoutSeconds { get; set; } = 300;
 
     // Tokens travel only over HTTPS; plain HTTP is accepted for the local development stack alone.
-    public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(PublishableKey)
-        && Uri.TryCreate(Url, UriKind.Absolute, out var uri)
-        && (uri.Scheme == Uri.UriSchemeHttps || (uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback));
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(PublishableKey) && IsProjectUrl;
+
+    // The project root only (https://<ref>.supabase.co): the app adds auth/v1, rest/v1 and storage/v1 itself, so a copied
+    // "…/rest/v1" would send every request to a path that does not exist.
+    public bool IsProjectUrl =>
+        Uri.TryCreate(Url, UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttps || (uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback))
+        && uri.AbsolutePath == "/"
+        && uri.Query.Length == 0
+        && uri.Fragment.Length == 0;
 
     public bool IsHostedProject =>
         Uri.TryCreate(Url, UriKind.Absolute, out var uri) && uri.Host.EndsWith(".supabase.co", StringComparison.OrdinalIgnoreCase);

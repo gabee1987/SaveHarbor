@@ -49,7 +49,7 @@ public partial class MainWindowViewModel
 
         if (needsGroupSetup)
         {
-            await SetupCloudGroupAsync();
+            await OpenSharingAsync();
         }
     }
 

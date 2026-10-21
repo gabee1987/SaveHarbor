@@ -16,6 +16,16 @@ public sealed partial class SupabaseRest
             (token, callToken) => http.RpcAsync("leave_group", new { p_group = RequireUuid(groupId) }, token, callToken),
             cancellationToken);
 
+    public async Task<IReadOnlyList<GroupMemberDto>> ListMembersAsync(string groupId, CancellationToken cancellationToken = default) =>
+        await GetAsync<List<GroupMemberDto>>(
+            $"rest/v1/group_members?select=user_id,display_name,role,joined_at&group_id=eq.{RequireUuid(groupId)}&order=joined_at.asc",
+            cancellationToken);
+
+    public Task SetDisplayNameAsync(string groupId, string displayName, CancellationToken cancellationToken = default) =>
+        auth.WithAccessTokenAsync(
+            (token, callToken) => http.RpcAsync("set_display_name", new { p_group = RequireUuid(groupId), p_display_name = displayName }, token, callToken),
+            cancellationToken);
+
     public Task<string> GetInviteCodeAsync(string groupId, CancellationToken cancellationToken = default) =>
         RpcAsync<string>("get_invite_code", new { p_group = RequireUuid(groupId) }, cancellationToken);
 

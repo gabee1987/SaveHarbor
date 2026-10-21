@@ -46,7 +46,7 @@ SAVEHARBOR_SUPABASE_LOCAL_KEY=$(npx supabase status -o env | grep '^PUBLISHABLE_
 Without the variable the test is skipped. To run the app against the local stack, put `http://127.0.0.1:54321` and
 the local publishable key under `SaveHarbor:CloudProvider:Supabase` in the **output** `appsettings.json` (never commit
 it). With `CloudProvider` empty in `%LOCALAPPDATA%\SaveHarbor\app-settings.json` the app offers the provider choice on
-start; with `Supabase` it opens the sign-in and group dialog. Sign-in codes arrive in Mailpit
+start; with `Supabase` it opens Settings on the Sharing page with the sign-in. Sign-in codes arrive in Mailpit
 (`http://127.0.0.1:54324`).
 
 ## Publish

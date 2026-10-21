@@ -47,6 +47,11 @@ public sealed partial class SupabaseHttp : IDisposable
             client.BaseAddress = new Uri(options.Url.TrimEnd('/') + "/");
             client.DefaultRequestHeaders.Add("apikey", options.PublishableKey);
         }
+        else if (!string.IsNullOrWhiteSpace(options.Url) && !options.IsProjectUrl)
+        {
+            logger.Warning(AppLogKeyword.CloudProvider,
+                "SaveHarbor Cloud is off: SaveHarbor:CloudProvider:Supabase:Url must be the project URL only, like https://<ref>.supabase.co, without /rest/v1 or another path.");
+        }
     }
 
     public TimeSpan DefaultTimeout => TimeSpan.FromSeconds(options.HttpTimeoutSeconds);
