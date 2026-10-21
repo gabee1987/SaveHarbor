@@ -13,8 +13,8 @@ public sealed class CloudSyncServiceStatusTests : IDisposable
 
     public CloudSyncServiceStatusTests()
     {
-        stateService = new LocalJsonSyncStateService(new TestPathProvider(temp));
-        service = new CloudSyncService(provider, stateService, new StubBackupService(), new StubGameRegistry(), new FixedPlayerIdentity(), new AppSettingsStore(new TestPathProvider(temp)), new NullAppLogger());
+        stateService = new LocalJsonSyncStateService(new TestPathProvider(temp), new FixedProviderSelector());
+        service = new CloudSyncService(provider, stateService, new StubBackupService(), new StubGameRegistry(), new FixedPlayerIdentity(), new AppSettingsStore(new TestPathProvider(temp)), new NullAppLogger(), new FixedDeviceIdentity(), new CloudProviderOptions());
     }
 
     public void Dispose() => temp.Dispose();

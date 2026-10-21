@@ -22,6 +22,8 @@ public sealed class AppDataPathProvider : IAppDataPathProvider
 
     public string GetSyncStateRoot(GameId game) => Path.Combine(LegacySyncStateRoot, game.ToStorageKey());
 
+    public string GetSyncStateRoot(GameId game, string providerKey) => Path.Combine(GetSyncStateRoot(game), providerKey);
+
     public string GetLocalTestCloudRoot(GameId game) => Path.Combine(LegacyLocalTestCloudRoot, game.ToStorageKey());
 
     public string CloudLogsPath => Path.Combine(LegacyLocalTestCloudRoot, "logs");
@@ -29,6 +31,8 @@ public sealed class AppDataPathProvider : IAppDataPathProvider
     public string GoogleTokenStorePath => Path.Combine(AppDataRoot, "google-drive-token");
 
     public string GoogleClientSecretsPath => Path.Combine(AppDataRoot, "google-client-secret.json");
+
+    public string SupabaseSessionPath => Path.Combine(AppDataRoot, "supabase-session.bin");
 
     public string CloudProviderSettingsPath => Path.Combine(AppDataRoot, "cloud-provider-settings.json");
 

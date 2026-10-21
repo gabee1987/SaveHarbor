@@ -1,0 +1,7 @@
+{
+  "id": "66666666-6666-4666-8666-666666666666", "world_uuid": "22222222-2222-4222-8222-222222222222", "group_id": "11111111-1111-4111-8111-111111111111", "version_number": 1,
+  "version_id": "20261020_120000_TEST_USER_v1", "uploaded_by": "44444444-4444-4444-8444-444444444444", "uploader_name": "TEST_USER", "uploader_device": "TEST_DEVICE",
+  "archive_path": "11111111-1111-4111-8111-111111111111/windrose/TEST_WORLD_ID/20261020_120000_TEST_USER_v1.zip", "archive_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "archive_size_bytes": 12345,
+  "source_world_modified_at": null, "based_on_version_number": 0, "based_on_version_id": "",
+  "created_at": "2026-10-20T12:00:05+00:00"
+}

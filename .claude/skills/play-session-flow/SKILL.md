@@ -55,7 +55,7 @@ Press Play
 - Game crash → treated as exit; upload still happens (files may be inconsistent: upload is
   still a new version, previous versions retained, so it is recoverable).
 - PC sleeps while playing → heartbeat stops; lock expiry must be long enough to tolerate short sleeps
-  but the owner reclaims automatically because `MachineName` matches.
+  but the owner reclaims automatically because `DeviceId` matches.
 - Two worlds for one game: Play acts on the selected world only; lock is per world.
 - Network drops on exit → retry with backoff (3 attempts), then the persistent "Retry upload" banner.
 - Game-specific settle time and file locks: see each game's save-format skill.

@@ -2,7 +2,9 @@ using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
+using SaveHarbor.App.Infrastructure.Updates;
 using Serilog.Events;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -64,13 +66,14 @@ public static class AppOptionsLoader
 
         var options = new CloudProviderOptions
         {
-            Provider = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.Provider)])
-                ? defaults.Provider
-                : section[nameof(CloudProviderOptions.Provider)]!,
+            DeveloperProviderOverride = ReadProviderOverride(section),
+            LockTtlSeconds = ReadInt(section[nameof(CloudProviderOptions.LockTtlSeconds)], defaults.LockTtlSeconds),
+            HeartbeatIntervalSeconds = ReadInt(section[nameof(CloudProviderOptions.HeartbeatIntervalSeconds)], defaults.HeartbeatIntervalSeconds),
             GoogleAppFolderName = string.IsNullOrWhiteSpace(section[nameof(CloudProviderOptions.GoogleAppFolderName)])
                 ? defaults.GoogleAppFolderName
                 : section[nameof(CloudProviderOptions.GoogleAppFolderName)]!,
-            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath
+            GoogleClientSecretsPath = section[nameof(CloudProviderOptions.GoogleClientSecretsPath)] ?? defaults.GoogleClientSecretsPath,
+            Supabase = ReadSupabaseOptions(section.GetSection(nameof(CloudProviderOptions.Supabase)))
         };
 
         // A shared folder in appsettings.json predates multi-game support and belongs to Windrose.
@@ -117,6 +120,54 @@ public static class AppOptionsLoader
         return options;
     }
 
+    // --update-source <folder> replaces GitHub with a folder of packed releases, for trying an update before publishing it.
+    public static UpdateOptions LoadUpdateOptions(IReadOnlyList<string> args)
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
+
+        var defaults = new UpdateOptions();
+        var section = configuration.GetSection(UpdateOptions.SectionName);
+        return new UpdateOptions
+        {
+            GitHubRepository = string.IsNullOrWhiteSpace(section[nameof(UpdateOptions.GitHubRepository)])
+                ? defaults.GitHubRepository
+                : section[nameof(UpdateOptions.GitHubRepository)]!.Trim(),
+            CheckIntervalHours = ReadInt(section[nameof(UpdateOptions.CheckIntervalHours)], defaults.CheckIntervalHours),
+            AutoDownload = ReadBool(section[nameof(UpdateOptions.AutoDownload)], defaults.AutoDownload),
+            LocalSourceFolder = ReadArgument(args, "--update-source") ?? string.Empty
+        };
+    }
+
+    private static SupabaseOptions ReadSupabaseOptions(IConfigurationSection section)
+    {
+        var defaults = new SupabaseOptions();
+        return new SupabaseOptions
+        {
+            Url = section[nameof(SupabaseOptions.Url)]?.Trim().TrimEnd('/') ?? defaults.Url,
+            PublishableKey = section[nameof(SupabaseOptions.PublishableKey)]?.Trim() ?? defaults.PublishableKey,
+            Bucket = string.IsNullOrWhiteSpace(section[nameof(SupabaseOptions.Bucket)]) ? defaults.Bucket : section[nameof(SupabaseOptions.Bucket)]!.Trim(),
+            MaxArchiveBytes = long.TryParse(section[nameof(SupabaseOptions.MaxArchiveBytes)], out var maxBytes) && maxBytes > 0 ? maxBytes : defaults.MaxArchiveBytes,
+            HttpTimeoutSeconds = ReadInt(section[nameof(SupabaseOptions.HttpTimeoutSeconds)], defaults.HttpTimeoutSeconds),
+            TransferTimeoutSeconds = ReadInt(section[nameof(SupabaseOptions.TransferTimeoutSeconds)], defaults.TransferTimeoutSeconds)
+        };
+    }
+
+    private static string ReadProviderOverride(IConfigurationSection section)
+    {
+        var value = section[nameof(CloudProviderOptions.DeveloperProviderOverride)];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            value = section["Provider"];
+        }
+
+        return string.Equals(value?.Trim(), CloudProviderKind.LocalTest, StringComparison.OrdinalIgnoreCase)
+            ? CloudProviderKind.LocalTest
+            : string.Empty;
+    }
+
     public static IReadOnlyDictionary<GameId, GameOptions> LoadGameOptions()
     {
         var configuration = new ConfigurationBuilder()
@@ -140,14 +191,16 @@ public static class AppOptionsLoader
         return byGame;
     }
 
-    public static GameId? ReadGameArgument(IReadOnlyList<string> args)
+    public static GameId? ReadGameArgument(IReadOnlyList<string> args) =>
+        GameIdExtensions.TryParseStorageKey(ReadArgument(args, "--game") ?? string.Empty, out var game) ? game : null;
+
+    private static string? ReadArgument(IReadOnlyList<string> args, string name)
     {
         for (var index = 0; index < args.Count - 1; index++)
         {
-            if (string.Equals(args[index], "--game", StringComparison.OrdinalIgnoreCase) &&
-                GameIdExtensions.TryParseStorageKey(args[index + 1], out var game))
+            if (string.Equals(args[index], name, StringComparison.OrdinalIgnoreCase))
             {
-                return game;
+                return args[index + 1];
             }
         }
 

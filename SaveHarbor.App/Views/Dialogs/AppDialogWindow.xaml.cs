@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace SaveHarbor.App.Views.Dialogs;
@@ -26,6 +27,12 @@ public partial class AppDialogWindow : Window
 
     public Brush AccentBrush { get; init; } = Brushes.White;
 
+    // Shown instead of Message when set.
+    public FlowDocument? Document { get; init; }
+
+    // The secondary button was pressed, as opposed to the window being closed.
+    public bool SecondaryChosen { get; private set; }
+
     private void PrimaryButton_Click(object sender, RoutedEventArgs e)
     {
         DialogResult = true;
@@ -33,6 +40,7 @@ public partial class AppDialogWindow : Window
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
+        SecondaryChosen = true;
         DialogResult = false;
     }
 }

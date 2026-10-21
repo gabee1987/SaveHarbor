@@ -5,10 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
+using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
 using SaveHarbor.App.Infrastructure.Migrations;
+using SaveHarbor.App.Infrastructure.Updates;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
 using Serilog;
@@ -22,11 +24,13 @@ public partial class App : Application
     private readonly IAppDataPathProvider _pathProvider = new AppDataPathProvider();
     private readonly AppLoggingOptions _loggingOptions;
     private readonly CloudProviderOptions _cloudProviderOptions;
+    private readonly UpdateOptions _updateOptions;
 
     public App()
     {
         _loggingOptions = AppOptionsLoader.LoadLoggingOptions();
         _cloudProviderOptions = AppOptionsLoader.LoadCloudProviderOptions();
+        _updateOptions = AppOptionsLoader.LoadUpdateOptions(Environment.GetCommandLineArgs());
         ConfigureLogging(_pathProvider, _loggingOptions);
 
         _host = Host.CreateDefaultBuilder()
@@ -35,10 +39,13 @@ public partial class App : Application
                 services.AddSingleton(_pathProvider);
                 services.AddSingleton(_loggingOptions);
                 services.AddSingleton(_cloudProviderOptions);
+                services.AddSingleton(_cloudProviderOptions.Supabase);
+                services.AddSingleton(TimeProvider.System);
                 services.AddSingleton<IAppLogger, SerilogAppLogger>();
                 services.AddSingleton<IAppErrorHandler, AppErrorHandler>();
                 services.AddSingleton<IAppSettingsStore, AppSettingsStore>();
                 services.AddSingleton<IPlayerIdentity, PlayerIdentity>();
+                services.AddSingleton<IDeviceIdentity, DeviceIdentity>();
                 services.AddSingleton(serviceProvider => new GameOptionsProvider(
                     AppOptionsLoader.LoadGameOptions(),
                     serviceProvider.GetRequiredService<IAppSettingsStore>()));
@@ -60,16 +67,44 @@ public partial class App : Application
                 services.AddSingleton<ILocalSyncStateService, LocalJsonSyncStateService>();
                 services.AddSingleton<FolderCloudProvider>();
                 services.AddSingleton<GoogleDriveCloudProvider>();
-                services.AddSingleton<ICloudProvider>(serviceProvider =>
-                {
-                    var options = serviceProvider.GetRequiredService<CloudProviderOptions>();
-                    return string.Equals(options.Provider, CloudProviderKind.LocalTest, StringComparison.OrdinalIgnoreCase)
-                        ? serviceProvider.GetRequiredService<FolderCloudProvider>()
-                        : serviceProvider.GetRequiredService<GoogleDriveCloudProvider>();
-                });
-                services.AddSingleton<ICloudSetupService, CloudProviderSettingsService>();
+                services.AddSingleton(serviceProvider => new SupabaseHttp(
+                    serviceProvider.GetRequiredService<SupabaseOptions>(),
+                    serviceProvider.GetRequiredService<IAppLogger>()));
+                services.AddSingleton<SupabaseSessionStore>();
+                services.AddSingleton<SupabaseAuthClient>();
+                services.AddSingleton<SupabaseRest>();
+                services.AddSingleton<SupabaseStorage>();
+                services.AddSingleton<SupabaseGroupService>();
+                services.AddSingleton<ICloudGroupService>(serviceProvider => serviceProvider.GetRequiredService<SupabaseGroupService>());
+                services.AddSingleton(serviceProvider => new SupabaseCloudProvider(
+                    serviceProvider.GetRequiredService<SupabaseOptions>(),
+                    serviceProvider.GetRequiredService<SupabaseAuthClient>(),
+                    serviceProvider.GetRequiredService<SupabaseRest>(),
+                    serviceProvider.GetRequiredService<SupabaseStorage>(),
+                    serviceProvider.GetRequiredService<ICloudGroupService>(),
+                    serviceProvider.GetRequiredService<IAppLogger>(),
+                    serviceProvider.GetRequiredService<TimeProvider>()));
+                services.AddSingleton(serviceProvider => new CloudProviderSelector(
+                    serviceProvider.GetRequiredService<CloudProviderOptions>(),
+                    serviceProvider.GetRequiredService<IAppSettingsStore>(),
+                    serviceProvider.GetRequiredService<FolderCloudProvider>(),
+                    serviceProvider.GetRequiredService<GoogleDriveCloudProvider>(),
+                    () => serviceProvider.GetRequiredService<SupabaseCloudProvider>(),
+                    serviceProvider.GetRequiredService<IAppLogger>()));
+                services.AddSingleton<ICloudProviderSelector>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSelector>());
+                services.AddSingleton<ICloudProvider>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSelector>());
+                services.AddSingleton<CloudProviderSettingsService>();
+                services.AddSingleton<ICloudSetupService>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSettingsService>());
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
+                services.AddSingleton<IAppUpdateService>(serviceProvider => new VelopackUpdateService(
+                    _updateOptions,
+                    serviceProvider.GetRequiredService<IAppSettingsStore>(),
+                    serviceProvider.GetRequiredService<IProcessDetectionService>(),
+                    serviceProvider.GetRequiredService<IActiveGameContext>(),
+                    serviceProvider.GetRequiredService<IAppLogger>(),
+                    VelopackUpdateService.CreateSourceFactory(_updateOptions)));
                 services.AddSingleton<LegacyLayoutMigrator>();
+                services.AddSingleton<SyncStateProviderScopeMigrator>();
                 services.AddSingleton<BackupFolderOrganizer>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();
@@ -85,9 +120,10 @@ public partial class App : Application
     {
         base.OnStartup(e);
         await _host.StartAsync();
+        var games = _host.Services.GetRequiredService<IGameRegistry>().All.Select(game => game.Id).ToArray();
         var migrationReport = _host.Services.GetRequiredService<LegacyLayoutMigrator>().Run();
-        var organizerReport = _host.Services.GetRequiredService<BackupFolderOrganizer>()
-            .Run(_host.Services.GetRequiredService<IGameRegistry>().All.Select(game => game.Id));
+        var syncStateReport = _host.Services.GetRequiredService<SyncStateProviderScopeMigrator>().Run(games);
+        var organizerReport = _host.Services.GetRequiredService<BackupFolderOrganizer>().Run(games);
         LogAppInformation(_loggingOptions, "SaveHarbor started");
 
         _host.Services.GetRequiredService<IThemeService>();
@@ -95,7 +131,7 @@ public partial class App : Application
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
 
-        if (migrationReport.Errors.Count > 0 || organizerReport.Errors.Count > 0)
+        if (migrationReport.Errors.Count > 0 || syncStateReport.Errors.Count > 0 || organizerReport.Errors.Count > 0)
         {
             _host.Services.GetRequiredService<IToastService>().Warning(
                 "Data migration incomplete",

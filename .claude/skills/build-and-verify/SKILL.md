@@ -25,7 +25,7 @@ against temp-dir fixtures, sync state resolution, lock acquire/verify logic with
 
 ## Manual smoke test (LocalTest provider)
 
-Set `SaveHarbor:CloudProvider:Provider` to `LocalTest` in the **output** `appsettings.json`
+Set `SaveHarbor:CloudProvider:DeveloperProviderOverride` to `LocalTest` in the **output** `appsettings.json`
 (never commit that change), then for each game:
 1. App starts, correct theme, worlds listed.
 2. Upload v1 → `%LOCALAPPDATA%\SaveHarbor\cloud-test` contains manifest + version.
@@ -34,12 +34,52 @@ Set `SaveHarbor:CloudProvider:Provider` to `LocalTest` in the **output** `appset
 5. Close game → upload happens, lock cleared.
 6. Switch game → other game's worlds/theme/cloud status; no cross-contamination of files.
 
+## SaveHarbor Cloud against the local Supabase stack
+
+With the local stack running (`npm run db:start`, Docker), one opt-in test drives `SupabaseCloudProvider` through the
+real APIs (sign-in code from Mailpit, upload, stale-upload refusal, lock, heartbeat, download, removal):
+
+```bash
+SAVEHARBOR_SUPABASE_LOCAL_KEY=$(npx supabase status -o env | grep '^PUBLISHABLE_KEY=' | cut -d= -f2 | tr -d '"')   dotnet test SaveHarbor.sln --no-build -- --filter-class "SaveHarbor.Tests.Cloud.Supabase.SupabaseLocalStackTests"
+```
+
+Without the variable the test is skipped. To run the app against the local stack, put `http://127.0.0.1:54321` and
+the local publishable key under `SaveHarbor:CloudProvider:Supabase` in the **output** `appsettings.json` (never commit
+it). With `CloudProvider` empty in `%LOCALAPPDATA%\SaveHarbor\app-settings.json` the app offers the provider choice on
+start; with `Supabase` it opens the sign-in and group dialog. Sign-in codes arrive in Mailpit
+(`http://127.0.0.1:54324`).
+
 ## Publish
 
 ```powershell
 dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -o artifacts/publish/SaveHarbor
 ```
 `artifacts/` is git-ignored. Never publish with a plaintext client secret.
+
+## Trying an update locally (needs `vpk`, owner installs it: `dotnet tool install -g vpk`)
+
+Pack two versions into one feed folder, install the older one, then start it with that folder as its feed. The second
+pack overwrites `SaveHarborApp-win-Setup.exe`, so keep a copy of the first one:
+```powershell
+dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -p:Version=2.3.0 -o artifacts/v230
+vpk pack --packId SaveHarborApp --packVersion 2.3.0 --packDir artifacts/v230 --mainExe SaveHarbor.App.exe --outputDir artifacts/feed
+Copy-Item artifacts/feed/SaveHarborApp-win-Setup.exe artifacts/Setup-2.3.0.exe
+dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -p:Version=2.3.1 -o artifacts/v231
+vpk pack --packId SaveHarborApp --packVersion 2.3.1 --packDir artifacts/v231 --mainExe SaveHarbor.App.exe --outputDir artifacts/feed
+artifacts/Setup-2.3.0.exe
+& "$env:LOCALAPPDATA\SaveHarborApp\current\SaveHarbor.App.exe" --update-source "$PWD\artifacts\feed"
+```
+Expected: about 10 s after start the banner shows "SaveHarbor 2.3.1 is ready." → Restart now → the footer shows
+v2.3.1. Uninstall afterwards from Windows Settings → Apps. Flag names: check `vpk pack --help` (V3).
+
+## Release pipeline (`.github/workflows`)
+
+`ci.yml` fails when the Release build has more warnings than `WARNING_BASELINE`; lower the number when warnings are
+fixed, never raise it. Before tagging, check the notes the release will use:
+```powershell
+./build/Get-ReleaseNotes.ps1 -Version 2.3.0 -Out artifacts/notes.md   # fails when CHANGELOG.md has no such section
+```
+`ReleaseNotesScriptTests` covers the script (needs `pwsh`). The owner's release checklist is in the README.
 
 ## Running the app
 

@@ -28,9 +28,23 @@ public partial class MainWindowViewModel
             if (HasOwnCloudSession())
             {
                 hasObservedGameRunningDuringSession = true;
+                await HeartbeatCloudSessionAsync();
             }
 
             return;
+        }
+
+        // The game saved while it ran: show the world's new save time and size.
+        if (wasRunning)
+        {
+            try
+            {
+                await RefreshSelectedWorldFromDiskAsync();
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.Warning(AppLogKeyword.Ui, "Could not re-read the world after the game closed: {Message}", ex.Message);
+            }
         }
 
         if (wasRunning && hasObservedGameRunningDuringSession && SelectedWorld is not null && HasOwnCloudSession())
@@ -117,9 +131,39 @@ public partial class MainWindowViewModel
         }
     }
 
+    // Keeps the session lock alive while the game runs. The service reaches the cloud only once per heartbeat interval,
+    // so this runs on every tick.
+    private async Task HeartbeatCloudSessionAsync()
+    {
+        if (isHeartbeating || SelectedWorld is not { } world)
+        {
+            return;
+        }
+
+        isHeartbeating = true;
+        try
+        {
+            var result = await _cloudSyncService.HeartbeatSessionAsync(world);
+            if (result.State == CloudSyncState.Conflict)
+            {
+                StatusText = result.Message;
+                AddActivity("Warning", result.Message);
+                _toastService.Warning("Session lock lost", result.Message);
+                await RefreshCloudStatusAsync(showToast: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning(AppLogKeyword.CloudSession, "Session heartbeat failed: {Message}", ex.Message);
+        }
+        finally
+        {
+            isHeartbeating = false;
+        }
+    }
+
     private bool HasOwnCloudSession()
     {
-        return CloudStatus?.SessionLock is not null &&
-            string.Equals(CloudStatus.SessionLock.MachineName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+        return CloudStatus?.SessionLock is not null && CloudStatus.IsOwnSession;
     }
 }

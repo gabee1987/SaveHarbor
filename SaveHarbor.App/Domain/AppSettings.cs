@@ -5,6 +5,15 @@ public sealed class AppSettings
     public int SchemaVersion { get; set; } = 1;
     public string LastGame { get; set; } = string.Empty;
 
+    // "GoogleDrive" or "Supabase". Empty means no cloud provider has been chosen on this PC yet.
+    public string CloudProvider { get; set; } = string.Empty;
+
+    // Identifies this installation in session locks. Generated once, never changes.
+    public string DeviceId { get; set; } = string.Empty;
+
+    // This PC's name for friends. Empty means the Windows computer name.
+    public string DeviceLabel { get; set; } = string.Empty;
+
     // Name shown to friends in sessions and uploads. Empty means the Windows user name (the previous behaviour).
     public string PlayerName { get; set; } = string.Empty;
 
@@ -16,6 +25,9 @@ public sealed class AppSettings
     public int CloudVersionRetentionCount { get; set; }
 
     public bool AmbientEffects { get; set; } = true;
+
+    // An update the player chose to skip ("2.4.0"); automatic checks do not offer it again.
+    public string SkippedUpdateVersion { get; set; } = string.Empty;
 
     // Per-game save folder chosen in Settings (storage key -> path). Overrides appsettings.json.
     public Dictionary<string, string> SaveRootOverrides { get; set; } = new(StringComparer.OrdinalIgnoreCase);

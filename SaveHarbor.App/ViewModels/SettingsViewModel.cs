@@ -21,6 +21,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IAppDataPathProvider _paths;
     private readonly Action _saveFolderChanged;
     private readonly Action _settingsChanged;
+    private readonly SettingsSharingServices _sharing;
 
     public SettingsViewModel(
         IAppSettingsStore settings,
@@ -29,7 +30,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         IPlayerIdentity playerIdentity,
         IAppDataPathProvider paths,
         Action saveFolderChanged,
-        Action settingsChanged)
+        Action settingsChanged,
+        SettingsSharingServices sharing)
     {
         _settings = settings;
         _activeGame = activeGame;
@@ -38,6 +40,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _paths = paths;
         _saveFolderChanged = saveFolderChanged;
         _settingsChanged = settingsChanged;
+        _sharing = sharing;
         Refresh();
     }
 
@@ -138,6 +141,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(BackupFolder));
         OnPropertyChanged(nameof(HasCustomSaveFolder));
         OnPropertyChanged(nameof(EffectivePlayerName));
+        RefreshSharing();
     }
 
     [RelayCommand]

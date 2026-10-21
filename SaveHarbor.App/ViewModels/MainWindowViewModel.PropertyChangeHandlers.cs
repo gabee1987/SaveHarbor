@@ -31,6 +31,9 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasSessionLock));
         OnPropertyChanged(nameof(IsOwnSession));
         OnPropertyChanged(nameof(IsOtherPlayerHosting));
+        OnPropertyChanged(nameof(CloudLockText));
+        OnPropertyChanged(nameof(HasCloudLockText));
+        NotifySharingHero();
         NotifySyncComparison();
         ApplySelectedStatusToBadges(value);
     }

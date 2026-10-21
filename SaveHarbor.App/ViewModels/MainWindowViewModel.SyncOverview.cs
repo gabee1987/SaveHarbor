@@ -81,6 +81,7 @@ public partial class MainWindowViewModel
     private async Task RefreshCloudOverviewAsync()
     {
         var game = _activeGame.Current.Id;
+        await RefreshSharingHeroAsync();
         try
         {
             var overview = await _cloudSyncService.GetOverviewAsync(game, Worlds.ToArray());

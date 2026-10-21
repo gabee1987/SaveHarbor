@@ -4,11 +4,17 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed partial class CloudSyncService
 {
-    // Applies "Keep shared versions" after this player's successful upload. A version that cannot be removed (for
-    // example one another player owns on Google Drive) is skipped and logged; it never fails the upload.
+    // Applies "Keep shared versions" after this player's successful upload; 0 means the provider's default. A version
+    // that cannot be removed (for example one another player owns on Google Drive) is skipped and logged; it never
+    // fails the upload.
     private async Task PruneCloudVersionsAsync(GameWorld world, int latestVersionNumber, CloudSessionLock? sessionLock, CancellationToken cancellationToken)
     {
         var keep = settings.Current.CloudVersionRetentionCount;
+        if (keep == 0)
+        {
+            keep = cloudProvider.Capabilities.DefaultRetentionCount;
+        }
+
         if (keep <= 0)
         {
             return;

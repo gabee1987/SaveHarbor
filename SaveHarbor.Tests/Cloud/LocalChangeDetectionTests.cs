@@ -26,7 +26,7 @@ public sealed class LocalChangeDetectionTests : IDisposable
         {
             [GameId.Dragonwilds] = new() { SaveRoot = saveRoot }
         }));
-        stateService = new LocalJsonSyncStateService(new TestPathProvider(temp));
+        stateService = new LocalJsonSyncStateService(new TestPathProvider(temp), new FixedProviderSelector());
         service = new CloudSyncService(
             provider,
             stateService,
@@ -34,7 +34,9 @@ public sealed class LocalChangeDetectionTests : IDisposable
             new StubGameRegistry(new StubGameDefinition(GameId.Dragonwilds, adapter)),
             new FixedPlayerIdentity(),
             new AppSettingsStore(new TestPathProvider(temp)),
-            new NullAppLogger());
+            new NullAppLogger(),
+            new FixedDeviceIdentity(),
+            new CloudProviderOptions());
         provider.SeedManifest(GameId.Dragonwilds, new CloudWorldManifest
         {
             Game = "dragonwilds",

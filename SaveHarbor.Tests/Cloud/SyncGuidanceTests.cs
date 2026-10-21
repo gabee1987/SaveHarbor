@@ -48,6 +48,34 @@ public sealed class SyncGuidanceTests
         Assert.Equal(action != SyncAction.None, advice.HasAction);
     }
 
+    [Theory]
+    [InlineData(CloudConnectionReason.SignIn, "Sign in to share", SyncAction.Connect)]
+    [InlineData(CloudConnectionReason.Group, "Choose a group", SyncAction.Connect)]
+    [InlineData(CloudConnectionReason.Unreachable, "Cloud unreachable", SyncAction.Connect)]
+    [InlineData(CloudConnectionReason.UpdateRequired, "Update required", SyncAction.None)]
+    [InlineData(CloudConnectionReason.NotConfigured, "Cloud not connected", SyncAction.None)]
+    public void Advise_NotConnectedWithAReason_ShowsTheProvidersWords(string reason, string headline, SyncAction action)
+    {
+        var status = Status(CloudSyncState.NotConnected, null, null) with
+        {
+            Connection = new CloudConnectionStatus(false, "SaveHarbor Cloud", null, "TEST_PROVIDER_MESSAGE", true, reason)
+        };
+
+        var advice = SyncAdvisor.Advise(status);
+
+        Assert.Equal(headline, advice.Headline);
+        Assert.Equal("TEST_PROVIDER_MESSAGE", advice.Explanation);
+        Assert.Equal(action, advice.Action);
+    }
+
+    [Fact]
+    public void Advise_NotConnectedWithoutAReason_KeepsTheDriveWording()
+    {
+        var status = Status(CloudSyncState.NotConnected, null, null) with { Connection = CloudConnectionStatus.NotConnected("Google Drive") };
+
+        Assert.StartsWith("Connect Google Drive", SyncAdvisor.Advise(status).Explanation);
+    }
+
     [Fact]
     public void DescribeLocal_PlayedSinceBase_SaysNotUploaded()
     {

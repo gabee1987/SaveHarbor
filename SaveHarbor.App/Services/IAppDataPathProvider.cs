@@ -10,7 +10,12 @@ public interface IAppDataPathProvider
 
     string GetBackupRoot(GameId game);
 
+    // State shared by every cloud provider (for example the Windrose world ledger).
     string GetSyncStateRoot(GameId game);
+
+    // Per-world sync state of one provider; version numbers differ between providers. providerKey comes from
+    // CloudProviderKind.ToStorageKey.
+    string GetSyncStateRoot(GameId game, string providerKey);
 
     string GetLocalTestCloudRoot(GameId game);
 
@@ -25,6 +30,9 @@ public interface IAppDataPathProvider
     string GoogleTokenStorePath { get; }
 
     string GoogleClientSecretsPath { get; }
+
+    // SaveHarbor Cloud sign-in, DPAPI-protected for the current Windows user.
+    string SupabaseSessionPath { get; }
 
     string CloudProviderSettingsPath { get; }
 

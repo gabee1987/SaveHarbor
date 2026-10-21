@@ -10,5 +10,8 @@ public enum CloudSyncState
     SomeonePlaying,
     Conflict,
     AuthError,
-    Error
+    Error,
+
+    // The cloud or this world's shared files need a newer SaveHarbor; nothing is uploaded or downloaded.
+    UpdateRequired
 }

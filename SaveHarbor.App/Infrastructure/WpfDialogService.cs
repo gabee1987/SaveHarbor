@@ -1,10 +1,12 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 using Microsoft.Win32;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 using SaveHarbor.App.ViewModels;
 using SaveHarbor.App.Views.Shell;
 using SaveHarbor.App.Views.Dialogs;
@@ -106,6 +108,44 @@ public sealed class WpfDialogService : IDialogService
         };
 
         return window.ShowDialog() == true ? new CloudFolderChoice(window.FolderInputValue, window.TestedFolderName) : null;
+    }
+
+    public string? ChooseCloudProvider(Uri skinDictionary, IReadOnlyList<CloudProviderChoice> choices)
+    {
+        var window = new CloudProviderChoiceWindow(skinDictionary, choices) { Owner = FindOwner() };
+        return window.ShowDialog() == true ? window.SelectedKind : null;
+    }
+
+    public CloudGroupSetupResult? ConfigureCloudGroup(Uri skinDictionary, string gameDisplayName, CloudGroupSetupViewModel viewModel)
+    {
+        var window = new CloudGroupSetupWindow(skinDictionary, gameDisplayName, viewModel) { Owner = FindOwner() };
+        window.ShowDialog();
+        return viewModel.Result;
+    }
+
+    public bool ShowReleaseNotes(string title, string markdown, bool canSkip)
+    {
+        var document = MarkdownLite.ToFlowDocument(string.IsNullOrWhiteSpace(markdown) ? UiTextCatalog.Get("Update.NoNotes") : markdown);
+        document.FontFamily = new FontFamily("Segoe UI");
+        document.FontSize = 13;
+        document.SetResourceReference(FlowDocument.ForegroundProperty, "InkBrush");
+
+        var window = new AppDialogWindow
+        {
+            Owner = FindOwner(),
+            Width = 560,
+            DialogTitle = title,
+            Subtitle = UiTextCatalog.Get("Update.NotesSubtitle"),
+            Document = document,
+            IconText = "i",
+            PrimaryText = UiTextCatalog.Get("Dialog.Close"),
+            CancelText = canSkip ? UiTextCatalog.Get("Update.Skip") : string.Empty,
+            CancelVisibility = canSkip ? Visibility.Visible : Visibility.Collapsed,
+            AccentBrush = System.Windows.Application.Current.TryFindResource("AccentBrush") as Brush ?? Brushes.White
+        };
+
+        window.ShowDialog();
+        return window.SecondaryChosen;
     }
 
     private static bool? ShowDialog(

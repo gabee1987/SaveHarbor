@@ -30,12 +30,27 @@ public partial class MainWindowViewModel
                 {
                     OnPropertyChanged(nameof(AmbientEffectsEnabled));
                     OnPropertyChanged(nameof(PlayerDisplayName));
-                });
+                },
+                new SettingsSharingServices(
+                    _providerSelector,
+                    _cloudGroups,
+                    _cloudSyncService,
+                    _deviceIdentity,
+                    _errorHandler,
+                    _toastService,
+                    SetupCloudGroupAsync,
+                    RefreshCloudAfterAccountChangeAsync));
             OnPropertyChanged(nameof(Settings));
         }
 
         Settings.Refresh();
         IsSettingsOpen = true;
+    }
+
+    private async Task RefreshCloudAfterAccountChangeAsync()
+    {
+        await RefreshCloudStatusAsync(showToast: false);
+        await RefreshCloudOverviewAsync();
     }
 
     [RelayCommand]

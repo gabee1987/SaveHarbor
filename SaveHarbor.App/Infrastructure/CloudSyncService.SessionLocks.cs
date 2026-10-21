@@ -4,29 +4,28 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed partial class CloudSyncService
 {
-    private static bool IsActiveOtherPlayerLock(CloudSessionLock? sessionLock)
+    private DateTimeOffset Now => timeProvider.GetUtcNow();
+
+    private TimeSpan LockTtl => TimeSpan.FromSeconds(options.LockTtlSeconds);
+
+    private TimeSpan HeartbeatInterval => TimeSpan.FromSeconds(options.HeartbeatIntervalSeconds);
+
+    // now is the provider's clock when it has one, so a PC with a wrong clock does not misjudge expiry.
+    private bool IsActiveOtherPlayerLock(CloudSessionLock? sessionLock, DateTimeOffset now)
     {
-        if (sessionLock is null)
-        {
-            return false;
-        }
-
-        if (DateTimeOffset.UtcNow > sessionLock.ExpiresAtUtc)
-        {
-            return false;
-        }
-
-        return !string.Equals(sessionLock.MachineName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+        return sessionLock is not null && sessionLock.IsLiveAt(now) && !IsOwnLock(sessionLock);
     }
 
-    private static bool IsOwnLock(CloudSessionLock? sessionLock)
+    // Locks written before version 2.3 have no DeviceId and are matched by computer name.
+    private bool IsOwnLock(CloudSessionLock? sessionLock)
     {
-        return sessionLock is not null &&
-            string.Equals(sessionLock.MachineName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+        return sessionLock is not null && sessionLock.IsHeldBy(deviceIdentity.DeviceId, Environment.MachineName);
     }
 
-    private static bool IsActiveOwnLock(CloudSessionLock? sessionLock)
+    private bool IsActiveOwnLock(CloudSessionLock? sessionLock, DateTimeOffset now)
     {
-        return IsOwnLock(sessionLock) && DateTimeOffset.UtcNow <= sessionLock!.ExpiresAtUtc;
+        return IsOwnLock(sessionLock) && sessionLock!.IsLiveAt(now);
     }
+
+    private static string HeartbeatKey(GameWorld world) => $"{world.Game.ToStorageKey()}:{world.WorldId}";
 }

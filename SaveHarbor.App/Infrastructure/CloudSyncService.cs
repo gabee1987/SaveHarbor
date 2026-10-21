@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Services;
@@ -13,6 +14,12 @@ public sealed partial class CloudSyncService : ICloudSyncService
     private readonly IPlayerIdentity playerIdentity;
     private readonly IAppSettingsStore settings;
     private readonly IAppLogger logger;
+    private readonly IDeviceIdentity deviceIdentity;
+    private readonly CloudProviderOptions options;
+    private readonly TimeProvider timeProvider;
+
+    // When this app last renewed each of its session locks (key: game and world id).
+    private readonly ConcurrentDictionary<string, DateTimeOffset> lastHeartbeats = new(StringComparer.OrdinalIgnoreCase);
 
     public CloudSyncService(
         ICloudProvider cloudProvider,
@@ -21,7 +28,10 @@ public sealed partial class CloudSyncService : ICloudSyncService
         IGameRegistry gameRegistry,
         IPlayerIdentity playerIdentity,
         IAppSettingsStore settings,
-        IAppLogger logger)
+        IAppLogger logger,
+        IDeviceIdentity deviceIdentity,
+        CloudProviderOptions options,
+        TimeProvider? timeProvider = null)
     {
         this.cloudProvider = cloudProvider;
         this.localSyncStateService = localSyncStateService;
@@ -30,6 +40,9 @@ public sealed partial class CloudSyncService : ICloudSyncService
         this.playerIdentity = playerIdentity;
         this.settings = settings;
         this.logger = logger;
+        this.deviceIdentity = deviceIdentity;
+        this.options = options;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default)
@@ -43,9 +56,16 @@ public sealed partial class CloudSyncService : ICloudSyncService
         logger.Debug(AppLogKeyword.CloudSync, "Refreshing cloud status for world {WorldId} ({WorldName})", world.WorldId, world.WorldName);
 
         var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
-        localState.LastCloudCheckAtUtc = DateTimeOffset.UtcNow;
+        localState.LastCloudCheckAtUtc = Now;
 
         var connection = await cloudProvider.GetConnectionStatusAsync(world.Game, cancellationToken);
+        if (connection.Reason == CloudConnectionReason.UpdateRequired)
+        {
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+            logger.Warning(AppLogKeyword.CloudSync, "The cloud needs a newer app for world {WorldId}", world.WorldId);
+            return UpdateRequiredStatus(connection, null, null, localState);
+        }
+
         if (!connection.IsConnected)
         {
             await localSyncStateService.SaveAsync(localState, cancellationToken);
@@ -58,12 +78,24 @@ public sealed partial class CloudSyncService : ICloudSyncService
                 null,
                 localState,
                 "Cloud not connected",
-                "Connect a cloud provider before syncing this world.");
+                connection.Reason.Length > 0 ? connection.Message : "Connect a cloud provider before syncing this world.");
         }
 
         var manifest = await cloudProvider.GetWorldManifestAsync(world.Game, world.WorldId, cancellationToken);
         var sessionLock = await cloudProvider.GetSessionLockAsync(world.Game, world.WorldId, cancellationToken);
         var latestVersion = manifest?.LatestVersion;
+
+        if (manifest?.SchemaVersion > CloudSchema.MaxKnownManifestVersion || sessionLock?.SchemaVersion > CloudSchema.MaxKnownLockVersion)
+        {
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+            logger.Warning(
+                AppLogKeyword.CloudSync,
+                "World {WorldId} was shared by a newer app (manifest {ManifestVersion}, lock {LockVersion})",
+                world.WorldId,
+                manifest?.SchemaVersion,
+                sessionLock?.SchemaVersion);
+            return UpdateRequiredStatus(connection, manifest, sessionLock, localState);
+        }
 
         if (latestVersion is not null)
         {
@@ -73,7 +105,7 @@ public sealed partial class CloudSyncService : ICloudSyncService
 
         await localSyncStateService.SaveAsync(localState, cancellationToken);
 
-        var otherPlayerPlaying = IsActiveOtherPlayerLock(sessionLock);
+        var otherPlayerPlaying = IsActiveOtherPlayerLock(sessionLock, Now);
         var hasLocalChanges = SyncStateClassifier.NeedsLocalChangeCheck(localState.LocalBaseVersionNumber, latestVersion?.VersionNumber, otherPlayerPlaying)
             && await DetectLocalChangesAsync(localState, world, cancellationToken) == true;
         var state = SyncStateClassifier.Classify(localState.LocalBaseVersionNumber, latestVersion?.VersionNumber, hasLocalChanges, otherPlayerPlaying);
@@ -90,8 +122,30 @@ public sealed partial class CloudSyncService : ICloudSyncService
         var (title, detail) = DescribeStatus(state, localState.LocalBaseVersionNumber, latestVersion, sessionLock);
         return new CloudSyncStatus(state, connection, manifest, latestVersion, sessionLock, localState, title, detail)
         {
-            HasLocalChanges = hasLocalChanges
+            HasLocalChanges = hasLocalChanges,
+            IsOwnSession = IsOwnLock(sessionLock)
         };
+    }
+
+    private static CloudSyncStatus UpdateRequiredStatus(
+        CloudConnectionStatus connection,
+        CloudWorldManifest? manifest,
+        CloudSessionLock? sessionLock,
+        LocalSyncState localState) => new(
+            CloudSyncState.UpdateRequired,
+            connection,
+            manifest,
+            null,
+            sessionLock,
+            localState,
+            "Update required",
+            "This version of SaveHarbor is too old for your group's cloud. Update to continue sharing.");
+
+    // Upload, download and starting a session never write shared files in a format newer than this app knows.
+    private CloudSyncResult UpdateRequiredResult(CloudSyncStatus status, AppLogKeyword keyword, GameWorld world)
+    {
+        logger.Warning(keyword, "Blocked for world {WorldId} until the app is updated", world.WorldId);
+        return new CloudSyncResult(false, CloudSyncState.UpdateRequired, status.Detail);
     }
 
     private static (string Title, string Detail) DescribeStatus(

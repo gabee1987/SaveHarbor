@@ -5,7 +5,8 @@ using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class LocalJsonSyncStateService(IAppDataPathProvider pathProvider) : ILocalSyncStateService
+// Each cloud provider keeps its own state per world, because version numbers start at 1 again in each provider.
+public sealed class LocalJsonSyncStateService(IAppDataPathProvider pathProvider, ICloudProviderSelector providerSelector) : ILocalSyncStateService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -61,7 +62,7 @@ public sealed class LocalJsonSyncStateService(IAppDataPathProvider pathProvider)
         try
         {
             var stateGame = GameIdExtensions.TryParseStorageKey(state.Game, out var parsedGame) ? parsedGame : GameId.Windrose;
-            Directory.CreateDirectory(pathProvider.GetSyncStateRoot(stateGame));
+            Directory.CreateDirectory(GetStateRoot(stateGame));
 
             var path = GetStatePath(stateGame, state.WorldId);
             var tempPath = $"{path}.{Guid.NewGuid():N}.tmp";
@@ -87,6 +88,9 @@ public sealed class LocalJsonSyncStateService(IAppDataPathProvider pathProvider)
     private string GetStatePath(GameId game, string worldId)
     {
         var safeWorldId = string.Join("_", worldId.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-        return Path.Combine(pathProvider.GetSyncStateRoot(game), $"{safeWorldId}.json");
+        return Path.Combine(GetStateRoot(game), $"{safeWorldId}.json");
     }
+
+    private string GetStateRoot(GameId game) =>
+        pathProvider.GetSyncStateRoot(game, CloudProviderKind.ToStorageKey(providerSelector.ActiveKind));
 }

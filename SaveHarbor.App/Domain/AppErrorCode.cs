@@ -9,6 +9,7 @@ public enum AppErrorCode
     InvalidData,
     InvalidOperation,
     CloudNotConnected,
+    CloudAuth,
     CloudConflict,
     CloudArchiveMissing,
     CloudHashMismatch,

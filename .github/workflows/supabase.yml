@@ -1,0 +1,45 @@
+name: supabase
+
+# Applies every migration and the seed to a fresh local stack, then runs the pgTAP tests and the linter.
+# Nothing here touches the hosted project: the owner pushes migrations from their PC (supabase db push).
+on:
+  push:
+    branches: [develop, main]
+    paths: ['supabase/**', '.github/workflows/supabase.yml']
+  pull_request:
+    paths: ['supabase/**', '.github/workflows/supabase.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          # Same version as the supabase devDependency in package.json.
+          version: 2.119.0
+
+      - name: Start the local stack
+        run: supabase start
+
+      - name: Apply migrations and seed
+        run: supabase db reset
+
+      - name: Database tests
+        run: supabase test db
+
+      - name: Lint
+        run: supabase db lint --level warning --fail-on warning
+
+      - name: Stop
+        if: always()
+        run: supabase stop --no-backup
