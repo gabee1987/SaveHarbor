@@ -72,6 +72,15 @@ artifacts/Setup-2.3.0.exe
 Expected: about 10 s after start the banner shows "SaveHarbor 2.3.1 is ready." → Restart now → the footer shows
 v2.3.1. Uninstall afterwards from Windows Settings → Apps. Flag names: check `vpk pack --help` (V3).
 
+## Release pipeline (`.github/workflows`)
+
+`ci.yml` fails when the Release build has more warnings than `WARNING_BASELINE`; lower the number when warnings are
+fixed, never raise it. Before tagging, check the notes the release will use:
+```powershell
+./build/Get-ReleaseNotes.ps1 -Version 2.3.0 -Out artifacts/notes.md   # fails when CHANGELOG.md has no such section
+```
+`ReleaseNotesScriptTests` covers the script (needs `pwsh`). The owner's release checklist is in the README.
+
 ## Running the app
 
 `dotnet run --project SaveHarbor.App` (Windows only). The game itself is not required for

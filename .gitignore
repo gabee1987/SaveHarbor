@@ -498,3 +498,10 @@ $RECYCLE.BIN/
 
 # Testing folder
 Testing
+
+# SaveHarbor: vpk output, companion web page build, Supabase CLI state
+Releases/
+web/node_modules/
+web/dist/
+supabase/.temp/
+supabase/.branches/

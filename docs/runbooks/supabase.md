@@ -79,15 +79,20 @@ The built-in e-mail sender is rate-limited and meant for development. If codes a
 
 ## 5. Operations
 
-- **Paused project (free plan, after 1 week without activity):** Dashboard → project → Resume. The weekly keep-alive
-  workflow (plan 07) should prevent it; check its run history if it happens.
+- **Paused project (free plan, after 1 week without activity):** Dashboard → project → Resume. The weekly
+  `keepalive` workflow (`.github/workflows/keepalive.yml`, Mondays 06:00 UTC) should prevent it. It needs the
+  repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`; check its run history if the project pauses,
+  and run it by hand (Actions → keepalive → Run workflow) after setting the variables.
 - **Storage use:** Dashboard → Storage, or `select sum(archive_size_bytes) from world_versions` in the SQL editor.
   The free plan includes 1 GB.
-- **Remove a member:** the group owner uses Settings in the app (`remove_member`), or delete the row from
-  `group_members` in the dashboard.
+- **Remove a member:** delete the row from `group_members` in the dashboard. The `remove_member` function exists, but
+  the app has no button for it yet (planned with T12.5).
 - **Delete a user on request (GDPR):** delete or reassign that user's rows in `world_versions` (they reference the
   uploader), then delete the user under Authentication → Users. Memberships and locks are removed with the user.
 - **Backup before risky migrations:** download the `saves` bucket in the dashboard and run
   `npx supabase db dump --linked -f backup.sql` (keep the file outside the repository).
 - **Rotate the publishable key:** requires a new app release because the key ships in `appsettings.json`; disable the
-  old key only after friends have updated.
+  old key only after friends have updated. Update the `SUPABASE_PUBLISHABLE_KEY` repository variable too.
+- **Raise `min_supported_app_version`:** only together with a breaking schema migration, and only after the app
+  release that understands it is live (README, "Releasing a new version"). Older apps then show "Update required"
+  and stop writing until they update.

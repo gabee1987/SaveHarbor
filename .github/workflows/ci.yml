@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Warnings of the Release build at the time this workflow was added. Lower it when warnings are fixed; never raise it.
+  WARNING_BASELINE: 0
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore SaveHarbor.sln
+
+      - name: Build
+        shell: pwsh
+        run: |
+          dotnet build SaveHarbor.sln -c Release --no-restore -p:TreatWarningsAsErrors=false "-consoleLoggerParameters:NoSummary" | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Warning count must not grow
+        shell: pwsh
+        run: |
+          $warnings = @(Select-String -Path build.log -Pattern ': warning [A-Z]+[0-9]+' | ForEach-Object { $_.Line.Trim() } | Sort-Object -Unique)
+          $warnings | ForEach-Object { Write-Host $_ }
+          Write-Host "Warnings: $($warnings.Count) (baseline $env:WARNING_BASELINE)"
+          if ($warnings.Count -gt [int]$env:WARNING_BASELINE) {
+            Write-Host "::error::The build has $($warnings.Count) warnings, more than the baseline of $env:WARNING_BASELINE."
+            exit 1
+          }
+
+      - name: Test
+        run: dotnet test SaveHarbor.sln -c Release --no-build
