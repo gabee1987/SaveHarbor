@@ -289,6 +289,25 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Foreground="{DynamicResource InkBrush}" FontSize="13.5">
+                                        <Run Text="{ui:UiText Settings.AppVersion}" />
+                                        <Run Text="{Binding AppVersionText, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{ui:UiText Settings.UpdatesHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <TextBlock Text="{ui:UiText Settings.UpdatesUnavailable}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
+                                               Visibility="{Binding UpdatesUnavailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="{ui:SpacedText Settings.CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}"
+                                        Style="{DynamicResource SkinButton}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <Border Style="{DynamicResource SkinSettingRow}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0">
                                     <TextBlock Text="{ui:UiText Settings.Troubleshooting}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" />
                                     <TextBlock Text="{ui:UiText Settings.TroubleshootingHint}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0" />
                                 </StackPanel>

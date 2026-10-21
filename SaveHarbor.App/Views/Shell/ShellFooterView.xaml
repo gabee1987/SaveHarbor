@@ -15,14 +15,21 @@
                 <Run Text="{Binding PlayerDisplayName, Mode=OneWay}" Foreground="{DynamicResource InkBrush}" />
                 <Run Text="  ·  " />
                 <Run Text="{Binding CloudProviderText, Mode=OneWay}" />
+                <Run Text="  ·  " />
+                <Run Text="{Binding AppVersionText, Mode=OneWay}" />
             </TextBlock>
-            <Button Grid.Column="1"
-                    Content="{ui:SpacedText Shell.Settings}"
-                    Command="{Binding OpenSettingsCommand}"
-                    Style="{DynamicResource SkinButton}"
-                    MinHeight="30"
-                    Padding="14,3"
-                    ToolTip="{ui:UiText Shell.SettingsTooltip}" />
+            <Grid Grid.Column="1">
+                <Button Content="{ui:SpacedText Shell.Settings}"
+                        Command="{Binding OpenSettingsCommand}"
+                        Style="{DynamicResource SkinButton}"
+                        MinHeight="30"
+                        Padding="14,3"
+                        ToolTip="{ui:UiText Shell.SettingsTooltip}" />
+                <!-- An update waits ("Later" was chosen); it installs when SaveHarbor closes. -->
+                <Ellipse Width="8" Height="8" Fill="{DynamicResource SkinGoldBrightBrush}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                         Margin="0,-3,-3,0" IsHitTestVisible="False"
+                         Visibility="{Binding HasUpdateDot, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
         </Grid>
     </StackPanel>
 </UserControl>

@@ -23,6 +23,9 @@ description: SaveHarbor cloud versioning model, manifest/lock JSON contracts, sy
 ## State resolution (`CloudSyncService.RefreshStatusAsync`)
 
 Order matters:
+0. Connection reason `UpdateRequired` (SaveHarbor Cloud's minimum app version), or a manifest/lock whose
+   `SchemaVersion` is above `CloudSchema.MaxKnownManifestVersion`/`MaxKnownLockVersion` → `UpdateRequired`. Upload,
+   download and starting a session refuse in that state (`UpdateRequiredResult`); ending a session still works.
 1. Not connected → `NotConnected`.
 2. No manifest/latest → `ConnectedNoCloudSave`.
 3. Unexpired lock from another machine → `SomeonePlaying`.

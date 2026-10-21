@@ -44,7 +44,35 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <local:ShellHeaderView />
+            <StackPanel>
+                <!-- A new version: found, downloading, or ready to install. "Later" hides it until the next one. -->
+                <Border Style="{DynamicResource SkinSettingRow}" Margin="0,12,0,0"
+                        Visibility="{Binding ShowUpdateBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding UpdateBannerText}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" TextWrapping="Wrap" />
+                            <ProgressBar Height="3" Margin="0,6,0,0" Maximum="100" Value="{Binding UpdateProgress, Mode=OneWay}"
+                                         Foreground="{DynamicResource SkinGoldBrush}" Background="Transparent" BorderThickness="0"
+                                         Visibility="{Binding IsUpdateDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{ui:SpacedText Update.WhatsNew}" Command="{Binding ShowReleaseNotesCommand}" Style="{DynamicResource SkinLinkButton}"
+                                    Margin="12,0,0,0" VerticalAlignment="Center" />
+                            <Button Content="{ui:SpacedText Update.RestartNow}" Command="{Binding RestartForUpdateCommand}" Style="{DynamicResource SkinButton}"
+                                    Margin="12,0,0,0" ToolTip="{ui:UiText Update.RestartTooltip}"
+                                    Visibility="{Binding IsUpdateReady, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <Button Content="{ui:SpacedText Update.Later}" Command="{Binding LaterCommand}" Style="{DynamicResource SkinLinkButton}"
+                                    Margin="12,0,0,0" VerticalAlignment="Center" ToolTip="{ui:UiText Update.LaterTooltip}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <local:ShellHeaderView />
+            </StackPanel>
 
             <ContentControl Grid.Row="1" Style="{DynamicResource SkinOrnamentDivider}" Margin="0,10,0,18" />
 

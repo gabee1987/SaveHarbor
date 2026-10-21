@@ -56,6 +56,22 @@ dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -o art
 ```
 `artifacts/` is git-ignored. Never publish with a plaintext client secret.
 
+## Trying an update locally (needs `vpk`, owner installs it: `dotnet tool install -g vpk`)
+
+Pack two versions into one feed folder, install the older one, then start it with that folder as its feed. The second
+pack overwrites `SaveHarborApp-win-Setup.exe`, so keep a copy of the first one:
+```powershell
+dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -p:Version=2.3.0 -o artifacts/v230
+vpk pack --packId SaveHarborApp --packVersion 2.3.0 --packDir artifacts/v230 --mainExe SaveHarbor.App.exe --outputDir artifacts/feed
+Copy-Item artifacts/feed/SaveHarborApp-win-Setup.exe artifacts/Setup-2.3.0.exe
+dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -p:Version=2.3.1 -o artifacts/v231
+vpk pack --packId SaveHarborApp --packVersion 2.3.1 --packDir artifacts/v231 --mainExe SaveHarbor.App.exe --outputDir artifacts/feed
+artifacts/Setup-2.3.0.exe
+& "$env:LOCALAPPDATA\SaveHarborApp\current\SaveHarbor.App.exe" --update-source "$PWD\artifacts\feed"
+```
+Expected: about 10 s after start the banner shows "SaveHarbor 2.3.1 is ready." → Restart now → the footer shows
+v2.3.1. Uninstall afterwards from Windows Settings → Apps. Flag names: check `vpk pack --help` (V3).
+
 ## Running the app
 
 `dotnet run --project SaveHarbor.App` (Windows only). The game itself is not required for

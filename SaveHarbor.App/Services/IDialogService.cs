@@ -26,6 +26,9 @@ public interface IDialogService
 
     // The group chosen, or null when the dialog was closed before that (the player may still have signed in).
     CloudGroupSetupResult? ConfigureCloudGroup(Uri skinDictionary, string gameDisplayName, CloudGroupSetupViewModel viewModel);
+
+    // True when the player chose "Skip this version"; offered only when canSkip.
+    bool ShowReleaseNotes(string title, string markdown, bool canSkip);
 }
 
 // One card of the provider choice; its texts are the CloudProviderChoice.<Kind>* keys.

@@ -26,6 +26,9 @@ public sealed class AppSettings
 
     public bool AmbientEffects { get; set; } = true;
 
+    // An update the player chose to skip ("2.4.0"); automatic checks do not offer it again.
+    public string SkippedUpdateVersion { get; set; } = string.Empty;
+
     // Per-game save folder chosen in Settings (storage key -> path). Overrides appsettings.json.
     public Dictionary<string, string> SaveRootOverrides { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

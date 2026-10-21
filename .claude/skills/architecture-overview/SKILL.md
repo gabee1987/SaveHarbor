@@ -31,9 +31,15 @@ forwards to the provider chosen on this PC (`AppSettings.CloudProvider`: Google 
 `Infrastructure/Cloud/Supabase/` (`SupabaseCloudProvider`, `SupabaseGroupService` as `ICloudGroupService`, and their
 HTTP, auth, REST and storage clients; options under `SaveHarbor:CloudProvider:Supabase`).
 
+Entry point: `Program.Main` (the csproj `StartupObject`) runs `VelopackApp.Build().Run()` first, which handles the
+installer's and updater's hook arguments and exits for them, then creates `App`. `IAppUpdateService` is
+`Infrastructure/Updates/VelopackUpdateService` (GitHub releases, options under `SaveHarbor:Updates`, `--update-source
+<folder>` for a local feed); it is `Disabled` outside a Velopack install (`dotnet run`, an unzipped folder).
+
 Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds,
 start game monitor timer, `PromptCloudSetupIfNeededAsync` (provider choice when none is chosen and SaveHarbor Cloud is
-configured, then the SaveHarbor Cloud group dialog or the Drive folder prompt).
+configured, then the SaveHarbor Cloud group dialog or the Drive folder prompt), and an update check 10 s later that
+never blocks the UI (`MainWindowViewModel.Updates.cs`: banner, footer version, Settings "Check for updates").
 
 ## Core flows
 

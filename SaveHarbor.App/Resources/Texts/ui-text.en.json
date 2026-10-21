@@ -43,6 +43,7 @@
   "Dialog.Ok": "OK",
   "Dialog.Continue": "Continue",
   "Dialog.Cancel": "Cancel",
+  "Dialog.Close": "Close",
 
   "CloudSetup.Title": "Google Drive folder setup",
   "CloudSetup.TitleFormat": "{0} – Google Drive folder setup",
@@ -233,5 +234,18 @@
   "Inspector.MoveLeftoversTooltip": "Moves the unfinished copies out of the game's save folder into SaveHarbor's data folder. Nothing is deleted.",
   "Inspector.PrivacyNote.Dragonwilds": "The world password and owner ID are never read or shown.",
   "Inspector.PrivacyNote.Windrose": "Only the world is shared. Characters and accounts stay on this PC and are only counted.",
-  "Inspector.Close": "CLOSE"
+  "Inspector.Close": "CLOSE",
+
+  "Update.WhatsNew": "What's new",
+  "Update.RestartNow": "Restart now",
+  "Update.RestartTooltip": "Close SaveHarbor, install the update and start the new version.",
+  "Update.Later": "Later",
+  "Update.LaterTooltip": "Hide this until the next update. The update installs when you close SaveHarbor.",
+  "Update.Skip": "Skip this version",
+  "Update.NotesSubtitle": "Release notes",
+  "Update.NoNotes": "This release has no notes.",
+  "Settings.AppVersion": "SaveHarbor",
+  "Settings.UpdatesHint": "SaveHarbor looks for new versions on GitHub every 6 hours and installs them when you restart or close it. GitHub sees only your IP address.",
+  "Settings.UpdatesUnavailable": "Updates are available in the installed version.",
+  "Settings.CheckForUpdates": "Check for updates"
 }

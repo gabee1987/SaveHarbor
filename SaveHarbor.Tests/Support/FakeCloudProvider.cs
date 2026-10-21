@@ -17,6 +17,9 @@ public sealed class FakeCloudProvider : ICloudProvider
 
     public bool IsConnected { get; set; } = true;
 
+    // Reported instead of the plain connected/not connected status, e.g. SaveHarbor Cloud's "update required".
+    public CloudConnectionStatus? ConnectionOverride { get; set; }
+
     public List<string> Calls { get; } = [];
 
     // Version archive names in the fake cloud, oldest first. Uploads add to it.
@@ -46,6 +49,11 @@ public sealed class FakeCloudProvider : ICloudProvider
     public Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default)
     {
         Calls.Add($"GetConnectionStatus:{game}");
+        if (ConnectionOverride is not null)
+        {
+            return Task.FromResult(ConnectionOverride);
+        }
+
         return Task.FromResult(IsConnected
             ? new CloudConnectionStatus(true, ProviderName, "TEST_USER", "Connected.")
             : CloudConnectionStatus.NotConnected(ProviderName));

@@ -29,7 +29,12 @@ public partial class MainWindowViewModel
 
     private bool cloudGroupsListedThisRun;
 
-    public SharingHeroState SharingHero => _providerSelector.ActiveKind switch
+    // A world shared by a newer app blocks every provider, Google Drive included.
+    public SharingHeroState SharingHero => CloudStatus?.State == CloudSyncState.UpdateRequired
+        ? SharingHeroState.UpdateRequired
+        : ProviderSharingHero;
+
+    private SharingHeroState ProviderSharingHero => _providerSelector.ActiveKind switch
     {
         "" => SharingHeroState.ChooseProvider,
         CloudProviderKind.Supabase => SharingConnection?.Reason switch
@@ -68,6 +73,7 @@ public partial class MainWindowViewModel
         SharingHeroState.Group => "Set up group",
         SharingHeroState.Connected => "Change",
         SharingHeroState.Unreachable => "Retry",
+        SharingHeroState.UpdateRequired => "Update",
         _ => string.Empty
     };
 
@@ -173,6 +179,9 @@ public partial class MainWindowViewModel
                 break;
             case SharingHeroState.Unreachable:
                 await CheckCloudCommand.ExecuteAsync(null);
+                break;
+            case SharingHeroState.UpdateRequired:
+                await CheckForUpdatesAsync();
                 break;
         }
     }

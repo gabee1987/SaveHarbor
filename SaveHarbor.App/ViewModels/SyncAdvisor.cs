@@ -62,6 +62,7 @@ public static class SyncAdvisor
         CloudSyncState.CloudNewer => new SyncBadge("Download needed", SyncTone.Warning),
         CloudSyncState.Conflict => new SyncBadge(hasLocalChanges ? "Both changed" : "Out of step", SyncTone.Danger),
         CloudSyncState.SomeonePlaying => new SyncBadge("Being played", SyncTone.Warning),
+        CloudSyncState.UpdateRequired => new SyncBadge("Update required", SyncTone.Warning),
         _ => null
     };
 
@@ -81,6 +82,8 @@ public static class SyncAdvisor
         var localBase = status.LocalState.LocalBaseVersionNumber;
         return status.State switch
         {
+            CloudSyncState.UpdateRequired => new SyncAdvice(
+                "Update required", status.Detail, SyncAction.None, string.Empty, SyncTone.Warning, "!") { Relation = "Blocked" },
             CloudSyncState.NotConnected when status.Connection.Reason.Length > 0 => AdviseSetup(status.Connection),
             CloudSyncState.NotConnected => new SyncAdvice(
                 "Cloud not connected",

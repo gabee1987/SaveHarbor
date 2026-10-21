@@ -10,6 +10,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public async Task InitializeAsync()
     {
+        _ = CheckForUpdatesInBackgroundAsync();
         await RefreshAsync();
         StartGameMonitor();
         await PromptCloudSetupIfNeededAsync();

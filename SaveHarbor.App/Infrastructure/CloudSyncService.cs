@@ -59,6 +59,13 @@ public sealed partial class CloudSyncService : ICloudSyncService
         localState.LastCloudCheckAtUtc = Now;
 
         var connection = await cloudProvider.GetConnectionStatusAsync(world.Game, cancellationToken);
+        if (connection.Reason == CloudConnectionReason.UpdateRequired)
+        {
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+            logger.Warning(AppLogKeyword.CloudSync, "The cloud needs a newer app for world {WorldId}", world.WorldId);
+            return UpdateRequiredStatus(connection, null, null, localState);
+        }
+
         if (!connection.IsConnected)
         {
             await localSyncStateService.SaveAsync(localState, cancellationToken);
@@ -77,6 +84,18 @@ public sealed partial class CloudSyncService : ICloudSyncService
         var manifest = await cloudProvider.GetWorldManifestAsync(world.Game, world.WorldId, cancellationToken);
         var sessionLock = await cloudProvider.GetSessionLockAsync(world.Game, world.WorldId, cancellationToken);
         var latestVersion = manifest?.LatestVersion;
+
+        if (manifest?.SchemaVersion > CloudSchema.MaxKnownManifestVersion || sessionLock?.SchemaVersion > CloudSchema.MaxKnownLockVersion)
+        {
+            await localSyncStateService.SaveAsync(localState, cancellationToken);
+            logger.Warning(
+                AppLogKeyword.CloudSync,
+                "World {WorldId} was shared by a newer app (manifest {ManifestVersion}, lock {LockVersion})",
+                world.WorldId,
+                manifest?.SchemaVersion,
+                sessionLock?.SchemaVersion);
+            return UpdateRequiredStatus(connection, manifest, sessionLock, localState);
+        }
 
         if (latestVersion is not null)
         {
@@ -106,6 +125,27 @@ public sealed partial class CloudSyncService : ICloudSyncService
             HasLocalChanges = hasLocalChanges,
             IsOwnSession = IsOwnLock(sessionLock)
         };
+    }
+
+    private static CloudSyncStatus UpdateRequiredStatus(
+        CloudConnectionStatus connection,
+        CloudWorldManifest? manifest,
+        CloudSessionLock? sessionLock,
+        LocalSyncState localState) => new(
+            CloudSyncState.UpdateRequired,
+            connection,
+            manifest,
+            null,
+            sessionLock,
+            localState,
+            "Update required",
+            "This version of SaveHarbor is too old for your group's cloud. Update to continue sharing.");
+
+    // Upload, download and starting a session never write shared files in a format newer than this app knows.
+    private CloudSyncResult UpdateRequiredResult(CloudSyncStatus status, AppLogKeyword keyword, GameWorld world)
+    {
+        logger.Warning(keyword, "Blocked for world {WorldId} until the app is updated", world.WorldId);
+        return new CloudSyncResult(false, CloudSyncState.UpdateRequired, status.Detail);
     }
 
     private static (string Title, string Detail) DescribeStatus(

@@ -9,6 +9,11 @@ public sealed partial class CloudSyncService
         logger.Debug(AppLogKeyword.CloudSession, "Starting cloud session for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
+        if (status.State == CloudSyncState.UpdateRequired)
+        {
+            return UpdateRequiredResult(status, AppLogKeyword.CloudSession, world);
+        }
+
         if (!status.Connection.IsConnected)
         {
             logger.Warning(AppLogKeyword.CloudSession, "Start session blocked because provider is not connected for world {WorldId}", world.WorldId);

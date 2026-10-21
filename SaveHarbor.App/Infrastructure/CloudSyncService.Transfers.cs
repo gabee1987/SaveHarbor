@@ -11,6 +11,11 @@ public sealed partial class CloudSyncService
         logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
+        if (status.State == CloudSyncState.UpdateRequired)
+        {
+            return UpdateRequiredResult(status, AppLogKeyword.CloudDownload, world);
+        }
+
         if (!status.Connection.IsConnected)
         {
             logger.Warning(AppLogKeyword.CloudDownload, "Cloud download blocked because provider is not connected for world {WorldId}", world.WorldId);
@@ -87,6 +92,11 @@ public sealed partial class CloudSyncService
         logger.Debug(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);
 
         var status = await RefreshStatusAsync(world, cancellationToken);
+        if (status.State == CloudSyncState.UpdateRequired)
+        {
+            return UpdateRequiredResult(status, AppLogKeyword.CloudUpload, world);
+        }
+
         if (!status.Connection.IsConnected)
         {
             logger.Warning(AppLogKeyword.CloudUpload, "Cloud upload blocked because provider is not connected for world {WorldId}", world.WorldId);

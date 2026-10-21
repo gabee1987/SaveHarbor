@@ -14,5 +14,6 @@ public enum AppLogKeyword
     CloudSession,
     CloudAuth,
     GameLauncher,
+    Updates,
     Ui
 }

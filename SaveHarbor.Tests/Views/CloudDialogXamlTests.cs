@@ -3,6 +3,7 @@ using System.Windows;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 using SaveHarbor.App.ViewModels;
 using SaveHarbor.App.Views.Dialogs;
 using SaveHarbor.App.Views.Shell;
@@ -10,7 +11,7 @@ using SaveHarbor.Tests.Support;
 
 namespace SaveHarbor.Tests.Views;
 
-// The SaveHarbor Cloud dialogs and the changed shell views load with both skins: a missing static resource or a bad
+// The SaveHarbor Cloud and update dialogs and the changed shell views load with both skins: a missing static resource or a bad
 // template only shows when the XAML is parsed, never at compile time.
 public sealed class CloudDialogXamlTests
 {
@@ -70,12 +71,26 @@ public sealed class CloudDialogXamlTests
                 Layout(window);
                 window.Close();
 
-                foreach (var view in new FrameworkElement[] { new ShellSharingView(), new ShellSettingsView() })
+                foreach (var view in new FrameworkElement[] { new ShellSharingView(), new ShellSettingsView(), new GameShellView(), new ShellFooterView() })
                 {
                     view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = skin });
                     view.Measure(new Size(900, 900));
                 }
             }
+        });
+    }
+
+    [Fact]
+    public void ReleaseNotesDialog_ShowsTheDocument()
+    {
+        RunOnStaThread(() =>
+        {
+            var window = new AppDialogWindow { DialogTitle = "What's new", Document = MarkdownLite.ToFlowDocument("## Added\n- Updates") };
+            Layout(window);
+
+            Assert.NotNull(window.Document);
+            Assert.False(window.SecondaryChosen);
+            window.Close();
         });
     }
 

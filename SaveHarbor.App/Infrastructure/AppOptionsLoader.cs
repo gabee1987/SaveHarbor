@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
+using SaveHarbor.App.Infrastructure.Updates;
 using Serilog.Events;
 
 namespace SaveHarbor.App.Infrastructure;
@@ -119,6 +120,27 @@ public static class AppOptionsLoader
         return options;
     }
 
+    // --update-source <folder> replaces GitHub with a folder of packed releases, for trying an update before publishing it.
+    public static UpdateOptions LoadUpdateOptions(IReadOnlyList<string> args)
+    {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
+
+        var defaults = new UpdateOptions();
+        var section = configuration.GetSection(UpdateOptions.SectionName);
+        return new UpdateOptions
+        {
+            GitHubRepository = string.IsNullOrWhiteSpace(section[nameof(UpdateOptions.GitHubRepository)])
+                ? defaults.GitHubRepository
+                : section[nameof(UpdateOptions.GitHubRepository)]!.Trim(),
+            CheckIntervalHours = ReadInt(section[nameof(UpdateOptions.CheckIntervalHours)], defaults.CheckIntervalHours),
+            AutoDownload = ReadBool(section[nameof(UpdateOptions.AutoDownload)], defaults.AutoDownload),
+            LocalSourceFolder = ReadArgument(args, "--update-source") ?? string.Empty
+        };
+    }
+
     private static SupabaseOptions ReadSupabaseOptions(IConfigurationSection section)
     {
         var defaults = new SupabaseOptions();
@@ -169,14 +191,16 @@ public static class AppOptionsLoader
         return byGame;
     }
 
-    public static GameId? ReadGameArgument(IReadOnlyList<string> args)
+    public static GameId? ReadGameArgument(IReadOnlyList<string> args) =>
+        GameIdExtensions.TryParseStorageKey(ReadArgument(args, "--game") ?? string.Empty, out var game) ? game : null;
+
+    private static string? ReadArgument(IReadOnlyList<string> args, string name)
     {
         for (var index = 0; index < args.Count - 1; index++)
         {
-            if (string.Equals(args[index], "--game", StringComparison.OrdinalIgnoreCase) &&
-                GameIdExtensions.TryParseStorageKey(args[index + 1], out var game))
+            if (string.Equals(args[index], name, StringComparison.OrdinalIgnoreCase))
             {
-                return game;
+                return args[index + 1];
             }
         }
 

@@ -10,6 +10,7 @@ using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
 using SaveHarbor.App.Infrastructure.Migrations;
+using SaveHarbor.App.Infrastructure.Updates;
 using SaveHarbor.App.Services;
 using SaveHarbor.App.ViewModels;
 using Serilog;
@@ -23,11 +24,13 @@ public partial class App : Application
     private readonly IAppDataPathProvider _pathProvider = new AppDataPathProvider();
     private readonly AppLoggingOptions _loggingOptions;
     private readonly CloudProviderOptions _cloudProviderOptions;
+    private readonly UpdateOptions _updateOptions;
 
     public App()
     {
         _loggingOptions = AppOptionsLoader.LoadLoggingOptions();
         _cloudProviderOptions = AppOptionsLoader.LoadCloudProviderOptions();
+        _updateOptions = AppOptionsLoader.LoadUpdateOptions(Environment.GetCommandLineArgs());
         ConfigureLogging(_pathProvider, _loggingOptions);
 
         _host = Host.CreateDefaultBuilder()
@@ -93,6 +96,13 @@ public partial class App : Application
                 services.AddSingleton<CloudProviderSettingsService>();
                 services.AddSingleton<ICloudSetupService>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSettingsService>());
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
+                services.AddSingleton<IAppUpdateService>(serviceProvider => new VelopackUpdateService(
+                    _updateOptions,
+                    serviceProvider.GetRequiredService<IAppSettingsStore>(),
+                    serviceProvider.GetRequiredService<IProcessDetectionService>(),
+                    serviceProvider.GetRequiredService<IActiveGameContext>(),
+                    serviceProvider.GetRequiredService<IAppLogger>(),
+                    VelopackUpdateService.CreateSourceFactory(_updateOptions)));
                 services.AddSingleton<LegacyLayoutMigrator>();
                 services.AddSingleton<SyncStateProviderScopeMigrator>();
                 services.AddSingleton<BackupFolderOrganizer>();

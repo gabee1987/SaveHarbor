@@ -26,6 +26,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ICloudProviderSelector _providerSelector;
     private readonly ICloudGroupService _cloudGroups;
     private readonly IDeviceIdentity _deviceIdentity;
+    private readonly IAppUpdateService _updates;
     private readonly DispatcherTimer gameMonitorTimer;
     private bool suppressSelectedWorldCloudRefresh;
     private bool hasObservedGameRunningDuringSession;
@@ -81,7 +82,8 @@ public partial class MainWindowViewModel : ObservableObject
         IAppDataPathProvider paths,
         ICloudProviderSelector providerSelector,
         ICloudGroupService cloudGroups,
-        IDeviceIdentity deviceIdentity)
+        IDeviceIdentity deviceIdentity,
+        IAppUpdateService updates)
     {
         _activeGame = activeGame;
         _gameRegistry = gameRegistry;
@@ -100,10 +102,12 @@ public partial class MainWindowViewModel : ObservableObject
         _providerSelector = providerSelector;
         _cloudGroups = cloudGroups;
         _deviceIdentity = deviceIdentity;
+        _updates = updates;
 
         _toastService.ToastRequested += OnToastRequested;
         _activeGame.ActiveGameChanged += OnActiveGameChanged;
         _providerSelector.ActiveChanged += OnCloudProviderChanged;
+        _updates.StateChanged += OnUpdateStateChanged;
 
         foreach (var definition in _gameRegistry.All)
         {
