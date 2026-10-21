@@ -53,6 +53,9 @@ It requests sign-in codes, so running it twice within 30 seconds hits the per-ad
 3. Extend the pgTAP tests for the new rule.
 4. Breaking change for older apps? Raise `min_supported_app_version` in the same migration, and release the fixed app
    **before** pushing the migration.
+5. Adding a game: a migration with `insert into public.games (key) values ('<key>');` only. The key must equal the
+   app's storage key (for example `enshrouded`). Push it **before** releasing the app that supports the game. Older
+   apps are not affected: they never ask for a game they do not know.
 
 ## 4. Hosted project (one-time setup, owner)
 
