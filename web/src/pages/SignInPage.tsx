@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { CloudError, requestCode, verifyCode } from '../lib/api';
 
-// The same e-mail code sign-in as the desktop app. The address stays in this page's memory only.
+// The same e-mail code sign-in as the desktop app.
 export function SignInPage() {
-  const [step, setStep] = useState<'email' | 'code'>('email');
-  const [email, setEmail] = useState('');
+  const [pending] = useState(readPendingSignIn);
+  const [step, setStep] = useState<'email' | 'code'>(pending ? 'code' : 'email');
+  const [email, setEmail] = useState(pending ?? '');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export function SignInPage() {
     event.preventDefault();
     void run(async () => {
       await requestCode(email.trim());
+      writePendingSignIn(email.trim());
       setCode('');
       setStep('code');
     });
@@ -32,7 +34,10 @@ export function SignInPage() {
 
   function checkCode(event: FormEvent) {
     event.preventDefault();
-    void run(() => verifyCode(email.trim(), code.replace(/\s/g, '')));
+    void run(async () => {
+      await verifyCode(email.trim(), code.replace(/\s/g, ''));
+      writePendingSignIn(null);
+    });
   }
 
   if (step === 'email') {
@@ -76,9 +81,52 @@ export function SignInPage() {
           {busy ? 'Checking…' : 'Sign in'}
         </button>
       </form>
-      <button type="button" className="link" onClick={() => setStep('email')} disabled={busy}>
+      <button
+        type="button"
+        className="link"
+        onClick={() => {
+          writePendingSignIn(null);
+          setStep('email');
+        }}
+        disabled={busy}
+      >
         Use another address or send a new code
       </button>
     </section>
   );
+}
+
+// A phone reloads the tab when the person comes back from the mail app, so the code step survives a reload. Only the
+// address is kept, only in this tab (sessionStorage), and only while a code can still be valid; never the code.
+const pendingKey = 'saveharbor.pendingSignIn';
+const pendingForMs = 10 * 60_000;
+
+function readPendingSignIn(): string | null {
+  try {
+    const value: unknown = JSON.parse(sessionStorage.getItem(pendingKey) ?? 'null');
+    if (typeof value === 'object' && value !== null && 'email' in value && 'at' in value) {
+      const { email, at } = value as { email: unknown; at: unknown };
+      if (typeof email === 'string' && typeof at === 'number' && Date.now() - at < pendingForMs) {
+        return email;
+      }
+    }
+
+    sessionStorage.removeItem(pendingKey);
+  } catch {
+    // Storage blocked or unreadable: start from the address step.
+  }
+
+  return null;
+}
+
+function writePendingSignIn(email: string | null): void {
+  try {
+    if (email) {
+      sessionStorage.setItem(pendingKey, JSON.stringify({ email, at: Date.now() }));
+    } else {
+      sessionStorage.removeItem(pendingKey);
+    }
+  } catch {
+    // Without storage the page still works; it only forgets the step on a reload.
+  }
 }
