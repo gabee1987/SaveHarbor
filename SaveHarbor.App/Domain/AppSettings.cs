@@ -26,6 +26,20 @@ public sealed class AppSettings
 
     public bool AmbientEffects { get; set; } = true;
 
+    // After Play starts the game, the window waits in the notification area until the game closes.
+    public bool MinimizeToTrayWhilePlaying { get; set; } = true;
+
+    // After a Play session, share the progress as soon as the game has closed and saved. Off: ask each time.
+    public bool UploadWhenGameCloses { get; set; } = true;
+
+    // SaveHarbor Cloud: the group sees that SaveHarbor is open on this PC and which world is being played.
+    public bool ShowOnlineStatus { get; set; } = true;
+
+    // Main window panels folded into a rail. Both start folded, so the Sharing panel has the room.
+    public bool WorldListCollapsed { get; set; } = true;
+
+    public bool WorldDetailsCollapsed { get; set; } = true;
+
     // An update the player chose to skip ("2.4.0"); automatic checks do not offer it again.
     public string SkippedUpdateVersion { get; set; } = string.Empty;
 

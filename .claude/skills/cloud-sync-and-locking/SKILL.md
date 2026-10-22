@@ -55,8 +55,11 @@ the last sync is **not** detected (only version numbers are compared).
    cloud once per `HeartbeatIntervalSeconds` (5 min). A session started without launching the game expires after
    20 min.
 3. **Pre-2.3 locks are matched by MachineName.** Two Windows users on one PC are told apart only once both run 2.3.
-4. **Game close does not upload**: auto-end only clears the lock, so progress is not shared unless
-   the user uploads manually. The planned flow uploads then releases.
+4. **Game close uploads, then releases (since CP6).** `AutoEndCloudSessionAfterGameClosedAsync` waits for the save
+   to settle (`SaveSettleWaiter`: 3 s without a write, at most 30 s), uploads (no new version when nothing changed),
+   then ends the session. A failed upload or a save with a health problem still releases the lock, and
+   `LocalSyncState.PendingUploadSinceUtc` (set when the session started) keeps the "not shared yet" banner with
+   Retry upload / Dismiss, also across restarts (for example after the app was closed while the game ran).
 5. **Stale lock UX**: expired foreign locks are silently ignored; the UI should say
    "<player>'s session expired at <time>, you can take over".
 
@@ -79,10 +82,21 @@ See `multi-game-separation`.
   refuses a lock whose base is not the latest version. Status reasons: `NotConfigured`, `SignIn`, `Group`,
   `UpdateRequired` (`app_meta.min_supported_app_version`, cached 1 h), `Unreachable`. Group per game in
   `cloud-provider-settings.json` `ActiveGroups`; sign-out clears it.
-- SaveHarbor Cloud setup UI: `MainWindowViewModel.CloudSetup.cs` (`PromptCloudSetupIfNeededAsync`: provider choice,
-  then the group dialog once per run and game; `SetupCloudCommand` opens the active provider's setup).
-  `CloudGroupSetupViewModel` owns the dialog's steps (e-mail, code, group, invite code after creating). The Sharing
-  view's top line comes from `MainWindowViewModel.Sharing.cs`, the Settings rows from `SettingsViewModel.Sharing.cs`.
+- Sharing UI: the Sharing page of Settings (`Views/Sharing/SharingView`, `ViewModels/Sharing`), opened by `OpenSharingAsync` in
+  `MainWindowViewModel.CloudSetup.cs` (first start, a game without a group once per run, the Sharing view's action,
+  Settings › Sharing). `CloudOnboardingViewModel` owns the sign-in steps (e-mail, code, name, group, invite code after
+  creating); `SharingGroupViewModel` the group screen (members via `ListMembersAsync`, invite code, storage);
+  `SharingProfileViewModel` the one player name (also sent to every group with `SetDisplayNameAsync`), the PC name and
+  versions kept. The Sharing view's top line comes from `MainWindowViewModel.Sharing.cs`.
+- Live updates (`ICloudLiveUpdates` → `SupabaseRealtimeClient` + `.Session.cs`, frames in `SupabaseRealtimeProtocol`):
+  one WebSocket (`vsn=1.0.0`, heartbeat 25 s, `access_token` frame when the token rotates, backoff 1 → 60 s) to the
+  **private** channel `realtime:saveharbor:<groupId>`, which only members may join (`can_use_realtime_topic` policies on
+  `realtime.messages`). It listens to `worlds` INSERT/UPDATE filtered by `group_id`; lock changes reach it through
+  `worlds.lock_changed_at` (Realtime cannot filter deletes by group, so never subscribe to deletes). A change only
+  triggers a debounced (500 ms) `RefreshCloudAsync("realtime")`; the payload is never trusted or logged. Toasts come
+  from `CloudFriendActivity.Compare` between two live overviews. State `Polling` → 60 s refresh timer. Presence:
+  `display_name`, `game`, `playing_world_id`. Wiring: `MainWindowViewModel.Realtime.cs`; `SyncLiveConnectionAsync`
+  runs after every cloud refresh and connects only for SaveHarbor Cloud with a group.
 - Storage maintenance (`ICloudStorageMaintenance`, SaveHarbor Cloud only): storage used is summed in the app (the API
   has aggregates switched off); unused archives are objects no `world_versions.archive_path` names and older than one
   hour, so a friend's upload that is still publishing is never removed.

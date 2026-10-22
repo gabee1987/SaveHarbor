@@ -53,6 +53,9 @@ It requests sign-in codes, so running it twice within 30 seconds hits the per-ad
 3. Extend the pgTAP tests for the new rule.
 4. Breaking change for older apps? Raise `min_supported_app_version` in the same migration, and release the fixed app
    **before** pushing the migration.
+5. Adding a game: a migration with `insert into public.games (key) values ('<key>');` only. The key must equal the
+   app's storage key (for example `enshrouded`). Push it **before** releasing the app that supports the game. Older
+   apps are not affected: they never ask for a game they do not know.
 
 ## 4. Hosted project (one-time setup, owner)
 
@@ -71,8 +74,18 @@ It requests sign-in codes, so running it twice within 30 seconds hits the per-ad
    the 6-digit code.
 5. Dashboard → Authentication → Settings: e-mail OTP expiry 600 seconds.
 6. Dashboard → Storage: check that bucket `saves` exists (the migration creates it), private, 45 MB limit.
-7. Copy the project URL and the **publishable** key into `SaveHarbor.App/appsettings.json` (plan 03 §1). Both are
+7. Dashboard → Realtime → Settings: turn **off** "Allow public access", so only private channels exist. The app's live
+   channel `saveharbor:<group id>` is private; migration `20261022000000_realtime.sql` lets only that group's members
+   join it. Check after `db push` that `select policyname from pg_policies where schemaname = 'realtime';` lists
+   `saveharbor_members_receive` and `saveharbor_members_track_presence`.
+8. Copy the project URL and the **publishable** key into `SaveHarbor.App/appsettings.json` (plan 03 §1). Both are
    public by design; row-level security protects the data.
+
+9. Companion web page (`web/`, plan 08): set the repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
+   (Settings → Secrets and variables → Actions → Variables; the keepalive workflow uses the same two), then Settings →
+   Pages → Source: **GitHub Actions**. Every push to `main` that changes `web/` runs the `pages` workflow, which tests,
+   builds and publishes `https://<owner>.github.io/SaveHarbor/`. The page signs in with the same e-mail code and never
+   creates an account. GitHub Pages is a third-party host; the compliance note of plan 00 §6 applies.
 
 The built-in e-mail sender is rate-limited and meant for development. If codes arrive late, configure custom SMTP
 (see plan 07 §6). A custom SMTP provider is a third-party service and needs a compliance review outside hobby use.
@@ -92,7 +105,8 @@ The built-in e-mail sender is rate-limited and meant for development. If codes a
 - **Backup before risky migrations:** download the `saves` bucket in the dashboard and run
   `npx supabase db dump --linked -f backup.sql` (keep the file outside the repository).
 - **Rotate the publishable key:** requires a new app release because the key ships in `appsettings.json`; disable the
-  old key only after friends have updated. Update the `SUPABASE_PUBLISHABLE_KEY` repository variable too.
+  old key only after friends have updated. Update the `SUPABASE_PUBLISHABLE_KEY` repository variable too, and run the
+  `pages` workflow by hand so the companion page uses the new key.
 - **Raise `min_supported_app_version`:** only together with a breaking schema migration, and only after the app
   release that understands it is live (README, "Releasing a new version"). Older apps then show "Update required"
   and stop writing until they update.

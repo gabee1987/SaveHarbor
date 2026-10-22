@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
+using SaveHarbor.App.Infrastructure.Cloud;
 using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
@@ -84,6 +85,11 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<ICloudGroupService>(),
                     serviceProvider.GetRequiredService<IAppLogger>(),
                     serviceProvider.GetRequiredService<TimeProvider>()));
+                services.AddSingleton(serviceProvider => new SupabaseRealtimeClient(
+                    serviceProvider.GetRequiredService<SupabaseOptions>(),
+                    serviceProvider.GetRequiredService<SupabaseAuthClient>(),
+                    serviceProvider.GetRequiredService<IAppLogger>()));
+                services.AddSingleton<ICloudLiveUpdates>(serviceProvider => serviceProvider.GetRequiredService<SupabaseRealtimeClient>());
                 services.AddSingleton(serviceProvider => new CloudProviderSelector(
                     serviceProvider.GetRequiredService<CloudProviderOptions>(),
                     serviceProvider.GetRequiredService<IAppSettingsStore>(),
@@ -96,6 +102,7 @@ public partial class App : Application
                 services.AddSingleton<CloudProviderSettingsService>();
                 services.AddSingleton<ICloudSetupService>(serviceProvider => serviceProvider.GetRequiredService<CloudProviderSettingsService>());
                 services.AddSingleton<ICloudSyncService, CloudSyncService>();
+                services.AddSingleton<CloudSnapshotCache>();
                 services.AddSingleton<IAppUpdateService>(serviceProvider => new VelopackUpdateService(
                     _updateOptions,
                     serviceProvider.GetRequiredService<IAppSettingsStore>(),
@@ -138,9 +145,43 @@ public partial class App : Application
                 "Some older files could not be moved. Nothing was deleted. See the log.");
         }
 
+        await ApplyProviderArgumentAsync(e.Args);
         if (mainWindow.DataContext is MainWindowViewModel viewModel)
         {
             await viewModel.InitializeAsync();
+            if (InviteLink.Find(e.Args) is not null)
+            {
+                await viewModel.HandleActivationAsync(e.Args);
+            }
+        }
+    }
+
+    // SaveHarbor was started again while running: the window comes forward and handles the new start's arguments.
+    public async void Activate(IReadOnlyList<string> args)
+    {
+        try
+        {
+            if (MainWindow is not SaveHarbor.App.MainWindow window || window.DataContext is not MainWindowViewModel viewModel)
+            {
+                return;
+            }
+
+            window.BringToFront();
+            await viewModel.HandleActivationAsync(args);
+        }
+        catch (Exception ex)
+        {
+            _host.Services.GetRequiredService<IAppErrorHandler>().Handle(ex, "Handle a second start", AppLogKeyword.Ui);
+        }
+    }
+
+    // --provider supabase|googledrive, for shortcuts and support: makes that provider the active one.
+    private async Task ApplyProviderArgumentAsync(IReadOnlyList<string> args)
+    {
+        var selector = _host.Services.GetRequiredService<ICloudProviderSelector>();
+        if (AppOptionsLoader.ReadProviderArgument(args) is { } kind && selector.AvailableKinds.Contains(kind) && selector.ActiveKind != kind)
+        {
+            await selector.SwitchAsync(kind);
         }
     }
 

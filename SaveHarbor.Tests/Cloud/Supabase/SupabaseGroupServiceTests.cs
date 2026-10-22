@@ -56,6 +56,50 @@ public sealed class SupabaseGroupServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ListMembers_PutsTheOwnerFirstAndMarksYou()
+    {
+        harness.SignIn();
+        harness.Handler.On(HttpMethod.Get, "rest/v1/group_members", HttpStatusCode.OK, $$"""
+            [{"user_id":"{{SupabaseHarness.UserId}}","display_name":"TEST_USER","role":"member","joined_at":"2026-10-20T12:00:00+00:00"},
+             {"user_id":"55555555-5555-4555-8555-555555555555","display_name":" TEST_OWNER ","role":"owner","joined_at":"2026-10-21T12:00:00+00:00"},
+             {"user_id":"66666666-6666-4666-8666-666666666666","display_name":"","role":"member","joined_at":"2026-10-19T12:00:00+00:00"}]
+            """);
+
+        var members = await harness.Groups.ListMembersAsync(SupabaseHarness.GroupId, Token);
+
+        Assert.Equal(["TEST_OWNER", "Player", "TEST_USER"], members.Select(member => member.DisplayName));
+        Assert.True(members[0].IsOwner);
+        Assert.Equal([false, false, true], members.Select(member => member.IsYou));
+        var request = harness.Handler.To("rest/v1/group_members").Single();
+        Assert.Contains($"group_id=eq.{SupabaseHarness.GroupId}", request.Query);
+        Assert.DoesNotContain("email", request.Query);
+    }
+
+    [Fact]
+    public async Task ListMembers_RefusesAnythingButAUuid()
+    {
+        harness.SignIn();
+
+        var exception = await Assert.ThrowsAsync<SupabaseException>(() => harness.Groups.ListMembersAsync("TEST_GROUP&select=*", Token));
+
+        Assert.Equal(SupabaseErrorCodes.InvalidData, exception.Code);
+        Assert.Empty(harness.Handler.Requests);
+    }
+
+    [Fact]
+    public async Task SetDisplayName_SendsTheTidiedName()
+    {
+        harness.SignIn();
+        harness.Handler.On(HttpMethod.Post, "rest/v1/rpc/set_display_name", HttpStatusCode.NoContent, string.Empty);
+
+        await harness.Groups.SetDisplayNameAsync(SupabaseHarness.GroupId, "  TEST_USER  ", Token);
+
+        var body = harness.Handler.To("rest/v1/rpc/set_display_name").Single().Body;
+        Assert.Contains("\"p_display_name\":\"TEST_USER\"", body);
+        Assert.Contains($"\"p_group\":\"{SupabaseHarness.GroupId}\"", body);
+    }
+
+    [Fact]
     public async Task SetActiveGroup_ForOneGame_LeavesTheOtherAlone()
     {
         await harness.Groups.SetActiveGroupAsync(GameId.Windrose, SupabaseHarness.GroupId, applyToAllGames: false, Token);

@@ -110,19 +110,6 @@ public sealed class WpfDialogService : IDialogService
         return window.ShowDialog() == true ? new CloudFolderChoice(window.FolderInputValue, window.TestedFolderName) : null;
     }
 
-    public string? ChooseCloudProvider(Uri skinDictionary, IReadOnlyList<CloudProviderChoice> choices)
-    {
-        var window = new CloudProviderChoiceWindow(skinDictionary, choices) { Owner = FindOwner() };
-        return window.ShowDialog() == true ? window.SelectedKind : null;
-    }
-
-    public CloudGroupSetupResult? ConfigureCloudGroup(Uri skinDictionary, string gameDisplayName, CloudGroupSetupViewModel viewModel)
-    {
-        var window = new CloudGroupSetupWindow(skinDictionary, gameDisplayName, viewModel) { Owner = FindOwner() };
-        window.ShowDialog();
-        return viewModel.Result;
-    }
-
     public bool ShowReleaseNotes(string title, string markdown, bool canSkip)
     {
         var document = MarkdownLite.ToFlowDocument(string.IsNullOrWhiteSpace(markdown) ? UiTextCatalog.Get("Update.NoNotes") : markdown);

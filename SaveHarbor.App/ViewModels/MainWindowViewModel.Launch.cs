@@ -52,6 +52,7 @@ public partial class MainWindowViewModel
 
             AddActivity("Success", $"Session active. {ActiveGameName} launch requested.");
             _toastService.Success($"Starting {ActiveGameName}", $"Session is active and Steam has been asked to launch {ActiveGameName}.");
+            MinimizeToTrayIfEnabled();
         });
     }
 

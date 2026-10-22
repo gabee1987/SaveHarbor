@@ -26,6 +26,12 @@ public interface ICloudGroupService
 
     Task LeaveGroupAsync(string groupId, CancellationToken cancellationToken = default);
 
+    // Owner first, then by joining date.
+    Task<IReadOnlyList<CloudGroupMember>> ListMembersAsync(string groupId, CancellationToken cancellationToken = default);
+
+    // The name the other members of this group see for the signed-in player.
+    Task SetDisplayNameAsync(string groupId, string displayName, CancellationToken cancellationToken = default);
+
     // Owners only.
     Task<string> GetInviteCodeAsync(string groupId, CancellationToken cancellationToken = default);
 

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SaveHarbor.App.Domain;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -15,7 +16,9 @@ public partial class MainWindowViewModel
     public string PlayerDisplayName => _playerIdentity.DisplayName;
 
     [RelayCommand]
-    private void OpenSettings()
+    private Task OpenSettingsAsync() => ShowSettingsAsync(sharingPage: false);
+
+    private async Task ShowSettingsAsync(bool sharingPage)
     {
         if (Settings is null)
         {
@@ -23,39 +26,50 @@ public partial class MainWindowViewModel
                 _settingsStore,
                 _activeGame,
                 _dialogService,
-                _playerIdentity,
                 _paths,
                 saveFolderChanged: () => RefreshCommand.Execute(null),
-                settingsChanged: () =>
-                {
-                    OnPropertyChanged(nameof(AmbientEffectsEnabled));
-                    OnPropertyChanged(nameof(PlayerDisplayName));
-                },
-                new SettingsSharingServices(
-                    _providerSelector,
-                    _cloudGroups,
-                    _cloudSyncService,
-                    _deviceIdentity,
-                    _errorHandler,
-                    _toastService,
-                    SetupCloudGroupAsync,
-                    RefreshCloudAfterAccountChangeAsync));
+                settingsChanged: () => OnPropertyChanged(nameof(AmbientEffectsEnabled)));
             OnPropertyChanged(nameof(Settings));
         }
 
-        Settings.Refresh();
-        IsSettingsOpen = true;
-    }
+        if (sharingPage)
+        {
+            Settings.SelectedPage = SettingsViewModel.SharingPage;
+        }
 
-    private async Task RefreshCloudAfterAccountChangeAsync()
-    {
-        await RefreshCloudStatusAsync(showToast: false);
-        await RefreshCloudOverviewAsync();
+        Settings.Refresh();
+        if (IsSettingsOpen)
+        {
+            return;
+        }
+
+        var sharing = CreateSharing();
+        Settings.Sharing = sharing;
+        IsSettingsOpen = true;
+
+        try
+        {
+            await sharing.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorHandler.Handle(ex, "Open Sharing", AppLogKeyword.Ui);
+        }
     }
 
     [RelayCommand]
     private void CloseSettings()
     {
         IsSettingsOpen = false;
+    }
+
+    // Also closed by a game switch, so the cloud is read again here and not in the command.
+    partial void OnIsSettingsOpenChanged(bool value)
+    {
+        if (!value && Settings?.Sharing is { } sharing)
+        {
+            Settings.Sharing = null;
+            _ = AfterSharingAsync(sharing);
+        }
     }
 }

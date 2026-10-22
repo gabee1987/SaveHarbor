@@ -89,6 +89,40 @@ public sealed class SyncGuidanceTests
     }
 
     [Fact]
+    public void DescribeLocal_AfterOwnUpload_ShowsSizeAndWhenItWasShared()
+    {
+        var world = new GameWorld(GameId.Dragonwilds, "TEST_WORLD", "TEST_WORLD", string.Empty, "C:\\TEST_PATH", DateTimeOffset.Now, DateTimeOffset.Now, 2048, 1);
+        var status = Status(CloudSyncState.UpToDate, 3, 3);
+        status.LocalState.LastDownloadedAtUtc = DateTimeOffset.UtcNow.AddDays(-2);
+        status.LocalState.LastUploadedAtUtc = DateTimeOffset.UtcNow.AddMinutes(-5);
+
+        var side = SyncAdvisor.DescribeLocal(world, status);
+
+        Assert.Equal("2 KB · you uploaded 5 min ago", side.Extra);
+    }
+
+    [Fact]
+    public void DescribeLocal_NeverShared_ShowsOnlyTheSize()
+    {
+        var world = new GameWorld(GameId.Dragonwilds, "TEST_WORLD", "TEST_WORLD", string.Empty, "C:\\TEST_PATH", DateTimeOffset.Now, DateTimeOffset.Now, 2048, 1);
+
+        var side = SyncAdvisor.DescribeLocal(world, Status(CloudSyncState.UpToDate, 3, 3));
+
+        Assert.Equal("2 KB", side.Extra);
+    }
+
+    [Theory]
+    [InlineData(CloudSyncState.UpToDate, 3, 3, false)]
+    [InlineData(CloudSyncState.LocalNewerUploadSafe, 3, 3, true)]
+    [InlineData(CloudSyncState.CloudNewer, 2, 3, false)]
+    [InlineData(CloudSyncState.Conflict, 2, 3, true)]
+    [InlineData(CloudSyncState.ConnectedNoCloudSave, null, null, false)]
+    public void Advise_SaysWhatHappensNext(CloudSyncState state, int? localBase, int? latest, bool changed)
+    {
+        Assert.True(SyncAdvisor.Advise(Status(state, localBase, latest, changed)).HasHint);
+    }
+
+    [Fact]
     public void Badge_NotConnected_HasNone()
     {
         Assert.Null(SyncAdvisor.Badge(CloudSyncState.NotConnected, hasLocalChanges: false));

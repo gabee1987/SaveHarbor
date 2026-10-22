@@ -74,3 +74,8 @@ Cloud layout inside each game's folder stays `worlds/<worldId>/...` — no cloud
 
 New `IGameDefinition` + `IGameSaveAdapter` + theme dictionary + text keys + one registration line.
 If that requires editing anything else, the abstraction leaked – fix that instead.
+
+SaveHarbor Cloud: one new migration with `insert into public.games (key) values ('<key>');`, where the key equals
+`GameIdExtensions.ToStorageKey`. Functions, the `worlds.game` foreign key and the storage upload policy all read that
+table (migration `20261021000000_games_table.sql`, tests in `supabase/tests/games.sql`). Push the migration before
+releasing the app version that knows the game, otherwise its uploads are refused with `invalid_input`.

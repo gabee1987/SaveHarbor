@@ -5,10 +5,25 @@
              xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
              xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
-    <ContentControl Style="{DynamicResource SkinFrame}" Padding="20,16">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid behaviors:FoldingPanel.IsExpanded="{Binding IsWorldDetailsExpanded}" behaviors:FoldingPanel.ExpandedWidth="380" HorizontalAlignment="Left">
+    <!-- Folded: the whole rail unfolds the panel again. -->
+    <Button Style="{StaticResource PanelRailButton}" Content="{ui:SpacedText Shell.WorldDetails}" Command="{Binding ToggleWorldDetailsCommand}" Tag="{Binding SelectedWorldSavedText}"
+            ToolTip="{ui:UiText Shell.ExpandDetailsTooltip}" AutomationProperties.Name="{ui:UiText Shell.ExpandDetailsTooltip}" />
+
+    <ContentControl Style="{DynamicResource SkinFrame}" Padding="20,16" Width="380">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <!-- The heading stays put above the part that scrolls, so the scrollbar never covers the fold chip. -->
+            <Grid>
+                <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Shell.WorldDetails}" Margin="0,0,36,14" />
+                <Button Style="{StaticResource PanelToggleButton}" Command="{Binding ToggleWorldDetailsCommand}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        ToolTip="{ui:UiText Shell.CollapseDetailsTooltip}" AutomationProperties.Name="{ui:UiText Shell.CollapseDetailsTooltip}" />
+            </Grid>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
-                <ContentControl Style="{DynamicResource SkinPanelHeading}" Content="{ui:SpacedText Shell.WorldDetails}" />
 
                 <TextBlock Text="{ui:UiText Shell.NoDetails}"
                            Style="{DynamicResource SkinMuted}"
@@ -80,5 +95,7 @@
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
+        </Grid>
     </ContentControl>
+    </Grid>
 </UserControl>

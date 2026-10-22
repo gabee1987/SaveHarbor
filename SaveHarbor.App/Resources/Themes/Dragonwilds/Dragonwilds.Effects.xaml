@@ -1,6 +1,12 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:shell="clr-namespace:SaveHarbor.App.Views.Shell">
     <SolidColorBrush x:Key="SkinEmberBrush" Color="#FFC47A" />
+
+    <!-- Ambient effect ("Ambient effects" in Settings): embers drifting up, like the sparks on the game's menus. -->
+    <DataTemplate x:Key="SkinAmbientTemplate">
+        <shell:EmberFieldView EmberBrush="{DynamicResource SkinEmberBrush}" />
+    </DataTemplate>
 
     <!-- Static smoke and vignette behind the panels, echoing the game's menu backdrops. -->
     <DataTemplate x:Key="SkinSmokeTemplate">

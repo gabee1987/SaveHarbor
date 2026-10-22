@@ -6,39 +6,47 @@ using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.ViewModels;
 
-// The SaveHarbor Cloud setup dialog: e-mail, then the code from the e-mail, then a group. Closing it at any step
-// leaves a valid state: signed out, or signed in without a group.
-public sealed partial class CloudGroupSetupViewModel : ObservableObject
+// SaveHarbor Cloud sign-in, one question per screen: e-mail, the code from the e-mail, the name friends see, then a
+// group. Leaving at any step keeps a valid state: signed out, or signed in without a group.
+public sealed partial class CloudOnboardingViewModel : ObservableObject
 {
     public const int ResendDelaySeconds = 30;
 
     private readonly ICloudGroupService _groups;
     private readonly IAppErrorHandler _errorHandler;
+    private readonly Action<string> _saveDisplayName;
     private readonly TimeProvider _time;
     private readonly GameId _game;
     private DateTimeOffset? _codeSentAtUtc;
 
-    public CloudGroupSetupViewModel(
+    public CloudOnboardingViewModel(
         ICloudGroupService groups,
         IPlayerIdentity playerIdentity,
         IAppErrorHandler errorHandler,
         GameId game,
         bool otherGameHasGroup,
+        Action<string> saveDisplayName,
         TimeProvider? time = null)
     {
         _groups = groups;
         _errorHandler = errorHandler;
+        _saveDisplayName = saveDisplayName;
         _time = time ?? TimeProvider.System;
         _game = game;
         displayName = playerIdentity.DisplayName;
         applyToAllGames = !otherGameHasGroup;
-        step = groups.IsSignedIn ? CloudGroupSetupStep.Group : CloudGroupSetupStep.Email;
+        step = groups.IsSignedIn ? CloudOnboardingStep.Group : CloudOnboardingStep.Email;
         Groups = new ObservableCollection<CloudGroupOption>(groups.KnownGroups.Select(group => new CloudGroupOption(group)));
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsEmailStep), nameof(IsCodeStep), nameof(IsGroupStep), nameof(IsCreatedStep), nameof(SignedInEmail), nameof(ShowSignedInHeader))]
-    private CloudGroupSetupStep step;
+    [NotifyPropertyChangedFor(nameof(IsEmailStep), nameof(IsCodeStep), nameof(IsNameStep), nameof(IsGroupStep), nameof(IsCreatedStep))]
+    [NotifyPropertyChangedFor(nameof(StepNumber), nameof(SignedInEmail))]
+    private CloudOnboardingStep step;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsChooseMode), nameof(IsJoinMode), nameof(IsCreateMode))]
+    private GroupSetupMode groupMode;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCodeCommand))]
@@ -57,7 +65,8 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
     private string groupName = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(JoinCommand), nameof(CreateCommand))]
+    [NotifyPropertyChangedFor(nameof(DisplayInitial))]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmNameCommand), nameof(JoinCommand), nameof(CreateCommand))]
     private string displayName;
 
     [ObservableProperty]
@@ -71,7 +80,8 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCodeCommand), nameof(VerifyCommand), nameof(ResendCommand), nameof(UseDifferentEmailCommand))]
-    [NotifyCanExecuteChangedFor(nameof(UseGroupCommand), nameof(JoinCommand), nameof(CreateCommand), nameof(SignOutCommand), nameof(FinishCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmNameCommand), nameof(UseGroupCommand), nameof(JoinCommand), nameof(CreateCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ChooseGroupModeCommand), nameof(FinishCommand))]
     private bool isBusy;
 
     [ObservableProperty]
@@ -82,39 +92,54 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
     [ObservableProperty]
     private string createdInviteCode = string.Empty;
 
+    [ObservableProperty]
+    private string createdGroupName = string.Empty;
+
     public ObservableCollection<CloudGroupOption> Groups { get; }
 
-    public bool IsEmailStep => Step == CloudGroupSetupStep.Email;
+    public bool IsEmailStep => Step == CloudOnboardingStep.Email;
 
-    public bool IsCodeStep => Step == CloudGroupSetupStep.Code;
+    public bool IsCodeStep => Step == CloudOnboardingStep.Code;
 
-    public bool IsGroupStep => Step == CloudGroupSetupStep.Group;
+    public bool IsNameStep => Step == CloudOnboardingStep.Name;
 
-    public bool IsCreatedStep => Step == CloudGroupSetupStep.Created;
+    public bool IsGroupStep => Step == CloudOnboardingStep.Group;
+
+    public bool IsCreatedStep => Step == CloudOnboardingStep.Created;
+
+    public bool IsChooseMode => GroupMode == GroupSetupMode.Choose;
+
+    public bool IsJoinMode => GroupMode == GroupSetupMode.Join;
+
+    public bool IsCreateMode => GroupMode == GroupSetupMode.Create;
+
+    // 1 to 4 for the step dots; the screen after creating a group counts as the last step.
+    public int StepNumber => Math.Min((int)Step + 1, 4);
 
     public bool HasGroups => Groups.Count > 0;
 
-    public bool ShowSignedInHeader => Step is CloudGroupSetupStep.Group or CloudGroupSetupStep.Created && _groups.IsSignedIn;
-
     public string? SignedInEmail => _groups.SignedInEmail;
 
-    public string ResendText => ResendAvailableIn > 0 ? $"Resend code in {ResendAvailableIn} s" : "Resend code";
+    public string DisplayInitial => SharingText.Initial(DisplayName);
 
-    // Set when the dialog closes with a group chosen.
+    public string ResendText => ResendAvailableIn > 0 ? $"Send a new code in {ResendAvailableIn} s" : "Send a new code";
+
+    // Set once a group is in use, also while the new group's invite code is still shown.
     public CloudGroupSetupResult? Result { get; private set; }
 
-    public event EventHandler? CloseRequested;
+    // Raised when the player is done and the group can be shown.
+    public event EventHandler? Completed;
 
-    // Refreshes the group list when the dialog opens already signed in.
+    // Refreshes the group list when the window opens already signed in.
     public async Task InitializeAsync()
     {
-        if (Step == CloudGroupSetupStep.Group)
+        if (Step == CloudOnboardingStep.Group)
         {
             await RunAsync(LoadGroupsAsync);
         }
     }
 
-    // Called every second by the dialog while the code step is shown.
+    // Called every second by the window while the code step is shown.
     public void UpdateResendCountdown()
     {
         var remaining = _codeSentAtUtc is { } sentAt
@@ -122,6 +147,8 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
             : 0;
         ResendAvailableIn = Math.Clamp(remaining, 0, ResendDelaySeconds);
     }
+
+    private bool IsIdle() => !IsBusy;
 
     private bool CanSendCode() => !IsBusy && !string.IsNullOrWhiteSpace(Email);
 
@@ -141,9 +168,11 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
             return;
         }
 
-        Step = CloudGroupSetupStep.Group;
-        ShowInfo(result.Message);
+        ShowInfo(string.Empty);
         await LoadGroupsAsync();
+
+        // Returning players pick one of their groups straight away; new players say who they are first.
+        Step = HasGroups ? CloudOnboardingStep.Group : CloudOnboardingStep.Name;
     });
 
     private bool CanResend() => !IsBusy && ResendAvailableIn == 0;
@@ -157,66 +186,18 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
         Code = string.Empty;
         _codeSentAtUtc = null;
         UpdateResendCountdown();
-        Step = CloudGroupSetupStep.Email;
+        Step = CloudOnboardingStep.Email;
         ShowInfo(string.Empty);
     }
 
-    [RelayCommand(CanExecute = nameof(IsIdle))]
-    private Task UseGroupAsync(CloudGroupOption? option) => option is null
-        ? Task.CompletedTask
-        : RunAsync(async () =>
-        {
-            await _groups.SetActiveGroupAsync(_game, option.Group.Id, ApplyToAllGames);
-            Close(option.Group);
-        });
+    private bool CanConfirmName() => !IsBusy && !string.IsNullOrWhiteSpace(DisplayName);
 
-    private bool CanJoin() => !IsBusy && !string.IsNullOrWhiteSpace(InviteCode) && !string.IsNullOrWhiteSpace(DisplayName);
-
-    [RelayCommand(CanExecute = nameof(CanJoin))]
-    private Task JoinAsync() => RunAsync(async () =>
+    [RelayCommand(CanExecute = nameof(CanConfirmName))]
+    private void ConfirmName()
     {
-        var group = await _groups.JoinGroupAsync(InviteCode, DisplayName);
-        await _groups.SetActiveGroupAsync(_game, group.Id, ApplyToAllGames);
-        Close(group);
-    });
-
-    private bool CanCreate() => !IsBusy && !string.IsNullOrWhiteSpace(GroupName) && !string.IsNullOrWhiteSpace(DisplayName);
-
-    [RelayCommand(CanExecute = nameof(CanCreate))]
-    private Task CreateAsync() => RunAsync(async () =>
-    {
-        var group = await _groups.CreateGroupAsync(GroupName, DisplayName);
-        await _groups.SetActiveGroupAsync(_game, group.Id, ApplyToAllGames);
-
-        // The group is in use from now on, also if the dialog is closed while its invite code is shown.
-        Result = new CloudGroupSetupResult(group.Id, group.Name);
-        CreatedInviteCode = await _groups.GetInviteCodeAsync(group.Id);
-        Step = CloudGroupSetupStep.Created;
-        ShowInfo($"{group.Name} is ready.");
-    });
-
-    // Closes after the invite code of a new group was shown.
-    [RelayCommand(CanExecute = nameof(IsIdle))]
-    private void Finish()
-    {
-        if (Result is not null)
-        {
-            CloseRequested?.Invoke(this, EventArgs.Empty);
-        }
+        _saveDisplayName(DisplayName);
+        ShowGroupStep(InviteCode.Length > 0 ? GroupSetupMode.Join : GroupSetupMode.Choose);
     }
-
-    [RelayCommand(CanExecute = nameof(IsIdle))]
-    private Task SignOutAsync() => RunAsync(async () =>
-    {
-        await _groups.SignOutAsync();
-        Groups.Clear();
-        OnPropertyChanged(nameof(HasGroups));
-        Code = string.Empty;
-        Step = CloudGroupSetupStep.Email;
-        ShowInfo("Signed out on this PC.");
-    });
-
-    private bool IsIdle() => !IsBusy;
 
     private async Task RequestCodeAsync()
     {
@@ -230,26 +211,8 @@ public sealed partial class CloudGroupSetupViewModel : ObservableObject
         _codeSentAtUtc = _time.GetUtcNow();
         UpdateResendCountdown();
         Code = string.Empty;
-        Step = CloudGroupSetupStep.Code;
-        ShowInfo($"{result.Message} Check spam if it takes more than a minute.");
-    }
-
-    private async Task LoadGroupsAsync()
-    {
-        var groups = await _groups.ListGroupsAsync();
-        Groups.Clear();
-        foreach (var group in groups)
-        {
-            Groups.Add(new CloudGroupOption(group));
-        }
-
-        OnPropertyChanged(nameof(HasGroups));
-    }
-
-    private void Close(CloudGroupSummary group)
-    {
-        Result = new CloudGroupSetupResult(group.Id, group.Name);
-        CloseRequested?.Invoke(this, EventArgs.Empty);
+        Step = CloudOnboardingStep.Code;
+        ShowInfo("It can take a minute. Check spam if it does not arrive.");
     }
 
     private async Task RunAsync(Func<Task> action)

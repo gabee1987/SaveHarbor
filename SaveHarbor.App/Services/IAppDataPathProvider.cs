@@ -36,5 +36,8 @@ public interface IAppDataPathProvider
 
     string CloudProviderSettingsPath { get; }
 
+    // The last cloud overview per provider and game, shown at startup until the live one arrives.
+    string CloudCacheRoot { get; }
+
     string AppSettingsPath { get; }
 }

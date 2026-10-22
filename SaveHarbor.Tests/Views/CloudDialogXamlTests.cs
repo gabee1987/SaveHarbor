@@ -7,6 +7,7 @@ using SaveHarbor.App.Utilities;
 using SaveHarbor.App.ViewModels;
 using SaveHarbor.App.Views.Dialogs;
 using SaveHarbor.App.Views.Shell;
+using SaveHarbor.App.Views.Sharing;
 using SaveHarbor.Tests.Support;
 
 namespace SaveHarbor.Tests.Views;
@@ -54,22 +55,16 @@ public sealed class CloudDialogXamlTests
     {
         RunOnStaThread(() =>
         {
+            using var temp = new TempDirectory();
             foreach (var skin in Skins)
             {
-                var choice = new CloudProviderChoiceWindow(skin, [new CloudProviderChoice(CloudProviderKind.Supabase, true), new CloudProviderChoice(CloudProviderKind.GoogleDrive, false)]);
-                Layout(choice);
-                choice.Close();
-
-                var groups = new FakeCloudGroupService
+                // The Sharing page at the width Settings gives it in the smallest main window.
+                foreach (var sharing in SharingOnEveryScreen(temp))
                 {
-                    IsSignedIn = true,
-                    SignedInEmail = "test@example.invalid",
-                    KnownGroups = [new CloudGroupSummary(SupabaseHarness.GroupId, "TEST_GROUP", "owner", 2, DateTimeOffset.UnixEpoch)]
-                };
-                var setup = new CloudGroupSetupViewModel(groups, new FixedPlayerIdentity(), new AppErrorHandler(new NullAppLogger()), GameId.Windrose, false);
-                var window = new CloudGroupSetupWindow(skin, "Windrose", setup);
-                Layout(window);
-                window.Close();
+                    var view = new SharingView { DataContext = sharing };
+                    view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = skin });
+                    Layout(view, 720);
+                }
 
                 foreach (var view in new FrameworkElement[] { new ShellSharingView(), new ShellSettingsView(), new GameShellView(), new ShellFooterView() })
                 {
@@ -86,7 +81,7 @@ public sealed class CloudDialogXamlTests
         RunOnStaThread(() =>
         {
             var window = new AppDialogWindow { DialogTitle = "What's new", Document = MarkdownLite.ToFlowDocument("## Added\n- Updates") };
-            Layout(window);
+            Layout((FrameworkElement)window.Content, 900);
 
             Assert.NotNull(window.Document);
             Assert.False(window.SecondaryChosen);
@@ -94,11 +89,54 @@ public sealed class CloudDialogXamlTests
         });
     }
 
-    // Applies the templates (the group rows, the provider cards) without showing the window.
-    private static void Layout(Window window)
+    // One view model per screen and sign-in step, so every part of the Sharing page is parsed and templated.
+    private static IEnumerable<SharingViewModel> SharingOnEveryScreen(TempDirectory temp)
     {
-        var content = (FrameworkElement)window.Content;
-        content.Measure(new Size(560, 1200));
-        content.Arrange(new Rect(0, 0, 560, 1200));
+        var screens = new List<SharingViewModel>();
+        foreach (var kind in new[] { string.Empty, CloudProviderKind.Supabase, CloudProviderKind.GoogleDrive })
+        {
+            var groups = new FakeCloudGroupService
+            {
+                IsSignedIn = kind == CloudProviderKind.Supabase,
+                SignedInEmail = "test@example.invalid",
+                KnownGroups = [new CloudGroupSummary(SupabaseHarness.GroupId, "TEST_GROUP", "owner", 2, DateTimeOffset.UnixEpoch)]
+            };
+            groups.ServerGroups.AddRange(groups.KnownGroups);
+            groups.Members.Add(new CloudGroupMember("TEST_USER", "owner", true, DateTimeOffset.UnixEpoch));
+            groups.SetActiveGroupAsync(GameId.Windrose, SupabaseHarness.GroupId, true).GetAwaiter().GetResult();
+            var settings = new AppSettingsStore(new TestPathProvider(temp));
+            var sharing = new SharingViewModel(
+                new SharingServices(new FixedProviderSelector(kind), groups, new StubCloudSyncService { Usage = new CloudStorageUsage(12345, 1073741824) },
+                    new StubCloudSetupService(), new FixedDeviceIdentity(), settings, new PlayerIdentity(settings),
+                    new AppErrorHandler(new NullAppLogger()), new RecordingDialogService(), new RecordingToastService(), () => Task.CompletedTask),
+                GameId.Windrose,
+                "Windrose");
+            sharing.InitializeAsync().GetAwaiter().GetResult();
+            screens.Add(sharing);
+        }
+
+        // The sign-in steps, each on its own.
+        foreach (var step in Enum.GetValues<GroupSetupMode>())
+        {
+            var settings = new AppSettingsStore(new TestPathProvider(temp));
+            var sharing = new SharingViewModel(
+                new SharingServices(new FixedProviderSelector(CloudProviderKind.Supabase), new FakeCloudGroupService { IsSignedIn = true }, new StubCloudSyncService(),
+                    new StubCloudSetupService(), new FixedDeviceIdentity(), settings, new PlayerIdentity(settings),
+                    new AppErrorHandler(new NullAppLogger()), new RecordingDialogService(), new RecordingToastService(), () => Task.CompletedTask),
+                GameId.Windrose,
+                "Windrose");
+            sharing.InitializeAsync().GetAwaiter().GetResult();
+            sharing.Onboarding!.ShowGroupStep(step);
+            screens.Add(sharing);
+        }
+
+        return screens;
+    }
+
+    // Applies the templates (the group rows, the provider cards) without showing a window.
+    private static void Layout(FrameworkElement content, double width)
+    {
+        content.Measure(new Size(width, 1200));
+        content.Arrange(new Rect(0, 0, width, 1200));
     }
 }

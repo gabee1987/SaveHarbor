@@ -90,6 +90,23 @@ public sealed class FakeCloudGroupService : ICloudGroupService
         return Task.CompletedTask;
     }
 
+    public List<CloudGroupMember> Members { get; } = [];
+
+    public Dictionary<string, string> DisplayNames { get; } = [];
+
+    public Task<IReadOnlyList<CloudGroupMember>> ListMembersAsync(string groupId, CancellationToken cancellationToken = default)
+    {
+        Calls.Add("members");
+        return Task.FromResult<IReadOnlyList<CloudGroupMember>>(Members.ToArray());
+    }
+
+    public Task SetDisplayNameAsync(string groupId, string displayName, CancellationToken cancellationToken = default)
+    {
+        Calls.Add("rename");
+        DisplayNames[groupId] = displayName;
+        return Task.CompletedTask;
+    }
+
     public Task<string> GetInviteCodeAsync(string groupId, CancellationToken cancellationToken = default) => Task.FromResult(InviteCode);
 
     public Task<string> RotateInviteCodeAsync(string groupId, CancellationToken cancellationToken = default) => Task.FromResult("TESTCODE33");

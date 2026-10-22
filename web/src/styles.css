@@ -1,0 +1,419 @@
+/*
+  SaveHarbor companion page styles.
+  Dark colours are copied by hand from the desktop themes; update them together:
+    windrose     SaveHarbor.App/Resources/Themes/Windrose.Colors.xaml
+    dragonwilds  SaveHarbor.App/Resources/Themes/Dragonwilds.Colors.xaml
+  The light colours have no desktop counterpart (the app is dark only); they keep the same hues at text contrast of
+  at least 4.5:1 on their panel colour. System fonts only: nothing is loaded from another site.
+*/
+
+:root,
+:root[data-game='windrose'] {
+  --bg: #141516;
+  --bg-top: #1e1f21;
+  --panel: #18191b;
+  --panel-alt: #131415;
+  --line: #3d3b37;
+  --line-soft: #2a2927;
+  --ink: #eee8dc;
+  --muted: #a9a296;
+  --accent: #b8252c;
+  --accent-ink: #f6f0e4;
+  --danger: #f0585e;
+  --warn: #e5a64a;
+  --success: #88c27c;
+  --info: #62b9b5;
+  --display: 'Segoe UI Semibold', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-game='dragonwilds'] {
+  --bg: #1c1517;
+  --bg-top: #33242b;
+  --panel: #211917;
+  --panel-alt: #1a1312;
+  --line: #4a3a26;
+  --line-soft: #33271d;
+  --ink: #f3e7cc;
+  --muted: #bfae90;
+  --accent: #d4af5f;
+  --accent-ink: #24170b;
+  --danger: #e5675a;
+  --warn: #e8a04a;
+  --success: #8bc47a;
+  --info: #b58cff;
+  --display: Georgia, 'Times New Roman', serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root,
+  :root[data-game='windrose'] {
+    --bg: #ece8e0;
+    --bg-top: #f6f3ee;
+    --panel: #ffffff;
+    --panel-alt: #f6f3ee;
+    --line: #d2ccc0;
+    --line-soft: #e4dfd6;
+    --ink: #1d1b18;
+    --muted: #5c564d;
+    --accent: #9e1f25;
+    --accent-ink: #ffffff;
+    --danger: #b3261e;
+    --warn: #8a5a12;
+    --success: #2f6b26;
+    --info: #1f6e6a;
+  }
+
+  :root[data-game='dragonwilds'] {
+    --bg: #efe6d4;
+    --bg-top: #f8f2e6;
+    --panel: #fffbf2;
+    --panel-alt: #f8f2e6;
+    --line: #d8c8a8;
+    --line-soft: #e8dcc4;
+    --ink: #2a1e10;
+    --muted: #5f4f38;
+    --accent: #7a5c18;
+    --accent-ink: #ffffff;
+    --danger: #a8321f;
+    --warn: #8a5410;
+    --success: #2f6b26;
+    --info: #5b3aa8;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 0%, var(--bg-top), var(--bg) 60%) fixed, var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+}
+
+a {
+  color: var(--ink);
+}
+
+h1,
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+h1 {
+  font-size: 22px;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+p {
+  margin: 0 0 10px;
+}
+
+.shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.brand {
+  font-family: var(--display);
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.footer {
+  margin-top: 28px;
+  font-size: 13px;
+}
+
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.narrow {
+  max-width: 420px;
+  margin: 24px auto;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 13px;
+}
+
+.block {
+  display: block;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.error {
+  color: var(--danger);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  color: var(--ink);
+  font: inherit;
+}
+
+#code {
+  font-size: 20px;
+  letter-spacing: 4px;
+}
+
+button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+button.primary {
+  width: 100%;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--display);
+}
+
+button.quiet {
+  min-height: 32px;
+  padding: 4px 10px;
+  background: transparent;
+}
+
+button.link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-top: 12px;
+  min-height: 0;
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+  overflow-x: auto;
+}
+
+.tabs a {
+  padding: 8px 12px;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.tabs a[aria-current='page'] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--muted);
+}
+
+.live {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.live-live .dot,
+.online .dot {
+  background: var(--success);
+}
+
+.live-polling .dot {
+  background: var(--warn);
+}
+
+.checked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.cards {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.card-title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+
+.link-card {
+  display: block;
+  text-decoration: none;
+}
+
+.lock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.lock-text::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--success);
+}
+
+.lock-playing .lock-text::before {
+  background: var(--warn);
+}
+
+.lock-yours .lock-text::before {
+  background: var(--info);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.invite-code {
+  font: 600 22px/1.2 ui-monospace, Consolas, monospace;
+  letter-spacing: 3px;
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+.versions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.versions li {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.versions li:first-child {
+  border-top: none;
+}
+
+.version-number {
+  min-width: 36px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ink, not the accent: the Windrose red is too dark for text on the dark panel. */
+.versions li.latest .version-number {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-connecting .dot {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}

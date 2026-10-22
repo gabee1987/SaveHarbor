@@ -16,10 +16,12 @@ Single WPF project `SaveHarbor.App` (solution `SaveHarbor.sln`). ~6.6k lines. No
 | `Infrastructure/` | Implementations: discovery, backup (zip), cloud providers, sync, launcher, process detection, logging, options | All file/network/process IO lives here |
 | `Utilities/` | Pure static helpers (hashing, formatting, filename sanitising) | Stateless |
 | `ViewModels/` | `MainWindowViewModel` split into partials by concern | CommunityToolkit.Mvvm source generators |
-| `Views/Controls`, `Views/Dialogs`, `Views/Behaviors` | Section user controls, dialogs, attached behaviours | Bind to the single main VM; `CloudGroupSetupWindow` binds its own `CloudGroupSetupViewModel` |
+| `Views/Controls`, `Views/Dialogs`, `Views/Behaviors` | Section user controls, dialogs, attached behaviours | Bind to the single main VM |
+| `Views/Sharing`, `ViewModels/Sharing` | The Sharing page of Settings (`SharingView`, a fresh `SharingViewModel` each time Settings opens; closing Settings reads the cloud again after a change): provider choice, SaveHarbor Cloud sign-in, the group (members, invite code, storage), the Drive folder, the player's name | `SharingViewModel` with `CloudOnboardingViewModel`, `SharingGroupViewModel`, `SharingProfileViewModel`; styles in `SharingStyles.xaml` |
 | `Localization/` | `UiTextCatalog` + `{ui:UiText}` markup extension | Reads `Resources/Texts/ui-text.en.json` |
 | `Resources/Styles/` | `DarkTheme.xaml` (brushes + styles) | Only theme dictionary today |
 | `Configuration/` | Encrypted Google client secret (`.enc`, git-ignored) | Never commit secrets |
+| `web/` (repository root) | Companion web page (plan 08): Vite + React + TypeScript, read-only view of a group's worlds, locks, versions and who is online; GitHub Pages via `.github/workflows/pages.yml` | Reads only through RLS (`group_summaries`, `get_group_snapshot`, `world_versions`, `get_invite_code`); listens on the group's private channel without tracking presence; exact dependency versions, no install scripts (`web/.npmrc`); `npm test` / `npm run build` in `web/` |
 
 ## Composition root
 
@@ -29,16 +31,24 @@ registers everything as **singletons**. `ICloudProvider` resolves to `CloudProvi
 forwards to the provider chosen on this PC (`AppSettings.CloudProvider`: Google Drive or SaveHarbor Cloud) or, with
 `DeveloperProviderOverride: LocalTest`, to `FolderCloudProvider`. SaveHarbor Cloud lives in
 `Infrastructure/Cloud/Supabase/` (`SupabaseCloudProvider`, `SupabaseGroupService` as `ICloudGroupService`, and their
-HTTP, auth, REST and storage clients; options under `SaveHarbor:CloudProvider:Supabase`).
+HTTP, auth, REST and storage clients, and `SupabaseRealtimeClient` as `ICloudLiveUpdates` for live updates; options
+under `SaveHarbor:CloudProvider:Supabase`).
 
 Entry point: `Program.Main` (the csproj `StartupObject`) runs `VelopackApp.Build().Run()` first, which handles the
 installer's and updater's hook arguments and exits for them, then creates `App`. `IAppUpdateService` is
 `Infrastructure/Updates/VelopackUpdateService` (GitHub releases, options under `SaveHarbor:Updates`, `--update-source
 <folder>` for a local feed); it is `Disabled` outside a Velopack install (`dotnet run`, an unzipped folder).
 
-Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds,
-start game monitor timer, `PromptCloudSetupIfNeededAsync` (provider choice when none is chosen and SaveHarbor Cloud is
-configured, then the SaveHarbor Cloud group dialog or the Drive folder prompt), and an update check 10 s later that
+`Program.Main` also keeps one SaveHarbor per Windows user (`Infrastructure/SingleInstanceGuard`): a second start
+(shortcut or `saveharbor://join/<CODE>` link, registered in HKCU by `ProtocolRegistration` from the Velopack hooks or
+Settings) hands its arguments to the running app (`App.Activate` → `MainWindowViewModel.HandleActivationAsync`).
+
+Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds, show the cached cloud overview
+(`Infrastructure/Cloud/CloudSnapshotCache`, display only, marked "as of HH:mm") and read the live one with
+`RefreshCloudAsync` (`MainWindowViewModel.CloudRefresh.cs`: one `ICloudSyncService.RefreshAllAsync` = one connection
+check and one snapshot for the Sharing line, the world list and the selected world; requests within 250 ms share
+one refresh), start game monitor timer, `PromptCloudSetupIfNeededAsync` (Settings on the Sharing page when no provider is chosen and SaveHarbor
+Cloud is configured, or when SaveHarbor Cloud has no group yet; the Drive folder prompt for Google Drive), and an update check 10 s later that
 never blocks the UI (`MainWindowViewModel.Updates.cs`: banner, footer version, Settings "Check for updates").
 
 ## Core flows

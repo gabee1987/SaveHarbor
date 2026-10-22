@@ -55,34 +55,51 @@ public sealed partial class CloudSyncService : ICloudSyncService
     {
         logger.Debug(AppLogKeyword.CloudSync, "Refreshing cloud status for world {WorldId} ({WorldName})", world.WorldId, world.WorldName);
 
-        var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
-        localState.LastCloudCheckAtUtc = Now;
-
         var connection = await cloudProvider.GetConnectionStatusAsync(world.Game, cancellationToken);
-        if (connection.Reason == CloudConnectionReason.UpdateRequired)
-        {
-            await localSyncStateService.SaveAsync(localState, cancellationToken);
-            logger.Warning(AppLogKeyword.CloudSync, "The cloud needs a newer app for world {WorldId}", world.WorldId);
-            return UpdateRequiredStatus(connection, null, null, localState);
-        }
-
         if (!connection.IsConnected)
         {
-            await localSyncStateService.SaveAsync(localState, cancellationToken);
-            logger.Warning(AppLogKeyword.CloudSync, "Cloud provider is not connected for world {WorldId}", world.WorldId);
-            return new CloudSyncStatus(
-                CloudSyncState.NotConnected,
-                connection,
-                null,
-                null,
-                null,
-                localState,
-                "Cloud not connected",
-                connection.Reason.Length > 0 ? connection.Message : "Connect a cloud provider before syncing this world.");
+            return await NotConnectedStatusAsync(world, connection, cancellationToken);
         }
 
         var manifest = await cloudProvider.GetWorldManifestAsync(world.Game, world.WorldId, cancellationToken);
         var sessionLock = await cloudProvider.GetSessionLockAsync(world.Game, world.WorldId, cancellationToken);
+        return await BuildStatusAsync(world, connection, manifest, sessionLock, cancellationToken);
+    }
+
+    private async Task<CloudSyncStatus> NotConnectedStatusAsync(GameWorld world, CloudConnectionStatus connection, CancellationToken cancellationToken)
+    {
+        var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
+        localState.LastCloudCheckAtUtc = Now;
+        await localSyncStateService.SaveAsync(localState, cancellationToken);
+
+        if (connection.Reason == CloudConnectionReason.UpdateRequired)
+        {
+            logger.Warning(AppLogKeyword.CloudSync, "The cloud needs a newer app for world {WorldId}", world.WorldId);
+            return UpdateRequiredStatus(connection, null, null, localState);
+        }
+
+        logger.Warning(AppLogKeyword.CloudSync, "Cloud provider is not connected for world {WorldId}", world.WorldId);
+        return new CloudSyncStatus(
+            CloudSyncState.NotConnected,
+            connection,
+            null,
+            null,
+            null,
+            localState,
+            "Cloud not connected",
+            connection.Reason.Length > 0 ? connection.Message : "Connect a cloud provider before syncing this world.");
+    }
+
+    // The world's state from its manifest and lock, read live either one by one or from the group's snapshot.
+    private async Task<CloudSyncStatus> BuildStatusAsync(
+        GameWorld world,
+        CloudConnectionStatus connection,
+        CloudWorldManifest? manifest,
+        CloudSessionLock? sessionLock,
+        CancellationToken cancellationToken)
+    {
+        var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
+        localState.LastCloudCheckAtUtc = Now;
         var latestVersion = manifest?.LatestVersion;
 
         if (manifest?.SchemaVersion > CloudSchema.MaxKnownManifestVersion || sessionLock?.SchemaVersion > CloudSchema.MaxKnownLockVersion)

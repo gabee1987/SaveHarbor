@@ -73,6 +73,9 @@ public sealed partial class CloudSyncService
         }
 
         lastHeartbeats[HeartbeatKey(world)] = now;
+        var localState = await localSyncStateService.LoadAsync(world, cancellationToken);
+        localState.PendingUploadSinceUtc ??= now;
+        await localSyncStateService.SaveAsync(localState, cancellationToken);
         logger.Information(AppLogKeyword.CloudSession, "Cloud session started for world {WorldId} from version {VersionNumber}", world.WorldId, attempt.Current.BasedOnVersionNumber);
         return new CloudSyncResult(true, CloudSyncState.SomeonePlaying, $"Session started for {world.WorldName} from v{attempt.Current.BasedOnVersionNumber}.");
     }

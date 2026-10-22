@@ -60,6 +60,8 @@ public partial class MainWindowViewModel
         StartGameCommand.NotifyCanExecuteChanged();
         JoinGameCommand.NotifyCanExecuteChanged();
         RunRecommendedSyncActionCommand.NotifyCanExecuteChanged();
+        RetryPendingUploadCommand.NotifyCanExecuteChanged();
+        DiscardPendingUploadCommand.NotifyCanExecuteChanged();
         NotifySwitchGameState();
     }
 

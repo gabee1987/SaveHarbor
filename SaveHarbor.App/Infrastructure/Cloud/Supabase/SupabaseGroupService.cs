@@ -123,6 +123,24 @@ public sealed partial class SupabaseGroupService : ICloudGroupService
         await RememberAsync(KnownGroups.Where(known => known.Id != groupId).ToArray(), cancellationToken);
     }
 
+    public async Task<IReadOnlyList<CloudGroupMember>> ListMembersAsync(string groupId, CancellationToken cancellationToken = default)
+    {
+        var me = auth.UserId;
+        return (await rest.ListMembersAsync(groupId, cancellationToken))
+            .Select(member => new CloudGroupMember(
+                PlayerIdentity.Normalize(member.DisplayName) is { Length: > 0 } name ? name : "Player",
+                member.Role,
+                me is not null && string.Equals(member.UserId, me, StringComparison.OrdinalIgnoreCase),
+                member.JoinedAt,
+                member.UserId))
+            .OrderByDescending(member => member.IsOwner)
+            .ThenBy(member => member.JoinedAtUtc)
+            .ToArray();
+    }
+
+    public Task SetDisplayNameAsync(string groupId, string displayName, CancellationToken cancellationToken = default) =>
+        rest.SetDisplayNameAsync(groupId, PlayerIdentity.Normalize(displayName), cancellationToken);
+
     public Task<string> GetInviteCodeAsync(string groupId, CancellationToken cancellationToken = default) =>
         rest.GetInviteCodeAsync(groupId, cancellationToken);
 

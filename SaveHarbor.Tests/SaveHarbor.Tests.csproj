@@ -28,7 +28,7 @@
     <Content Include="..\SaveHarbor.App\Resources\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\SaveHarbor.App\Resources\Themes\*\*.xaml" Link="Themes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Cloud\Supabase\Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\SaveHarbor.App\Views\Shell\*.xaml;..\SaveHarbor.App\Views\Dialogs\*.xaml;..\SaveHarbor.App\Views\Dialogs\*.xaml.cs" Link="ShellViews\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\SaveHarbor.App\Views\Shell\*.xaml;..\SaveHarbor.App\Views\Dialogs\*.xaml;..\SaveHarbor.App\Views\Dialogs\*.xaml.cs;..\SaveHarbor.App\Views\Sharing\*.xaml;..\SaveHarbor.App\Views\Controls\*.xaml" Link="ShellViews\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

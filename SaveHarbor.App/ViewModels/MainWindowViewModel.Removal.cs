@@ -90,8 +90,7 @@ public partial class MainWindowViewModel
         {
             var result = await _cloudSyncService.RemoveCloudWorldAsync(_activeGame.Current.Id, target.WorldId);
             await RefreshBackupStatsAsync();
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("removal");
 
             StatusText = result.Message;
             AddActivity(result.IsSuccess ? "Success" : "Warning", result.Message);

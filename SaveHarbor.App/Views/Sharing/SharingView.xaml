@@ -1,0 +1,62 @@
+<!-- The Sharing page of Settings. DataContext: SharingViewModel. The skin comes from the main window. -->
+<UserControl x:Class="SaveHarbor.App.Views.Sharing.SharingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:SaveHarbor.App.Views.Controls"
+             xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+             xmlns:sharing="clr-namespace:SaveHarbor.App.Views.Sharing"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SaveHarbor.App;component/Views/Sharing/SharingStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Heading: what this screen is about, and which game it serves. -->
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Style="{DynamicResource SharingAvatar}" Width="46" Height="46" CornerRadius="23" Margin="0,0,14,0" Tag="True"
+                    Visibility="{Binding IsGroup, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{Binding Group.GroupInitial}" Style="{DynamicResource SharingAvatarText}" FontSize="21" />
+            </Border>
+            <Path Width="36" Height="27" Margin="0,0,14,0" Stretch="Uniform" Data="{DynamicResource SkinCloudGeometry}"
+                  Stroke="{DynamicResource SkinGoldBrush}" StrokeThickness="1.4" VerticalAlignment="Center"
+                  Visibility="{Binding IsGroup, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Heading}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="23"
+                           Foreground="{DynamicResource SkinGoldTextBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Subheading}" Style="{DynamicResource SharingHint}" FontSize="13" Margin="0,2,0,0" />
+            </StackPanel>
+            <Border Grid.Column="2" Style="{DynamicResource SkinPill}" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding GameName}" Foreground="{DynamicResource SkinParchmentBrush}" FontSize="12" />
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <sharing:SharingWelcomeView Visibility="{Binding IsWelcome, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <sharing:SharingSignInView x:Name="SignInView" DataContext="{Binding Onboarding}"
+                                       Visibility="{Binding DataContext.IsSignIn, RelativeSource={RelativeSource AncestorType=sharing:SharingView}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <sharing:SharingGroupView Visibility="{Binding IsGroup, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <sharing:SharingDriveView Visibility="{Binding IsDrive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </Grid>
+
+        <Button Grid.Row="2" Content="{ui:UiText Sharing.BackToGroup}" Command="{Binding BackToGroupCommand}" Style="{DynamicResource SkinLinkButton}"
+                HorizontalAlignment="Left" Margin="0,12,0,0"
+                Visibility="{Binding CanGoBackToGroup, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+        <controls:IndeterminateProgressLineView Grid.Row="2" IsActive="{Binding IsBusy}" VerticalAlignment="Bottom" Margin="0,0,0,-6" />
+    </Grid>
+</UserControl>

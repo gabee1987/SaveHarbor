@@ -70,6 +70,80 @@
         </Style.Triggers>
     </Style>
 
+    <!-- The comparison's middle icon, picked by SyncAdvice.Direction and drawn in its tone: a check when both copies
+         match, an arrow towards the side that is behind, a fork when both changed, a lock while a friend plays,
+         a warning when blocked, a question mark when the cloud was not checked. Drawn on a 24 x 24 grid. -->
+    <Geometry x:Key="SyncSameGeometry">M6.5,12.5 L10.5,16.5 L17.5,8</Geometry>
+    <Geometry x:Key="SyncLocalAheadGeometry">M4,12 H19 M14,7 L19,12 L14,17</Geometry>
+    <Geometry x:Key="SyncCloudAheadGeometry">M20,12 H5 M10,7 L5,12 L10,17</Geometry>
+    <Geometry x:Key="SyncDivergedGeometry">M3.5,12 H8 C11,12 11,6.5 14.5,6.5 H20 M8,12 C11,12 11,17.5 14.5,17.5 H20 M17.5,4 L20,6.5 L17.5,9 M17.5,15 L20,17.5 L17.5,20</Geometry>
+    <Geometry x:Key="SyncInUseGeometry">M7,11 H17 V19.5 H7 Z M9.5,11 V8.5 A2.5,2.5 0 0 1 14.5,8.5 V11 M12,14.3 V16.2</Geometry>
+    <Geometry x:Key="SyncBlockedGeometry">M12,4 L20.5,19 H3.5 Z M12,9.8 V13.6 M12,16.3 V16.4</Geometry>
+    <Geometry x:Key="SyncFreeGeometry">M7,11 H17 V19.5 H7 Z M9.5,11 V8.5 A2.5,2.5 0 0 1 14.4,7.8 M12,14.3 V16.2</Geometry>
+    <Geometry x:Key="SyncUnknownGeometry">M9.3,9.2 A2.8,2.8 0 1 1 13.3,11.7 C12.5,12.2 12,12.8 12,13.9 M12,16.9 V17</Geometry>
+
+    <Style x:Key="SkinSyncIcon" TargetType="Path">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Stretch" Value="None" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="StrokeStartLineCap" Value="Round" />
+        <Setter Property="StrokeEndLineCap" Value="Round" />
+        <Setter Property="StrokeLineJoin" Value="Round" />
+        <Setter Property="SnapsToDevicePixels" Value="False" />
+        <Setter Property="LayoutTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Stroke" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="Data" Value="{StaticResource SyncUnknownGeometry}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Direction}" Value="=">
+                <Setter Property="Data" Value="{StaticResource SyncSameGeometry}" />
+                <Setter Property="StrokeThickness" Value="2.4" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="→">
+                <Setter Property="Data" Value="{StaticResource SyncLocalAheadGeometry}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="←">
+                <Setter Property="Data" Value="{StaticResource SyncCloudAheadGeometry}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="≠">
+                <Setter Property="Data" Value="{StaticResource SyncDivergedGeometry}" />
+                <Setter Property="StrokeThickness" Value="1.8" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="…">
+                <Setter Property="Data" Value="{StaticResource SyncInUseGeometry}" />
+                <Setter Property="StrokeThickness" Value="1.8" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="lock">
+                <Setter Property="Data" Value="{StaticResource SyncInUseGeometry}" />
+                <Setter Property="StrokeThickness" Value="1.8" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="unlock">
+                <Setter Property="Data" Value="{StaticResource SyncFreeGeometry}" />
+                <Setter Property="StrokeThickness" Value="1.8" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Direction}" Value="!">
+                <Setter Property="Data" Value="{StaticResource SyncBlockedGeometry}" />
+                <Setter Property="StrokeThickness" Value="1.8" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Tone}" Value="{x:Static vm:SyncTone.Good}">
+                <Setter Property="Stroke" Value="{DynamicResource SuccessBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Tone}" Value="{x:Static vm:SyncTone.Info}">
+                <Setter Property="Stroke" Value="{DynamicResource InfoBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Tone}" Value="{x:Static vm:SyncTone.Warning}">
+                <Setter Property="Stroke" Value="{DynamicResource WarnBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Tone}" Value="{x:Static vm:SyncTone.Danger}">
+                <Setter Property="Stroke" Value="{DynamicResource DangerBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Shows its content only while there is some. -->
     <Style x:Key="SkinOptionalContent" TargetType="ContentControl">
         <Setter Property="Focusable" Value="False" />

@@ -9,6 +9,10 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(SelectedWorldSize));
         RefreshSelectedWorldBackups();
         NotifySyncComparison();
+        NotifyPlayPreflight();
+        NotifyHosting();
+        OnPropertyChanged(nameof(TrayTooltip));
+        OnPropertyChanged(nameof(SelectedWorldSavedText));
         _ = RefreshWorldFactsAsync();
 
         if (!suppressSelectedWorldCloudRefresh)
@@ -35,6 +39,8 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasCloudLockText));
         NotifySharingHero();
         NotifySyncComparison();
+        NotifyPlayPreflight();
+        NotifyHosting();
         ApplySelectedStatusToBadges(value);
     }
 
@@ -56,6 +62,7 @@ public partial class MainWindowViewModel
     partial void OnIsGameRunningChanged(bool value)
     {
         OnPropertyChanged(nameof(SafetyHint));
+        OnPropertyChanged(nameof(HasPendingUpload));
         NotifySwitchGameState();
     }
 }

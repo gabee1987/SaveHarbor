@@ -7,29 +7,29 @@
          own shell wrapper around this view, e.g. DragonwildsShellView. -->
     <UserControl.Resources>
         <ResourceDictionary>
-            <DataTemplate x:Key="EmbersTemplate">
-                <local:EmberFieldView EmberBrush="{DynamicResource SkinEmberBrush}" />
-            </DataTemplate>
             <DataTemplate x:Key="SettingsTemplate">
                 <local:ShellSettingsView />
             </DataTemplate>
         </ResourceDictionary>
     </UserControl.Resources>
 
+    <!-- Ctrl+U uploads the selected world, Ctrl+R scans and reads the cloud again; Enter on the world list is Play. -->
     <UserControl.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CloseSettingsCommand}" />
+        <KeyBinding Key="U" Modifiers="Control" Command="{Binding UploadCloudCommand}" />
+        <KeyBinding Key="R" Modifiers="Control" Command="{Binding RefreshCommand}" />
     </UserControl.InputBindings>
 
     <Grid>
         <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource SkinSmokeTemplate}" />
 
-        <!-- Embers exist only while ambient effects are on. -->
+        <!-- The game's ambient effect exists only while ambient effects are on: embers for Dragonwilds, the sea for Windrose. -->
         <ContentControl Content="{Binding}" Focusable="False" IsHitTestVisible="False">
             <ContentControl.Style>
                 <Style TargetType="ContentControl">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding AmbientEffectsEnabled}" Value="True">
-                            <Setter Property="ContentTemplate" Value="{StaticResource EmbersTemplate}" />
+                            <Setter Property="ContentTemplate" Value="{DynamicResource SkinAmbientTemplate}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -71,14 +71,33 @@
                     </Grid>
                 </Border>
 
+                <!-- Progress from a session on this PC that the group does not have yet; survives restarts. -->
+                <Border Style="{DynamicResource SkinSettingRow}" Margin="0,12,0,0"
+                        Visibility="{Binding HasPendingUpload, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding PendingUploadText}" Foreground="{DynamicResource WarnBrush}" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{ui:SpacedText Shell.PendingUploadRetry}" Command="{Binding RetryPendingUploadCommand}" Style="{DynamicResource SkinButton}"
+                                    Margin="12,0,0,0" ToolTip="{ui:UiText Shell.PendingUploadRetryTooltip}" />
+                            <Button Content="{ui:SpacedText Shell.PendingUploadDismiss}" Command="{Binding DiscardPendingUploadCommand}" Style="{DynamicResource SkinLinkButton}"
+                                    Margin="12,0,0,0" VerticalAlignment="Center" ToolTip="{ui:UiText Shell.PendingUploadDismissTooltip}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <local:ShellHeaderView />
             </StackPanel>
 
             <ContentControl Grid.Row="1" Style="{DynamicResource SkinOrnamentDivider}" Margin="0,10,0,18" />
 
             <Grid Grid.Row="2">
+                <!-- The world list and the world details have their own widths and fold into a rail; Sharing takes the rest. -->
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="18" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
@@ -92,7 +111,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="18" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
