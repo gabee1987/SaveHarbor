@@ -13,7 +13,7 @@ Needs Node.js 24 and the local Supabase stack (`npm run db:start` in the reposit
 cd web
 npm ci
 Copy-Item .env.example .env.local   # then set the local URL and the publishable key from `npx supabase status`
-npm run dev                         # http://localhost:5173/SaveHarbor/
+npm run dev                         # http://localhost:5287/SaveHarbor/
 ```
 
 Sign in with a seed address (`test-a@example.invalid`); the code arrives in Mailpit at http://127.0.0.1:54324.

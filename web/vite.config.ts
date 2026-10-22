@@ -25,6 +25,9 @@ export default defineConfig(({ mode }) => {
     // GitHub Pages serves the repository's page under /SaveHarbor/.
     base: '/SaveHarbor/',
     plugins: [react(), securityHeaders(env.VITE_SUPABASE_URL)],
+    // Own ports instead of Vite's 5173/4173, which other projects on the same PC use; fail instead of moving on.
+    server: { port: 5287, strictPort: true },
+    preview: { port: 4287, strictPort: true },
     build: { target: 'es2022', sourcemap: false },
     test: { environment: 'node', include: ['src/**/*.test.ts'] }
   };
