@@ -120,16 +120,23 @@ public partial class MainWindowViewModel
             }
 
             var current = await adapter.ReadWorldAsync(world.SavePath) ?? world;
-            StatusText = $"Sharing {current.WorldName}...";
-            var upload = await ShareAfterGameClosedAsync(current);
+            var share = _settingsStore.Current.UploadWhenGameCloses || AskToShareAfterGameClosed(current);
+            StatusText = share ? $"Sharing {current.WorldName}..." : $"Ending the session on {current.WorldName}...";
+            var upload = share ? await ShareAfterGameClosedAsync(current) : null;
             var end = await _cloudSyncService.EndSessionAsync(current);
             hasObservedGameRunningDuringSession = false;
             await RefreshBackupStatsAsync();
             await RefreshCloudAsync("game closed");
             await RefreshPendingUploadAsync();
 
-            StatusText = upload.Message;
-            if (upload.IsSuccess)
+            if (upload is null)
+            {
+                // The session marked the world as not shared yet, so the banner keeps the progress in view.
+                StatusText = $"{current.WorldName} is free again; your progress stays on this PC until you upload it.";
+                AddActivity("Info", $"{ActiveGameName} closed. {StatusText}");
+                _toastService.Info("Progress not shared", "Upload it from the banner when you are ready.");
+            }
+            else if (upload.IsSuccess)
             {
                 AddActivity("Success", $"{ActiveGameName} closed. {upload.Message}");
                 _toastService.Success("Progress shared", upload.Message);
@@ -163,6 +170,18 @@ public partial class MainWindowViewModel
             UpdateGameStatus();
             NotifyCommandStates();
         }
+    }
+
+    // "Share progress when the game closes" is off: the window comes back and asks. Not now still frees the world, so
+    // friends are not blocked, and says what that means for them.
+    private bool AskToShareAfterGameClosed(GameWorld world)
+    {
+        RestoreFromTray();
+        return _dialogService.Confirm(
+            "Share your progress?",
+            $"{ActiveGameName} closed. Share your progress in {world.WorldName} with your group now?\n\n"
+            + "If you choose not now, the world is freed anyway: friends who play it before you upload start from the version before your session. "
+            + "A reminder stays until you upload.");
     }
 
     // A copy the game would not load as it is, or one it swapped for another, is not shared without the player.

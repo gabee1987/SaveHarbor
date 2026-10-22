@@ -85,6 +85,11 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<ICloudGroupService>(),
                     serviceProvider.GetRequiredService<IAppLogger>(),
                     serviceProvider.GetRequiredService<TimeProvider>()));
+                services.AddSingleton(serviceProvider => new SupabaseRealtimeClient(
+                    serviceProvider.GetRequiredService<SupabaseOptions>(),
+                    serviceProvider.GetRequiredService<SupabaseAuthClient>(),
+                    serviceProvider.GetRequiredService<IAppLogger>()));
+                services.AddSingleton<ICloudLiveUpdates>(serviceProvider => serviceProvider.GetRequiredService<SupabaseRealtimeClient>());
                 services.AddSingleton(serviceProvider => new CloudProviderSelector(
                     serviceProvider.GetRequiredService<CloudProviderOptions>(),
                     serviceProvider.GetRequiredService<IAppSettingsStore>(),

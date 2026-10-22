@@ -86,6 +86,6 @@ public sealed partial class CloudSyncService
             .ToArray();
 
         logger.Debug(AppLogKeyword.CloudSync, "Cloud overview for {Game}: {LocalCount} local world(s), {CloudOnlyCount} only in the cloud", game, summaries.Count, cloudOnly.Length);
-        return new CloudWorldOverview(true, summaries, cloudOnly);
+        return new CloudWorldOverview(true, summaries, cloudOnly, snapshot.LocksByWorldId);
     }
 }

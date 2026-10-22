@@ -30,7 +30,8 @@ registers everything as **singletons**. `ICloudProvider` resolves to `CloudProvi
 forwards to the provider chosen on this PC (`AppSettings.CloudProvider`: Google Drive or SaveHarbor Cloud) or, with
 `DeveloperProviderOverride: LocalTest`, to `FolderCloudProvider`. SaveHarbor Cloud lives in
 `Infrastructure/Cloud/Supabase/` (`SupabaseCloudProvider`, `SupabaseGroupService` as `ICloudGroupService`, and their
-HTTP, auth, REST and storage clients; options under `SaveHarbor:CloudProvider:Supabase`).
+HTTP, auth, REST and storage clients, and `SupabaseRealtimeClient` as `ICloudLiveUpdates` for live updates; options
+under `SaveHarbor:CloudProvider:Supabase`).
 
 Entry point: `Program.Main` (the csproj `StartupObject`) runs `VelopackApp.Build().Run()` first, which handles the
 installer's and updater's hook arguments and exits for them, then creates `App`. `IAppUpdateService` is

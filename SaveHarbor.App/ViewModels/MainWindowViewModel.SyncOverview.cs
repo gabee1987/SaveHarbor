@@ -84,6 +84,7 @@ public partial class MainWindowViewModel
         CloudOnlyWorlds.Clear();
         worldSummaries = new Dictionary<string, WorldSyncSummary>();
         hasLiveCloudOverview = false;
+        lastLiveOverview = null;
         CloudStaleSince = null;
         NotifyPlayPreflight();
     }

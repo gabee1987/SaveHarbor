@@ -126,7 +126,8 @@ public partial class MainWindowViewModel
                 _errorHandler,
                 _dialogService,
                 _toastService,
-                SetupSharedFolderAsync),
+                SetupSharedFolderAsync,
+                _live),
             game.Id,
             game.DisplayName);
         sharing.CloseRequested += (_, _) => IsSettingsOpen = false;
@@ -143,6 +144,8 @@ public partial class MainWindowViewModel
     {
         cloudChoicePostponed |= sharing.Postponed;
         OnPropertyChanged(nameof(PlayerDisplayName));
+        // A new name or the online switch reaches the group at once.
+        await SyncLiveConnectionAsync();
         if (sharing.ConnectedGroupName is null && SharingState() == sharingOpenedWith)
         {
             return;

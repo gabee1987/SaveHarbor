@@ -44,7 +44,8 @@ public sealed record SharingServices(
     IAppErrorHandler ErrorHandler,
     IDialogService Dialogs,
     IToastService Toasts,
-    Func<Task> SetupSharedFolderAsync);
+    Func<Task> SetupSharedFolderAsync,
+    ICloudLiveUpdates? Live = null);
 
 // A group the player already belongs to. The member count is unknown (0) for groups remembered from an earlier start.
 public sealed record CloudGroupOption(CloudGroupSummary Group)
@@ -59,7 +60,8 @@ public sealed record CloudGroupOption(CloudGroupSummary Group)
 }
 
 // One face in the group's member list.
-public sealed record SharingMember(CloudGroupMember Member)
+// IsOnline: SaveHarbor is open for that member right now (SaveHarbor Cloud presence).
+public sealed record SharingMember(CloudGroupMember Member, bool IsOnline = false)
 {
     public string Name => Member.DisplayName;
 
@@ -74,6 +76,7 @@ public sealed record SharingMember(CloudGroupMember Member)
         (true, true) => "Owner · you",
         (true, false) => "Owner",
         (false, true) => "You",
+        _ when IsOnline => "Online now",
         _ => $"Joined {Member.JoinedAtUtc.ToLocalTime():d MMM yyyy}"
     };
 }

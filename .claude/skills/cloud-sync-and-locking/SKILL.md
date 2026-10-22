@@ -88,6 +88,15 @@ See `multi-game-separation`.
   creating); `SharingGroupViewModel` the group screen (members via `ListMembersAsync`, invite code, storage);
   `SharingProfileViewModel` the one player name (also sent to every group with `SetDisplayNameAsync`), the PC name and
   versions kept. The Sharing view's top line comes from `MainWindowViewModel.Sharing.cs`.
+- Live updates (`ICloudLiveUpdates` → `SupabaseRealtimeClient` + `.Session.cs`, frames in `SupabaseRealtimeProtocol`):
+  one WebSocket (`vsn=1.0.0`, heartbeat 25 s, `access_token` frame when the token rotates, backoff 1 → 60 s) to the
+  **private** channel `realtime:saveharbor:<groupId>`, which only members may join (`can_use_realtime_topic` policies on
+  `realtime.messages`). It listens to `worlds` INSERT/UPDATE filtered by `group_id`; lock changes reach it through
+  `worlds.lock_changed_at` (Realtime cannot filter deletes by group, so never subscribe to deletes). A change only
+  triggers a debounced (500 ms) `RefreshCloudAsync("realtime")`; the payload is never trusted or logged. Toasts come
+  from `CloudFriendActivity.Compare` between two live overviews. State `Polling` → 60 s refresh timer. Presence:
+  `display_name`, `game`, `playing_world_id`. Wiring: `MainWindowViewModel.Realtime.cs`; `SyncLiveConnectionAsync`
+  runs after every cloud refresh and connects only for SaveHarbor Cloud with a group.
 - Storage maintenance (`ICloudStorageMaintenance`, SaveHarbor Cloud only): storage used is summed in the app (the API
   has aggregates switched off); unused archives are objects no `world_versions.archive_path` names and older than one
   hour, so a friend's upload that is still publishing is never removed.

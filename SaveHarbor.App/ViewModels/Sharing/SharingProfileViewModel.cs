@@ -81,6 +81,37 @@ public sealed partial class SharingProfileViewModel : ObservableObject
         }
     }
 
+    public bool UploadWhenGameCloses
+    {
+        get => _services.Settings.Current.UploadWhenGameCloses;
+        set
+        {
+            if (value == _services.Settings.Current.UploadWhenGameCloses)
+            {
+                return;
+            }
+
+            _services.Settings.Update(settings => settings.UploadWhenGameCloses = value);
+            OnPropertyChanged();
+        }
+    }
+
+    // SaveHarbor Cloud only; reaches the group when Settings closes.
+    public bool ShowOnlineStatus
+    {
+        get => _services.Settings.Current.ShowOnlineStatus;
+        set
+        {
+            if (value == _services.Settings.Current.ShowOnlineStatus)
+            {
+                return;
+            }
+
+            _services.Settings.Update(settings => settings.ShowOnlineStatus = value);
+            OnPropertyChanged();
+        }
+    }
+
     // The name chosen during sign-in; the groups get it when they are joined or created.
     public void Save(string displayName)
     {
@@ -97,6 +128,8 @@ public sealed partial class SharingProfileViewModel : ObservableObject
         OnPropertyChanged(nameof(EffectiveDeviceLabel));
         OnPropertyChanged(nameof(Email));
         OnPropertyChanged(nameof(SelectedCloudRetention));
+        OnPropertyChanged(nameof(UploadWhenGameCloses));
+        OnPropertyChanged(nameof(ShowOnlineStatus));
     }
 
     // Raised after the name reached every group, so their member lists can be read again.

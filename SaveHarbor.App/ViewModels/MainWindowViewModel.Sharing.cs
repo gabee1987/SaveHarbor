@@ -111,6 +111,11 @@ public partial class MainWindowViewModel
             parts.Add(group.MemberCount == 1 ? "1 member" : $"{group.MemberCount} members");
         }
 
+        if (OnlineMemberCount > 0)
+        {
+            parts.Add($"{OnlineMemberCount} online");
+        }
+
         return string.Join(" · ", parts);
     }
 

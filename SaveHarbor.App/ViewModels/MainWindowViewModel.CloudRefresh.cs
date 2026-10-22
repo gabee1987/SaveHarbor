@@ -61,6 +61,7 @@ public partial class MainWindowViewModel
                 CloudStatus = refresh.SelectedStatus;
             }
 
+            ShowFriendActivity(game, refresh.Overview);
             ApplyCloudOverview(refresh.Overview);
             hasLiveCloudOverview = true;
             CloudStaleSince = null;
@@ -70,8 +71,18 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             var error = _errorHandler.Handle(ex, "Refresh cloud status", AppLogKeyword.CloudSync);
-            AddActivity("Error", FormatActivityError(error));
-            _toastService.Error("Cloud check failed", error.UserMessage);
+            // A minute's poll while the live connection is down fails quietly (logged only); the Sharing line already
+            // says the cloud is being retried.
+            if (reason != "polling")
+            {
+                AddActivity("Error", FormatActivityError(error));
+                _toastService.Error("Cloud check failed", error.UserMessage);
+            }
+        }
+
+        if (generation == cloudRefreshGeneration)
+        {
+            await SyncLiveConnectionAsync();
         }
     }
 

@@ -11,7 +11,10 @@ when you quit, your friends get your progress.** Everything else is secondary.
 ## Current behaviour (as of develop @ 0dbf842)
 
 `StartGameAsync`: start session (blocked if cloud newer → user must Download manually) → launch via Steam.
-Game monitor (5 s): when the game closes and we own the lock → `EndSessionAsync` (lock cleared, **no upload**).
+Game monitor (5 s): when the game closes and we own the lock → wait for the save to settle → upload
+(`ShareAfterGameClosedAsync`) → `EndSessionAsync` (CP6). With `AppSettings.UploadWhenGameCloses` off (Settings › Sharing,
+"Share progress when the game closes") the window returns and asks first; "not now" still ends the session, and the
+pending-upload banner (`PendingUploadSinceUtc`, set at session start) stays until an upload. Nothing downloads by itself.
 
 ## Target flow (single primary button)
 

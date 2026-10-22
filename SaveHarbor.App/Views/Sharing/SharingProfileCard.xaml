@@ -1,4 +1,5 @@
-<!-- "You": the name friends see, this PC's name, versions kept, and (SaveHarbor Cloud) the account.
+<!-- "You": the name friends see, this PC's name, versions kept, sharing after play, and (SaveHarbor Cloud) the online
+     status and the account.
      DataContext: SharingViewModel. -->
 <UserControl x:Class="SaveHarbor.App.Views.Sharing.SharingProfileCard"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -37,6 +38,32 @@
             <ComboBox Style="{DynamicResource SkinComboBox}" AutomationProperties.Name="{ui:UiText Sharing.KeepVersions}"
                       ItemsSource="{Binding Profile.CloudRetentionOptions}" SelectedItem="{Binding Profile.SelectedCloudRetention}"
                       ToolTip="{ui:UiText Sharing.KeepVersionsTooltip}" />
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="{ui:UiText Sharing.UploadOnClose}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" />
+                    <TextBlock Text="{ui:UiText Sharing.UploadOnCloseHint}" Style="{DynamicResource SharingHint}" FontSize="11.5" TextWrapping="Wrap" />
+                </StackPanel>
+                <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Profile.UploadWhenGameCloses}"
+                          AutomationProperties.Name="{ui:UiText Sharing.UploadOnClose}" ToolTip="{ui:UiText Sharing.UploadOnCloseTooltip}" />
+            </Grid>
+
+            <Grid Margin="0,12,0,0" Visibility="{Binding ShowAccount, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="{ui:UiText Sharing.ShowOnline}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" />
+                    <TextBlock Text="{ui:UiText Sharing.ShowOnlineHint}" Style="{DynamicResource SharingHint}" FontSize="11.5" TextWrapping="Wrap" />
+                </StackPanel>
+                <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Profile.ShowOnlineStatus}"
+                          AutomationProperties.Name="{ui:UiText Sharing.ShowOnline}" ToolTip="{ui:UiText Sharing.ShowOnlineTooltip}" />
+            </Grid>
 
             <Button Content="{ui:UiText Sharing.SignOut}" Command="{Binding SignOutCommand}" Style="{DynamicResource SkinLinkButton}"
                     HorizontalAlignment="Left" Margin="0,14,0,0"

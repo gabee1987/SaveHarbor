@@ -74,7 +74,11 @@ It requests sign-in codes, so running it twice within 30 seconds hits the per-ad
    the 6-digit code.
 5. Dashboard → Authentication → Settings: e-mail OTP expiry 600 seconds.
 6. Dashboard → Storage: check that bucket `saves` exists (the migration creates it), private, 45 MB limit.
-7. Copy the project URL and the **publishable** key into `SaveHarbor.App/appsettings.json` (plan 03 §1). Both are
+7. Dashboard → Realtime → Settings: turn **off** "Allow public access", so only private channels exist. The app's live
+   channel `saveharbor:<group id>` is private; migration `20261022000000_realtime.sql` lets only that group's members
+   join it. Check after `db push` that `select policyname from pg_policies where schemaname = 'realtime';` lists
+   `saveharbor_members_receive` and `saveharbor_members_track_presence`.
+8. Copy the project URL and the **publishable** key into `SaveHarbor.App/appsettings.json` (plan 03 §1). Both are
    public by design; row-level security protects the data.
 
 The built-in e-mail sender is rate-limited and meant for development. If codes arrive late, configure custom SMTP

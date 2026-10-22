@@ -131,7 +131,8 @@ public sealed partial class SupabaseGroupService : ICloudGroupService
                 PlayerIdentity.Normalize(member.DisplayName) is { Length: > 0 } name ? name : "Player",
                 member.Role,
                 me is not null && string.Equals(member.UserId, me, StringComparison.OrdinalIgnoreCase),
-                member.JoinedAt))
+                member.JoinedAt,
+                member.UserId))
             .OrderByDescending(member => member.IsOwner)
             .ThenBy(member => member.JoinedAtUtc)
             .ToArray();

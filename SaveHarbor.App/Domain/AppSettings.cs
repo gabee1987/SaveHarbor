@@ -29,6 +29,12 @@ public sealed class AppSettings
     // After Play starts the game, the window waits in the notification area until the game closes.
     public bool MinimizeToTrayWhilePlaying { get; set; } = true;
 
+    // After a Play session, share the progress as soon as the game has closed and saved. Off: ask each time.
+    public bool UploadWhenGameCloses { get; set; } = true;
+
+    // SaveHarbor Cloud: the group sees that SaveHarbor is open on this PC and which world is being played.
+    public bool ShowOnlineStatus { get; set; } = true;
+
     // Main window panels folded into a rail. Both start folded, so the Sharing panel has the room.
     public bool WorldListCollapsed { get; set; } = true;
 

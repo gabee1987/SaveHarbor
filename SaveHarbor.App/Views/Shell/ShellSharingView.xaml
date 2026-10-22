@@ -82,8 +82,30 @@
                             <TextBlock Text="{Binding CloudStaleText}" Foreground="{DynamicResource MutedBrush}" FontSize="11.5" />
                         </Border>
                     </StackPanel>
-                    <TextBlock Grid.Column="1" Text="{Binding CloudCheckedText}" Style="{DynamicResource SkinMuted}" FontSize="11.5" VerticalAlignment="Center"
-                               Margin="12,0,0,0" ToolTip="{ui:UiText Shell.CheckedTooltip}" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <!-- Live: friends' changes arrive by themselves. Reconnecting: checked every minute meanwhile. -->
+                        <StackPanel Orientation="Horizontal" Background="Transparent" Margin="0,0,12,0" ToolTip="{Binding LiveStateTooltip}"
+                                    Visibility="{Binding HasLiveState, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Ellipse Width="7" Height="7" VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{DynamicResource SubtleBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LiveStateTone}" Value="Good">
+                                                <Setter Property="Fill" Value="{DynamicResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LiveStateTone}" Value="Warning">
+                                                <Setter Property="Fill" Value="{DynamicResource WarnBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="{Binding LiveStateText}" Style="{DynamicResource SkinMuted}" FontSize="11.5" VerticalAlignment="Center" Margin="5,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding CloudCheckedText}" Style="{DynamicResource SkinMuted}" FontSize="11.5" VerticalAlignment="Center"
+                                   ToolTip="{ui:UiText Shell.CheckedTooltip}" />
+                    </StackPanel>
                     <Button Grid.Column="2"
                             Content="{Binding SharingActionText, Converter={x:Static converters:SpacedCapsConverter.Instance}}"
                             Command="{Binding RunSharingActionCommand}"

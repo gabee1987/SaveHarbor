@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Services;
 using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.ViewModels;
@@ -128,10 +129,13 @@ public sealed partial class SharingGroupViewModel : ObservableObject
         }
 
         var members = await _services.Groups.ListMembersAsync(groupId);
+        var online = _services.Live is { State: CloudLiveState.Live } live
+            ? live.Online.Select(entry => entry.UserId).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : [];
         Members.Clear();
         foreach (var member in members)
         {
-            Members.Add(new SharingMember(member));
+            Members.Add(new SharingMember(member, member.UserId.Length > 0 && online.Contains(member.UserId)));
         }
 
         NotifyGroup();

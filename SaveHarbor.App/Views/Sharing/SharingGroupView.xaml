@@ -33,9 +33,15 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Style="{DynamicResource SharingAvatar}" Tag="{Binding IsYou}">
-                                            <TextBlock Text="{Binding Initial}" Style="{DynamicResource SharingAvatarText}" />
-                                        </Border>
+                                        <Grid VerticalAlignment="Center">
+                                            <Border Style="{DynamicResource SharingAvatar}" Tag="{Binding IsYou}">
+                                                <TextBlock Text="{Binding Initial}" Style="{DynamicResource SharingAvatarText}" />
+                                            </Border>
+                                            <!-- SaveHarbor is open for this member right now. -->
+                                            <Ellipse Width="11" Height="11" Fill="{DynamicResource SuccessBrush}" Stroke="{DynamicResource PanelBrush}" StrokeThickness="2"
+                                                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                     Visibility="{Binding IsOnline, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </Grid>
                                         <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                                             <TextBlock Text="{Binding Detail}" Style="{DynamicResource SharingHint}" FontSize="11.5" />
