@@ -1,14 +1,24 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { CloudError, requestCode, verifyCode } from '../lib/api';
+import { googleSignInAvailable, startGoogleSignIn } from '../lib/oauth';
 
-// The same e-mail code sign-in as the desktop app.
-export function SignInPage() {
+// The same sign-ins as the desktop app: a code by e-mail, or Google when the cloud has it on.
+export function SignInPage({ notice }: { notice: string | null }) {
   const [pending] = useState(readPendingSignIn);
   const [step, setStep] = useState<'email' | 'code'>(pending ? 'code' : 'email');
   const [email, setEmail] = useState(pending ?? '');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(notice);
+  const [google, setGoogle] = useState(false);
+
+  useEffect(() => {
+    let current = true;
+    void googleSignInAvailable().then((available) => current && setGoogle(available));
+    return () => {
+      current = false;
+    };
+  }, []);
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -53,6 +63,14 @@ export function SignInPage() {
             {busy ? 'Sending…' : 'Send code'}
           </button>
         </form>
+        {google && (
+          <>
+            <p className="divider">or</p>
+            <button type="button" className="wide" disabled={busy} onClick={() => void run(startGoogleSignIn)}>
+              Continue with Google
+            </button>
+          </>
+        )}
         <p className="hint">New to SaveHarbor? Install the app on your PC and join your friends' group there first.</p>
       </section>
     );

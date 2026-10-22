@@ -45,6 +45,30 @@ public sealed class FakeCloudGroupService : ICloudGroupService
         return Task.FromResult(new CloudAuthResult(true, $"Signed in as {email}."));
     }
 
+    public bool GoogleAvailable { get; set; }
+
+    // Null: Google sign-in waits until it is cancelled, like a player who has not finished in the browser yet.
+    public CloudAuthResult? GoogleResult { get; set; }
+
+    public Task<bool> IsGoogleSignInAvailableAsync(CancellationToken cancellationToken = default) => Task.FromResult(GoogleAvailable);
+
+    public async Task<CloudAuthResult> SignInWithGoogleAsync(CancellationToken cancellationToken = default)
+    {
+        Calls.Add("google");
+        if (GoogleResult is null)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+        }
+
+        if (GoogleResult!.IsSuccess)
+        {
+            IsSignedIn = true;
+            SignedInEmail = "test@example.invalid";
+        }
+
+        return GoogleResult;
+    }
+
     public Task SignOutAsync(CancellationToken cancellationToken = default)
     {
         Calls.Add("signout");

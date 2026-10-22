@@ -229,6 +229,27 @@ button.primary {
   font-family: var(--display);
 }
 
+button.wide {
+  width: 100%;
+  font-family: var(--display);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line-soft);
+}
+
 button.quiet {
   min-height: 32px;
   padding: 4px 10px;

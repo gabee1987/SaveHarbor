@@ -13,6 +13,12 @@ public interface ICloudGroupService
 
     Task<CloudAuthResult> VerifySignInCodeAsync(string email, string code, CancellationToken cancellationToken = default);
 
+    // False while the cloud cannot be reached or has Google sign-in switched off.
+    Task<bool> IsGoogleSignInAvailableAsync(CancellationToken cancellationToken = default);
+
+    // Opens Google sign-in in the browser and waits up to five minutes for the player to finish there.
+    Task<CloudAuthResult> SignInWithGoogleAsync(CancellationToken cancellationToken = default);
+
     Task SignOutAsync(CancellationToken cancellationToken = default);
 
     // The groups from the last ListGroupsAsync, also after a restart.

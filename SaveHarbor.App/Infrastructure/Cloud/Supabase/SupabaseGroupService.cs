@@ -11,14 +11,21 @@ public sealed partial class SupabaseGroupService : ICloudGroupService
     public const int InviteCodeLength = 10;
 
     private readonly SupabaseAuthClient auth;
+    private readonly SupabaseOAuthSignIn oauth;
     private readonly SupabaseRest rest;
     private readonly CloudProviderSettingsService settings;
     private readonly IAppLogger logger;
     private IReadOnlyList<CloudGroupSummary>? knownGroups;
 
-    public SupabaseGroupService(SupabaseAuthClient auth, SupabaseRest rest, CloudProviderSettingsService settings, IAppLogger logger)
+    public SupabaseGroupService(
+        SupabaseAuthClient auth,
+        SupabaseOAuthSignIn oauth,
+        SupabaseRest rest,
+        CloudProviderSettingsService settings,
+        IAppLogger logger)
     {
         this.auth = auth;
+        this.oauth = oauth;
         this.rest = rest;
         this.settings = settings;
         this.logger = logger;
@@ -77,6 +84,22 @@ public sealed partial class SupabaseGroupService : ICloudGroupService
                 ? SupabaseErrorMapper.Describe(new SupabaseException(SupabaseErrorCodes.OtpExpired)).Message
                 : SupabaseErrorMapper.Describe(exception).Message;
             return new CloudAuthResult(false, message, NeedsCode: true);
+        }
+    }
+
+    public Task<bool> IsGoogleSignInAvailableAsync(CancellationToken cancellationToken = default) =>
+        oauth.IsGoogleEnabledAsync(cancellationToken);
+
+    public async Task<CloudAuthResult> SignInWithGoogleAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await oauth.SignInWithGoogleAsync(cancellationToken);
+            return new CloudAuthResult(true, $"Signed in as {auth.Email}.");
+        }
+        catch (SupabaseException exception)
+        {
+            return new CloudAuthResult(false, SupabaseErrorMapper.Describe(exception).Message);
         }
     }
 

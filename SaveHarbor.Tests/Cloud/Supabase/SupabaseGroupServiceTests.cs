@@ -144,7 +144,7 @@ public sealed class SupabaseGroupServiceTests : IDisposable
         harness.Handler.On(HttpMethod.Get, "rest/v1/group_summaries", HttpStatusCode.OK, $"[{GroupJson(SupabaseHarness.GroupId, "TEST_GROUP", "member")}]");
         await harness.Groups.ListGroupsAsync(Token);
 
-        var restarted = new SupabaseGroupService(harness.Auth, harness.Rest, harness.Settings, new NullAppLogger());
+        var restarted = new SupabaseGroupService(harness.Auth, harness.OAuth, harness.Rest, harness.Settings, new NullAppLogger());
 
         Assert.Equal("TEST_GROUP", Assert.Single(restarted.KnownGroups).Name);
     }

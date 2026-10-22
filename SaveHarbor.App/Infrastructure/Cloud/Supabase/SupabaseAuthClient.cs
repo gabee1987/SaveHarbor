@@ -72,6 +72,20 @@ public sealed class SupabaseAuthClient
         logger.Information(AppLogKeyword.CloudAuth, "Signed in to SaveHarbor Cloud");
     }
 
+    // The last step of a browser sign-in (Google): the one-time code from the redirect, with the verifier only this PC knows.
+    public async Task ExchangeCodeAsync(string authCode, string codeVerifier, CancellationToken cancellationToken = default)
+    {
+        var dto = await http.SendJsonAsync<AuthSessionDto>(
+            HttpMethod.Post,
+            "auth/v1/token?grant_type=pkce",
+            new { auth_code = authCode, code_verifier = codeVerifier },
+            null,
+            cancellationToken);
+
+        Replace(ToSession(dto, string.Empty));
+        logger.Information(AppLogKeyword.CloudAuth, "Signed in to SaveHarbor Cloud with a browser sign-in");
+    }
+
     public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         var current = Current ?? throw new SupabaseException(SupabaseErrorCodes.NotSignedIn);

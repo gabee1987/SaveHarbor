@@ -161,7 +161,16 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# SaveHarbor: the desktop app's Google sign-in callbacks (OAuthLoopbackListener.Ports) and the companion page's dev
+# server (web/vite.config.ts). Exact addresses, no wildcards; the hosted project lists the same plus the Pages address.
+additional_redirect_urls = [
+  "https://127.0.0.1:3000",
+  "http://127.0.0.1:53287/auth/callback",
+  "http://127.0.0.1:53288/auth/callback",
+  "http://127.0.0.1:53289/auth/callback",
+  "http://localhost:5287/SaveHarbor/",
+  "http://127.0.0.1:5287/SaveHarbor/",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -341,6 +350,17 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+email_optional = false
+
+# SaveHarbor: Google sign-in. Off locally unless you set both variables (a Google OAuth client whose redirect URI is
+# http://127.0.0.1:54321/auth/v1/callback) and set enabled = true; never commit the secret. See docs/runbooks/supabase.md.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+url = ""
+skip_nonce_check = false
 email_optional = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.

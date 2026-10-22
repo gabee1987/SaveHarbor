@@ -14,6 +14,15 @@ public static class SupabaseErrorMapper
             (AppErrorCode.CloudAuth, "Your sign-in expired. Sign in again to continue."),
         SupabaseErrorCodes.OtpExpired =>
             (AppErrorCode.CloudAuth, "This code is wrong or has expired. Request a new code."),
+        SupabaseErrorCodes.BrowserSignInCancelled =>
+            (AppErrorCode.CloudAuth, "Google sign-in was cancelled. Try again, or sign in with your e-mail address."),
+        SupabaseErrorCodes.BrowserSignInTimedOut =>
+            (AppErrorCode.CloudAuth, "Google sign-in took too long. Try again."),
+        SupabaseErrorCodes.BrowserSignInFailed or SupabaseErrorCodes.FlowStateNotFound or SupabaseErrorCodes.FlowStateExpired
+            or SupabaseErrorCodes.BadCodeVerifier =>
+            (AppErrorCode.CloudAuth, "Google sign-in did not finish. Try again, or sign in with your e-mail address."),
+        SupabaseErrorCodes.CallbackPortsBusy =>
+            (AppErrorCode.CloudAuth, "Google sign-in needs one of the ports 53287 to 53289 on this PC, and all are in use. Close the program using them, or sign in with your e-mail address."),
         SupabaseErrorCodes.NotMember =>
             (AppErrorCode.CloudAuth, "You are no longer a member of this group. Choose another group."),
         SupabaseErrorCodes.NotOwner =>

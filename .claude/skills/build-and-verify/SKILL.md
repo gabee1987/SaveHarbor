@@ -58,7 +58,7 @@ dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -o art
 
 ## Trying an update locally (needs `vpk`, owner installs it: `dotnet tool install -g vpk`)
 
-Pack two versions into one feed folder, install the older one, then start it with that folder as its feed. The second
+`build/Pack-LocalRelease.ps1 -Version <x.y.z>` does the publish and pack below in one step (feed: `artifacts/local/feed`, installers kept as `artifacts/local/SaveHarbor-Setup-<x.y.z>.exe`). By hand: pack two versions into one feed folder, install the older one, then start it with that folder as its feed. The second
 pack overwrites `SaveHarborApp-win-Setup.exe`, so keep a copy of the first one:
 ```powershell
 dotnet publish SaveHarbor.App -c Release -r win-x64 --self-contained true -p:Version=2.3.0 -o artifacts/v230

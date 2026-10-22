@@ -73,6 +73,8 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<IAppLogger>()));
                 services.AddSingleton<SupabaseSessionStore>();
                 services.AddSingleton<SupabaseAuthClient>();
+                services.AddSingleton<IBrowserLauncher, SystemBrowserLauncher>();
+                services.AddSingleton<SupabaseOAuthSignIn>();
                 services.AddSingleton<SupabaseRest>();
                 services.AddSingleton<SupabaseStorage>();
                 services.AddSingleton<SupabaseGroupService>();

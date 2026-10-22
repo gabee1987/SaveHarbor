@@ -73,6 +73,12 @@ public partial class SharingView : UserControl
             UpdateTimer();
             FocusCurrentStep();
         }
+
+        // Back from the browser: bring SaveHarbor to the front (Windows may only flash it in the taskbar).
+        if (e.PropertyName == nameof(CloudOnboardingViewModel.IsWaitingForBrowser) && onboarding?.IsWaitingForBrowser == false)
+        {
+            Window.GetWindow(this)?.Activate();
+        }
     }
 
     private void UpdateTimer()

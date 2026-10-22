@@ -1,7 +1,8 @@
 name: pages
 
 # Tests and builds the companion web page (web/), and publishes it to GitHub Pages from main.
-# Needs the repository variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY (public values, not secrets) and
+# Needs the repository variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY (public values, not secrets),
+# LEGAL_OPERATOR_NAME and LEGAL_CONTACT_EMAIL (shown on the privacy and terms pages), and
 # Settings › Pages › Source: GitHub Actions.
 on:
   push:
@@ -47,13 +48,16 @@ jobs:
           ON_MAIN: ${{ github.ref == 'refs/heads/main' }}
           HOSTED_URL: ${{ vars.SUPABASE_URL }}
           HOSTED_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          OPERATOR_NAME: ${{ vars.LEGAL_OPERATOR_NAME }}
+          CONTACT_EMAIL: ${{ vars.LEGAL_CONTACT_EMAIL }}
         run: |
           if [ "$ON_MAIN" = "true" ]; then
-            if [ -z "$HOSTED_URL" ] || [ -z "$HOSTED_KEY" ]; then
-              echo "::error::Set the repository variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY."
+            if [ -z "$HOSTED_URL" ] || [ -z "$HOSTED_KEY" ] || [ -z "$OPERATOR_NAME" ] || [ -z "$CONTACT_EMAIL" ]; then
+              echo "::error::Set the repository variables SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, LEGAL_OPERATOR_NAME and LEGAL_CONTACT_EMAIL."
               exit 1
             fi
             export VITE_SUPABASE_URL="$HOSTED_URL" VITE_SUPABASE_PUBLISHABLE_KEY="$HOSTED_KEY"
+            export LEGAL_OPERATOR_NAME="$OPERATOR_NAME" LEGAL_CONTACT_EMAIL="$CONTACT_EMAIL"
           else
             export VITE_SUPABASE_URL=https://TEST_REF.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_TEST
           fi

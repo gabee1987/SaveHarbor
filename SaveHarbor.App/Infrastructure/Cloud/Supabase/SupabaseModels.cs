@@ -117,6 +117,17 @@ public sealed class AuthUserDto
     [JsonPropertyName("email")] public string? Email { get; set; }
 }
 
+// The project's public auth settings (GET auth/v1/settings); only the sign-in providers SaveHarbor offers.
+public sealed class AuthSettingsDto
+{
+    [JsonPropertyName("external")] public AuthProvidersDto? External { get; set; }
+}
+
+public sealed class AuthProvidersDto
+{
+    [JsonPropertyName("google")] public bool Google { get; set; }
+}
+
 // An entry of a storage listing. Folders come back with no id and no metadata.
 public sealed class StorageObjectDto
 {

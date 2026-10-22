@@ -32,6 +32,7 @@ Your worlds, backups and settings stay where they are, in `%LOCALAPPDATA%\SaveHa
 - **Live updates (SaveHarbor Cloud):** a friend's new version, or a friend starting or finishing a session, appears within seconds with a short notice. A dot next to the cloud status shows **Live**; without a connection SaveHarbor checks every minute.
 - **Who is online:** the group shows which friends have SaveHarbor open. Turn off **Show me as online** in Settings › Sharing to stay hidden.
 - **Companion web page:** see from your phone who is playing and the newest version of each world. Sign in with the same e-mail code. The page only shows; playing, uploading and downloading stay in the app.
+- **Continue with Google:** sign in to SaveHarbor Cloud with your Google account, in the app and on the companion page, when the group's cloud has it switched on. The browser opens Google's own sign-in; SaveHarbor never sees your Google password. If you already signed in with the same e-mail address, it is the same account.
 - **Join links:** a saveharbor://join link from a friend opens SaveHarbor with the invite code filled in. A second start of SaveHarbor brings the open window forward instead.
 - **Shortcuts:** Ctrl+U uploads, Ctrl+R refreshes, Esc closes Settings.
 - A new app icon.

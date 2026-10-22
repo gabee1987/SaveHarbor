@@ -43,7 +43,7 @@ public sealed partial class SupabaseLocalStackTests : IDisposable
         var auth = new SupabaseAuthClient(http, new SupabaseSessionStore(paths, logger), logger, TimeProvider.System);
         var rest = new SupabaseRest(http, auth);
         var settings = new CloudProviderSettingsService(new CloudProviderOptions(), new FakeCloudProvider(), paths, logger);
-        var groups = new SupabaseGroupService(auth, rest, settings, logger);
+        var groups = new SupabaseGroupService(auth, new SupabaseOAuthSignIn(http, options, auth, new RecordingBrowserLauncher(), logger), rest, settings, logger);
         var provider = new SupabaseCloudProvider(options, auth, rest, new SupabaseStorage(http, auth, options), groups, logger, TimeProvider.System, new Version(2, 3, 0));
 
         await SignInAsync(groups);
