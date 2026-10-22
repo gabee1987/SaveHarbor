@@ -17,7 +17,8 @@ public sealed class SupabaseRealtimeClientTests : IAsyncDisposable
 
     private readonly RealtimeTestServer server = new(TestContext.Current.CancellationToken);
     private readonly RecordingLogger logger = new();
-    private string token = "TEST_TOKEN";
+    // Written by the test, read by the client's heartbeat on another thread.
+    private volatile string token = "TEST_TOKEN";
 
     public async ValueTask DisposeAsync() => await server.DisposeAsync();
 
@@ -68,7 +69,9 @@ public sealed class SupabaseRealtimeClientTests : IAsyncDisposable
     [Fact]
     public async Task Heartbeats_AreSentAndARefreshedTokenIsPassedOn()
     {
-        await using var client = new ClientScope(CreateClient(TimeSpan.FromMilliseconds(150)));
+        // Every reply must arrive before the next tick, or the client rightly drops the connection; a second leaves
+        // room for a busy CI runner.
+        await using var client = new ClientScope(CreateClient(TimeSpan.FromSeconds(1)));
         var socket = await JoinAsync(client.Value);
 
         var heartbeat = await ReceiveUntilAsync(socket, message => message.Event == "heartbeat");
