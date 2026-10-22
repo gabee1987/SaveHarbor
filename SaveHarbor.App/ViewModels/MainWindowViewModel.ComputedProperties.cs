@@ -1,0 +1,50 @@
+using SaveHarbor.App.Utilities;
+
+namespace SaveHarbor.App.ViewModels;
+
+public partial class MainWindowViewModel
+{
+    public string BackupRoot => _backupService.GetBackupRoot(_activeGame.Current.Id);
+
+    public string LocalSaveRoot => _activeGame.Current.SaveAdapter.SaveRootPath;
+
+    public string PlayHintText => _activeGame.Current.PlayHint;
+
+    public string SelectedWorldSize => SelectedWorld is null ? "Unknown" : DisplayFormatter.FormatBytes(SelectedWorld.SizeBytes);
+
+    public string BackupStorageSummary => $"{BackupCount:N0} backups • {TotalBackupSize}";
+
+    public string SafetyHint => IsGameRunning
+        ? $"Close {ActiveGameName} before backup, restore, upload, or download."
+        : $"Safe for backup and restore. Keep {ActiveGameName} closed during save operations.";
+
+    public string CloudStateText => CloudStatus?.Title ?? "Cloud not checked";
+
+    public string CloudDetailText => CloudStatus?.Detail ?? "Check cloud status after selecting a world.";
+
+    public string CloudProviderText => CloudStatus?.Connection.ProviderName ?? "Not configured";
+
+    public string CloudAccountText => CloudStatus?.Connection.AccountEmail ?? "No account connected";
+
+    public string CloudLatestVersionText => CloudStatus?.LatestVersion is null
+        ? "No cloud version"
+        : $"v{CloudStatus.LatestVersion.VersionNumber} by {CloudStatus.LatestVersion.UploadedBy}";
+
+    public string CloudSessionText => CloudStatus?.SessionLock is null
+        ? "None"
+        : CloudStatus.IsOwnSession
+            ? "You"
+            : CloudStatus.SessionLock.PlayerName;
+
+    public string CloudSessionTooltip => CloudStatus?.SessionLock is null
+        ? "No active cloud session. Nobody has marked this world as currently being played."
+        : $"{CloudStatus.SessionLock.PlayerName} started a cloud session from v{CloudStatus.SessionLock.BasedOnVersionNumber} on {CloudStatus.SessionLock.StartedAtUtc:yyyy-MM-dd HH:mm} UTC. Lock expires at {CloudStatus.SessionLock.ExpiresAtUtc:yyyy-MM-dd HH:mm} UTC.";
+
+    public bool IsCloudConnected => CloudStatus?.Connection.IsConnected == true;
+
+    public bool HasSessionLock => CloudStatus?.SessionLock is not null;
+
+    public bool IsOwnSession => HasOwnCloudSession();
+
+    public bool IsOtherPlayerHosting => HasSessionLock && !IsOwnSession;
+}

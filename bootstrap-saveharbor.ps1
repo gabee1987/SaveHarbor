@@ -37,7 +37,7 @@ Invoke-CommandStep "Creating solution" {
 }
 
 Invoke-CommandStep "Creating WPF project" {
-    dotnet new wpf -n $projectName -f net8.0
+    dotnet new wpf -n $projectName -f net10.0
 }
 
 $projectFile = ".\$projectName\$projectName.csproj"

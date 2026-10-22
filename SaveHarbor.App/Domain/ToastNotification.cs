@@ -5,6 +5,8 @@ namespace SaveHarbor.App.Domain;
 public sealed class ToastNotification : ObservableObject
 {
     private bool isClosing;
+    private bool isHovered;
+    private double remainingFraction = 1;
 
     public ToastNotification(Guid id, ToastKind kind, string title, string message)
     {
@@ -26,5 +28,19 @@ public sealed class ToastNotification : ObservableObject
     {
         get => isClosing;
         set => SetProperty(ref isClosing, value);
+    }
+
+    // The display time does not run down while the pointer rests on the toast.
+    public bool IsHovered
+    {
+        get => isHovered;
+        set => SetProperty(ref isHovered, value);
+    }
+
+    // Share of the display time still left (1 to 0), drawn as a shrinking bar.
+    public double RemainingFraction
+    {
+        get => remainingFraction;
+        set => SetProperty(ref remainingFraction, value);
     }
 }

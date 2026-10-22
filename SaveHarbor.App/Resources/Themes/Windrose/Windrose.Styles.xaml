@@ -1,0 +1,267 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- Windrose skin base for the shared main screen (Views/Shell): ink-washed charcoal panels with riveted iron
+         frames, bone-white Palatino capitals, crimson brush strokes and brass fittings. Every skin defines the same
+         Skin* keys; "Gold" names are the skin's highlight metal (brass here). -->
+    <sys:String x:Key="SkinWordmarkKicker">SAVEHARBOR</sys:String>
+    <sys:String x:Key="SkinWordmarkTitle">WINDROSE</sys:String>
+    <SolidColorBrush x:Key="SkinGoldBrush" Color="#B89A63" />
+    <SolidColorBrush x:Key="SkinGoldBrightBrush" Color="#F1EADB" />
+    <SolidColorBrush x:Key="SkinParchmentBrush" Color="#E8E1D2" />
+    <SolidColorBrush x:Key="SkinFrameBrush" Color="#5F5C56" />
+    <SolidColorBrush x:Key="SkinFrameInnerBrush" Color="#2B2B2C" />
+    <SolidColorBrush x:Key="SkinRowBrush" Color="#701A1B1D" />
+    <SolidColorBrush x:Key="SkinRowBorderBrush" Color="#3B3A37" />
+    <SolidColorBrush x:Key="SkinMagicBrush" Color="#3FA7A3" />
+    <SolidColorBrush x:Key="SkinOverlayBrush" Color="#E40A0B0C" />
+    <SolidColorBrush x:Key="SkinCrimsonBrush" Color="#C2292F" />
+    <LinearGradientBrush x:Key="SkinGoldTextBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#EAE3D4" Offset="0.55" />
+        <GradientStop Color="#BFB6A4" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinGoldFillBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#C8343A" Offset="0" />
+        <GradientStop Color="#A21E24" Offset="0.55" />
+        <GradientStop Color="#741318" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinGoldFillHoverBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#D94148" Offset="0" />
+        <GradientStop Color="#B5272E" Offset="0.55" />
+        <GradientStop Color="#84171D" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinCardBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#E61B1C1E" Offset="0" />
+        <GradientStop Color="#EE111213" Offset="1" />
+    </LinearGradientBrush>
+    <!-- The selected world: a crimson sash fading into the row. -->
+    <LinearGradientBrush x:Key="SkinSelectedRowBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#6A1E23" Offset="0" />
+        <GradientStop Color="#3A1A1D" Offset="0.55" />
+        <GradientStop Color="#221B1C" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinFadeLeftBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#008F897E" Offset="0" />
+        <GradientStop Color="#8F897E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinFadeRightBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#8F897E" Offset="0" />
+        <GradientStop Color="#008F897E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinGlowLineBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00D8363D" Offset="0" />
+        <GradientStop Color="#E0434A" Offset="0.5" />
+        <GradientStop Color="#00D8363D" Offset="1" />
+    </LinearGradientBrush>
+    <!-- Crimson brush stroke under headings: thick at the start, frayed towards the end. -->
+    <LinearGradientBrush x:Key="SkinBrushStrokeBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#E0B8252C" Offset="0" />
+        <GradientStop Color="#A0B8252C" Offset="0.6" />
+        <GradientStop Color="#00B8252C" Offset="1" />
+    </LinearGradientBrush>
+    <Geometry x:Key="SkinBrushStrokeGeometry">M0,3 C30,0.4 120,0.6 220,2 C240,2.3 250,3 260,3.4 C240,4.4 200,5.6 120,5.8 C70,6 25,6.4 0,5 Z</Geometry>
+    <Geometry x:Key="SkinDiamondGeometry">M4,0 L8,4 L4,8 L0,4 Z</Geometry>
+    <!-- Line ending in a small four-point compass star. -->
+    <GeometryGroup x:Key="SkinRuleEndGeometry">
+        <LineGeometry StartPoint="0,4" EndPoint="14,4" />
+        <PathGeometry Figures="M21,-1 L22.2,2.8 L26,4 L22.2,5.2 L21,9 L19.8,5.2 L16,4 L19.8,2.8 Z" />
+        <LineGeometry StartPoint="28,4" EndPoint="42,4" />
+    </GeometryGroup>
+    <!-- Iron corner bracket with a rivet. -->
+    <Geometry x:Key="SkinCornerGeometry">M0,15 L0,0 L15,0 M5.5,5.5 m-1.6,0 a1.6,1.6 0 1 0 3.2,0 a1.6,1.6 0 1 0 -3.2,0</Geometry>
+
+    <Style x:Key="SkinPageHeading" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <StackPanel HorizontalAlignment="Left">
+                        <TextBlock Text="{TemplateBinding Content}" Foreground="{StaticResource SkinParchmentBrush}"
+                                   FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="{TemplateBinding FontSize}" />
+                        <Path Data="{StaticResource SkinBrushStrokeGeometry}" Fill="{StaticResource SkinBrushStrokeBrush}"
+                              Width="260" Height="7" Stretch="Fill" HorizontalAlignment="Left" Margin="-4,6,0,0" />
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="SkinMuted" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- Weathered panel: iron hairline frame with riveted corner brackets. -->
+    <Style x:Key="SkinFrame" TargetType="ContentControl">
+        <Setter Property="Background" Value="{StaticResource SkinCardBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource SkinFrameBrush}" />
+        <Setter Property="Padding" Value="18" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{StaticResource SkinFrameInnerBrush}" BorderThickness="1" Margin="3">
+                            <Border BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter Margin="3" />
+                            </Border>
+                        </Border>
+                        <Path Data="{StaticResource SkinCornerGeometry}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="1.3"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" />
+                        <Path Data="{StaticResource SkinCornerGeometry}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="1.3"
+                              HorizontalAlignment="Right" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5">
+                            <Path.RenderTransform><ScaleTransform ScaleX="-1" /></Path.RenderTransform>
+                        </Path>
+                        <Path Data="{StaticResource SkinCornerGeometry}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="1.3"
+                              HorizontalAlignment="Left" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,0.5">
+                            <Path.RenderTransform><ScaleTransform ScaleY="-1" /></Path.RenderTransform>
+                        </Path>
+                        <Path Data="{StaticResource SkinCornerGeometry}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="1.3"
+                              HorizontalAlignment="Right" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,0.5">
+                            <Path.RenderTransform><ScaleTransform ScaleX="-1" ScaleY="-1" /></Path.RenderTransform>
+                        </Path>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Header divider: hairlines meeting at a brass compass star. -->
+    <Style x:Key="SkinOrnamentDivider" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Height="1" Fill="{StaticResource SkinFadeLeftBrush}" VerticalAlignment="Center" />
+                        <Path Grid.Column="1" Data="{StaticResource SkinRuleEndGeometry}" Stroke="{StaticResource SkinGoldBrush}"
+                              Fill="{StaticResource SkinGoldBrush}" StrokeThickness="1" Width="42" Height="10" Margin="6,0" />
+                        <Rectangle Grid.Column="2" Height="1" Fill="{StaticResource SkinFadeRightBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Crimson call-to-action with bone capitals, like a red sash. -->
+    <Style x:Key="SkinPlayButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource SkinGoldFillBrush}" />
+        <Setter Property="Foreground" Value="#F6F0E4" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppDisplayFontFamily}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="Padding" Value="24,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="#5A0E12" BorderThickness="1">
+                        <Border BorderBrush="#40FFE6E0" BorderThickness="0,1,0,0" Margin="1" Padding="{TemplateBinding Padding}">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="3" ShadowDepth="1" Opacity="0.6" />
+                                </TextBlock.Effect>
+                            </TextBlock>
+                        </Border>
+                        <Border.Effect>
+                            <DropShadowEffect Color="#C2292F" BlurRadius="18" ShadowDepth="0" Opacity="0.35" />
+                        </Border.Effect>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SkinGoldFillHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dark plate with a bone hairline, like the game's Next / Back buttons. -->
+    <Style x:Key="SkinButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource SkinParchmentBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppDisplayFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Padding" Value="18,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="#D21C1D1F" BorderBrush="#7D786E" BorderThickness="1">
+                        <Border BorderBrush="#12FFFFFF" BorderThickness="0,1,0,0" Padding="{TemplateBinding Padding}">
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="#E0282A2D" />
+                            <Setter TargetName="Label" Property="Foreground" Value="{StaticResource SkinGoldBrightBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#F00E0F10" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinLinkButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#E2C995" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <TextBlock x:Name="Label" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" Background="Transparent" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Label" Property="TextDecorations" Value="Underline" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinPill" TargetType="Border">
+        <Setter Property="Background" Value="#991B1C1E" />
+        <Setter Property="BorderBrush" Value="{StaticResource SkinRowBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,3" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+</ResourceDictionary>

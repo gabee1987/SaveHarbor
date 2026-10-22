@@ -1,31 +1,38 @@
 using System.IO;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text.Json;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure.Backup;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure;
 
-public sealed class ZipBackupService : IBackupService
+public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, IGameRegistry gameRegistry, IAppSettingsStore settings) : IBackupService
 {
+    private const int MaxNameAttempts = 100;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly FileSetPayloadStrategy FileSetStrategy = new();
+    private readonly DirectoryPayloadStrategy directoryStrategy = new(Path.Combine(pathProvider.AppDataRoot, "staging"));
 
-    public string BackupRoot { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SaveHarbor",
-        "backups");
+    public string GetBackupRoot(GameId game) => pathProvider.GetBackupRoot(game);
 
-    public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(CancellationToken cancellationToken = default)
+    public string GetWorldBackupFolder(GameId game, string worldName) =>
+        Path.Combine(GetBackupRoot(game), BackupFileName.FolderName(worldName));
+
+    public Task<IReadOnlyList<BackupInfo>> ListBackupsAsync(GameId game, CancellationToken cancellationToken = default)
     {
-        if (!Directory.Exists(BackupRoot))
+        var backupRoot = GetBackupRoot(game);
+        if (!Directory.Exists(backupRoot))
         {
             return Task.FromResult<IReadOnlyList<BackupInfo>>([]);
         }
 
         return Task.Run<IReadOnlyList<BackupInfo>>(() =>
         {
-            return Directory.EnumerateFiles(BackupRoot, "*.zip", SearchOption.TopDirectoryOnly)
+            // Backups made before world folders existed may still sit directly in the root.
+            return Directory.EnumerateFiles(backupRoot, "*", SearchOption.AllDirectories)
+                .Where(path => path.EndsWith(BackupFileName.Extension, StringComparison.OrdinalIgnoreCase))
                 .Select(path =>
                 {
                     var fileInfo = new FileInfo(path);
@@ -40,7 +47,7 @@ public sealed class ZipBackupService : IBackupService
         }, cancellationToken);
     }
 
-    public async Task<BackupManifest> ReadManifestAsync(string backupPath, CancellationToken cancellationToken = default)
+    public async Task<BackupManifest> ReadManifestAsync(string backupPath, GameId expectedGame, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(backupPath))
         {
@@ -54,9 +61,14 @@ public sealed class ZipBackupService : IBackupService
 
         await using var manifestStream = entry.Open();
         var manifest = await JsonSerializer.DeserializeAsync<BackupManifest>(manifestStream, JsonOptions, cancellationToken);
-        if (manifest is null || !string.Equals(manifest.Game, "Windrose", StringComparison.OrdinalIgnoreCase))
+        if (manifest is null || !string.Equals(manifest.Game, expectedGame.ToStorageKey(), StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("This backup does not look like a Windrose SaveHarbor backup.");
+            throw new InvalidOperationException($"This backup does not look like a {expectedGame} SaveHarbor backup.");
+        }
+
+        if (manifest.SchemaVersion is not (1 or 2))
+        {
+            throw new InvalidOperationException("Unsupported backup version.");
         }
 
         if (string.IsNullOrWhiteSpace(manifest.WorldId))
@@ -67,34 +79,72 @@ public sealed class ZipBackupService : IBackupService
         return manifest;
     }
 
-    public async Task<BackupInfo> CreateBackupAsync(WindroseWorld world, string reason, CancellationToken cancellationToken = default)
+    public async Task<BackupInfo> CreateBackupAsync(GameWorld world, string reason, CancellationToken cancellationToken = default)
     {
-        Directory.CreateDirectory(BackupRoot);
+        var backupRoot = GetWorldBackupFolder(world.Game, world.WorldName);
+        Directory.CreateDirectory(backupRoot);
 
-        var safeWorldName = MakeSafeFileName(world.WorldName);
-        var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss");
-        var fileName = $"{timestamp}_{safeWorldName}_{reason}.zip";
-        var targetPath = Path.Combine(BackupRoot, fileName);
+        var createdAt = DateTimeOffset.UtcNow;
+        var targetPath = Enumerable.Range(1, MaxNameAttempts)
+            .Select(attempt => Path.Combine(backupRoot, BackupFileName.Create(createdAt, world.WorldName, reason, attempt)))
+            .FirstOrDefault(path => !File.Exists(path))
+            ?? throw new IOException("Could not find a free backup file name.");
 
         await Task.Run(() => CreateArchive(world, targetPath, reason, cancellationToken), cancellationToken);
+        await PruneOldBackupsAsync(world.Game, targetPath, cancellationToken);
 
         var fileInfo = new FileInfo(targetPath);
         return new BackupInfo(fileInfo.FullName, fileInfo.Name, fileInfo.CreationTime, fileInfo.Length);
     }
 
-    public async Task RestoreBackupAsync(string backupPath, WindroseWorld targetWorld, CancellationToken cancellationToken = default)
+    public async Task RestoreBackupAsync(string backupPath, GameWorld targetWorld, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(backupPath))
         {
             throw new FileNotFoundException("Backup archive was not found.", backupPath);
         }
 
-        await CreateBackupAsync(targetWorld, "pre-restore", cancellationToken);
+        var manifest = await ReadManifestAsync(backupPath, targetWorld.Game, cancellationToken);
+        var adapter = gameRegistry.Get(targetWorld.Game).SaveAdapter;
+        var strategy = SelectStrategyForManifest(manifest, adapter);
+        SaveFormatCompatibility.EnsureCanRestore(manifest.SaveFormatVersion, adapter.GetSaveFormatVersion(targetWorld.SavePath));
 
-        var targetPath = targetWorld.SavePath;
-        var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
+        await CreateBackupAsync(targetWorld, BackupReasons.PreRestore, cancellationToken);
 
+        await RunWithExtractedPayloadAsync(backupPath, payloadRoot =>
+        {
+            adapter.ValidatePayload(payloadRoot, targetWorld.WorldId);
+            strategy.Restore(payloadRoot, targetWorld, manifest, cancellationToken);
+            adapter.PlaceGameFiles(Path.Combine(payloadRoot, BackupPayloadLayout.GameFilesFolderName), targetWorld.SavePath);
+        }, cancellationToken);
+        adapter.RememberWorldState(targetWorld.SavePath);
+    }
+
+    private async Task PruneOldBackupsAsync(GameId game, string justCreatedPath, CancellationToken cancellationToken)
+    {
+        var backups = await ListBackupsAsync(game, cancellationToken);
+        foreach (var backup in BackupRetention.SelectForDeletion(backups, settings.Current.BackupRetentionCount, justCreatedPath, DateTimeOffset.Now))
+        {
+            File.Delete(backup.FilePath);
+        }
+    }
+
+    private IPayloadStrategy SelectStrategy(WorldPayloadKind kind) =>
+        kind == WorldPayloadKind.FileSet ? FileSetStrategy : directoryStrategy;
+
+    private IPayloadStrategy SelectStrategyForManifest(BackupManifest manifest, IGameSaveAdapter adapter)
+    {
+        if (!Enum.TryParse<WorldPayloadKind>(manifest.PayloadKind, ignoreCase: true, out var manifestKind) || manifestKind != adapter.PayloadKind)
+        {
+            throw new InvalidOperationException("This backup was created for a different save layout.");
+        }
+
+        return SelectStrategy(manifestKind);
+    }
+
+    private static async Task RunWithExtractedPayloadAsync(string backupPath, Action<string> apply, CancellationToken cancellationToken)
+    {
+        var tempPath = CreateTempFolder();
         try
         {
             ZipFile.ExtractToDirectory(backupPath, tempPath);
@@ -104,169 +154,72 @@ public sealed class ZipBackupService : IBackupService
                 throw new InvalidOperationException("Backup archive does not contain a world payload.");
             }
 
-            await Task.Run(() =>
-            {
-                ReplaceDirectory(payloadRoot, targetPath, cancellationToken);
-            }, cancellationToken);
+            await Task.Run(() => apply(payloadRoot), cancellationToken);
         }
         finally
         {
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
+            DeleteTempFolder(tempPath);
         }
     }
 
-    public async Task<string> ImportBackupAsNewWorldAsync(
-        string backupPath,
-        WindroseProfile profile,
-        bool overwriteExisting,
-        CancellationToken cancellationToken = default)
+    private static string CreateTempFolder()
     {
-        var manifest = await ReadManifestAsync(backupPath, cancellationToken);
-        var targetWorldPath = Path.Combine(profile.WorldsPath, manifest.WorldId);
+        var path = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        return path;
+    }
 
-        if (Directory.Exists(targetWorldPath) && !overwriteExisting)
+    private static void DeleteTempFolder(string path)
+    {
+        if (Directory.Exists(path))
         {
-            throw new InvalidOperationException("This world already exists on this computer. Use restore instead, or confirm overwrite.");
-        }
-
-        var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
-
-        try
-        {
-            ZipFile.ExtractToDirectory(backupPath, tempPath);
-            var payloadRoot = Path.Combine(tempPath, "world");
-            if (!Directory.Exists(payloadRoot))
-            {
-                throw new InvalidOperationException("Backup archive does not contain a world payload.");
-            }
-
-            await Task.Run(() =>
-            {
-                Directory.CreateDirectory(profile.WorldsPath);
-
-                if (Directory.Exists(targetWorldPath))
-                {
-                    Directory.Delete(targetWorldPath, true);
-                }
-
-                CopyDirectory(payloadRoot, targetWorldPath, cancellationToken);
-            }, cancellationToken);
-
-            return targetWorldPath;
-        }
-        finally
-        {
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
+            Directory.Delete(path, true);
         }
     }
 
-    private static void CreateArchive(WindroseWorld world, string targetPath, string reason, CancellationToken cancellationToken)
+    private void CreateArchive(GameWorld world, string targetPath, string reason, CancellationToken cancellationToken)
     {
-        var tempPath = Path.Combine(Path.GetTempPath(), "SaveHarbor", Guid.NewGuid().ToString("N"));
+        var adapter = gameRegistry.Get(world.Game).SaveAdapter;
+        var strategy = SelectStrategy(adapter.PayloadKind);
+
+        var tempPath = CreateTempFolder();
         var payloadRoot = Path.Combine(tempPath, "world");
+        var partialPath = targetPath + ".partial";
         Directory.CreateDirectory(payloadRoot);
 
         try
         {
-            CopyDirectory(world.SavePath, payloadRoot, cancellationToken);
+            var files = strategy.Stage(world, adapter, payloadRoot, cancellationToken);
+            adapter.StageGameFiles(world, payloadRoot);
 
-            var manifest = new
+            var manifest = new BackupManifest
             {
-                SchemaVersion = 1,
-                Game = "Windrose",
-                world.WorldId,
-                world.WorldName,
+                SchemaVersion = 2,
+                Game = world.Game.ToStorageKey(),
+                WorldId = world.WorldId,
+                WorldName = world.WorldName,
                 SourcePath = world.SavePath,
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 Reason = reason,
                 FileCount = Directory.EnumerateFiles(payloadRoot, "*", SearchOption.AllDirectories).Count(),
-                PayloadSha256 = ComputeDirectoryHash(payloadRoot)
+                PayloadSha256 = DirectoryHashCalculator.ComputeSha256(payloadRoot),
+                PayloadKind = adapter.PayloadKind.ToString(),
+                Files = [.. files],
+                SaveFormatVersion = adapter.GetSaveFormatVersion(world.SavePath) ?? string.Empty
             };
 
             var manifestPath = Path.Combine(tempPath, "saveharbor-manifest.json");
             File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifest, JsonOptions));
 
-            if (File.Exists(targetPath))
-            {
-                File.Delete(targetPath);
-            }
-
-            ZipFile.CreateFromDirectory(tempPath, targetPath, CompressionLevel.Optimal, includeBaseDirectory: false);
+            // Written next to the target first, so a failed or interrupted backup never leaves a broken archive.
+            File.Delete(partialPath);
+            ZipFile.CreateFromDirectory(tempPath, partialPath, CompressionLevel.Optimal, includeBaseDirectory: false);
+            File.Move(partialPath, targetPath);
         }
         finally
         {
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
+            File.Delete(partialPath);
+            DeleteTempFolder(tempPath);
         }
-    }
-
-    private static void CopyDirectory(string source, string target, CancellationToken cancellationToken)
-    {
-        Directory.CreateDirectory(target);
-
-        foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var relativePath = Path.GetRelativePath(source, directory);
-            Directory.CreateDirectory(Path.Combine(target, relativePath));
-        }
-
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (string.Equals(Path.GetFileName(file), "LOCK", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var relativePath = Path.GetRelativePath(source, file);
-            var destination = Path.Combine(target, relativePath);
-            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
-            File.Copy(file, destination, overwrite: true);
-        }
-    }
-
-    private static void ReplaceDirectory(string source, string target, CancellationToken cancellationToken)
-    {
-        var stagingPath = $"{target}.saveharbor-staging-{Guid.NewGuid():N}";
-        CopyDirectory(source, stagingPath, cancellationToken);
-
-        if (Directory.Exists(target))
-        {
-            Directory.Delete(target, true);
-        }
-
-        Directory.Move(stagingPath, target);
-    }
-
-    private static string ComputeDirectoryHash(string root)
-    {
-        using var sha = SHA256.Create();
-        foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-                     .OrderBy(file => Path.GetRelativePath(root, file), StringComparer.OrdinalIgnoreCase))
-        {
-            var relativePathBytes = System.Text.Encoding.UTF8.GetBytes(Path.GetRelativePath(root, file).Replace('\\', '/'));
-            sha.TransformBlock(relativePathBytes, 0, relativePathBytes.Length, null, 0);
-            var bytes = File.ReadAllBytes(file);
-            sha.TransformBlock(bytes, 0, bytes.Length, null, 0);
-        }
-
-        sha.TransformFinalBlock([], 0, 0);
-        return Convert.ToHexString(sha.Hash ?? []);
-    }
-
-    private static string MakeSafeFileName(string value)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        return string.Join("_", value.Split(invalid, StringSplitOptions.RemoveEmptyEntries)).Trim();
     }
 }

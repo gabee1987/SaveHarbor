@@ -1,0 +1,16 @@
+{
+  "name": "saveharbor-dev-tools",
+  "private": true,
+  "description": "Developer tooling only: the pinned Supabase CLI that runs the local SaveHarbor Cloud stack in Docker. Not part of the app build.",
+  "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "db:lint": "supabase db lint --level warning"
+  },
+  "devDependencies": {
+    "supabase": "2.119.0"
+  }
+}

@@ -1,0 +1,73 @@
+<!-- "You": the name friends see, this PC's name, versions kept, sharing after play, and (SaveHarbor Cloud) the online
+     status and the account.
+     DataContext: SharingViewModel. -->
+<UserControl x:Class="SaveHarbor.App.Views.Sharing.SharingProfileCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:SaveHarbor.App.Localization"
+             x:Name="Root">
+    <Border Style="{DynamicResource SharingCard}">
+        <StackPanel>
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{DynamicResource SharingAvatar}" Width="46" Height="46" CornerRadius="23" Tag="True">
+                    <TextBlock Text="{Binding Profile.Initial}" Style="{DynamicResource SharingAvatarText}" FontSize="20" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Profile.EffectiveDisplayName}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="17"
+                               Foreground="{DynamicResource SkinGoldBrightBrush}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Style="{DynamicResource SharingHint}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                               Visibility="{Binding ShowAccount, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{Binding Profile.Email, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="{ui:UiText Sharing.NameLabel}" Style="{DynamicResource SharingFieldLabel}" />
+            <TextBox Style="{DynamicResource SkinTextBox}" MaxLength="32" AutomationProperties.Name="{ui:UiText Sharing.NameLabel}"
+                     Text="{Binding Profile.DisplayName, UpdateSourceTrigger=LostFocus}" ToolTip="{ui:UiText Sharing.NameTooltip}" />
+
+            <TextBlock Text="{ui:UiText Sharing.DeviceLabel}" Style="{DynamicResource SharingFieldLabel}" Margin="0,12,0,5" />
+            <TextBox Style="{DynamicResource SkinTextBox}" MaxLength="32" AutomationProperties.Name="{ui:UiText Sharing.DeviceLabel}"
+                     Text="{Binding Profile.DeviceLabel, UpdateSourceTrigger=LostFocus}" ToolTip="{ui:UiText Sharing.DeviceTooltip}" />
+
+            <TextBlock Text="{ui:UiText Sharing.KeepVersions}" Style="{DynamicResource SharingFieldLabel}" Margin="0,12,0,5" />
+            <ComboBox Style="{DynamicResource SkinComboBox}" AutomationProperties.Name="{ui:UiText Sharing.KeepVersions}"
+                      ItemsSource="{Binding Profile.CloudRetentionOptions}" SelectedItem="{Binding Profile.SelectedCloudRetention}"
+                      ToolTip="{ui:UiText Sharing.KeepVersionsTooltip}" />
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="{ui:UiText Sharing.UploadOnClose}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" />
+                    <TextBlock Text="{ui:UiText Sharing.UploadOnCloseHint}" Style="{DynamicResource SharingHint}" FontSize="11.5" TextWrapping="Wrap" />
+                </StackPanel>
+                <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Profile.UploadWhenGameCloses}"
+                          AutomationProperties.Name="{ui:UiText Sharing.UploadOnClose}" ToolTip="{ui:UiText Sharing.UploadOnCloseTooltip}" />
+            </Grid>
+
+            <Grid Margin="0,12,0,0" Visibility="{Binding ShowAccount, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="{ui:UiText Sharing.ShowOnline}" Style="{DynamicResource SharingText}" FontWeight="SemiBold" />
+                    <TextBlock Text="{ui:UiText Sharing.ShowOnlineHint}" Style="{DynamicResource SharingHint}" FontSize="11.5" TextWrapping="Wrap" />
+                </StackPanel>
+                <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Profile.ShowOnlineStatus}"
+                          AutomationProperties.Name="{ui:UiText Sharing.ShowOnline}" ToolTip="{ui:UiText Sharing.ShowOnlineTooltip}" />
+            </Grid>
+
+            <Button Content="{ui:UiText Sharing.SignOut}" Command="{Binding SignOutCommand}" Style="{DynamicResource SkinLinkButton}"
+                    HorizontalAlignment="Left" Margin="0,14,0,0"
+                    Visibility="{Binding ShowAccount, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </StackPanel>
+    </Border>
+</UserControl>

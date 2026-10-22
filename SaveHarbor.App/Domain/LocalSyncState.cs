@@ -1,0 +1,36 @@
+namespace SaveHarbor.App.Domain;
+
+public sealed class LocalSyncState
+{
+    public int SchemaVersion { get; set; } = 1;
+    public string Game { get; set; } = string.Empty;
+    public string WorldId { get; set; } = string.Empty;
+    public string WorldName { get; set; } = string.Empty;
+    public string LocalWorldPath { get; set; } = string.Empty;
+    public int? LastKnownCloudVersionNumber { get; set; }
+    public string LastKnownCloudVersionId { get; set; } = string.Empty;
+    public int? LocalBaseVersionNumber { get; set; }
+    public string LocalBaseVersionId { get; set; } = string.Empty;
+    // Fingerprint of the local world files when they last matched the base version (see LocalChangeDetector).
+    // Empty in states saved by older versions.
+    public string LocalBaseSignature { get; set; } = string.Empty;
+    public string LocalBaseContentHash { get; set; } = string.Empty;
+    public DateTimeOffset? LastDownloadedAtUtc { get; set; }
+    public DateTimeOffset? LastUploadedAtUtc { get; set; }
+    public string LastLocalBackupPath { get; set; } = string.Empty;
+    public DateTimeOffset? LastCloudCheckAtUtc { get; set; }
+    // Set when a session starts on this PC and cleared once its progress is shared (or the player dismisses it):
+    // while set and the game is closed, the window says the progress is not shared yet. Survives restarts.
+    public DateTimeOffset? PendingUploadSinceUtc { get; set; }
+
+    public static LocalSyncState CreateNew(GameWorld world)
+    {
+        return new LocalSyncState
+        {
+            Game = world.Game.ToStorageKey(),
+            WorldId = world.WorldId,
+            WorldName = world.WorldName,
+            LocalWorldPath = world.SavePath
+        };
+    }
+}

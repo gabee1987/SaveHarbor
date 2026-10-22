@@ -2,5 +2,5 @@ namespace SaveHarbor.App.Services;
 
 public interface IProcessDetectionService
 {
-    bool IsWindroseRunning();
+    bool IsGameRunning(IGameDefinition game);
 }

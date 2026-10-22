@@ -1,0 +1,52 @@
+using SaveHarbor.App.Domain;
+
+namespace SaveHarbor.App.Services;
+
+public interface ICloudSyncService
+{
+    Task<CloudConnectionResult> ConnectAsync(GameId game, CancellationToken cancellationToken = default);
+
+    // Whether the active provider can share this game's worlds now, without signing in or opening a browser.
+    Task<CloudConnectionStatus> GetConnectionStatusAsync(GameId game, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncStatus> RefreshStatusAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> DownloadLatestAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> DownloadLatestAvailableAsync(GameSaveRoot profile, CancellationToken cancellationToken = default);
+
+    // Downloads a shared world that is not on this PC yet; never overwrites a local world.
+    Task<CloudSyncResult> DownloadCloudWorldAsync(GameSaveRoot profile, string worldId, CancellationToken cancellationToken = default);
+
+    // Keeps the latest shared version as a local backup, then removes the world from the shared folder for everyone.
+    Task<CloudSyncResult> RemoveCloudWorldAsync(GameId game, string worldId, CancellationToken cancellationToken = default);
+
+    Task<CloudWorldOverview> GetOverviewAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, CancellationToken cancellationToken = default);
+
+    // The connection, the world list and the selected world's state from one snapshot.
+    Task<CloudRefresh> RefreshAllAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, GameWorld? selectedWorld, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> UploadCurrentAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // Renews this PC's session lock while the game runs. Cheap to call often: it only reaches the cloud once per
+    // heartbeat interval. Conflict when the lock was lost.
+    Task<CloudSyncResult> HeartbeatSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> EndSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // Since when this PC has progress from a session that is not shared yet; null when there is none.
+    Task<DateTimeOffset?> GetPendingUploadAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // The player shared the progress another way or chose to keep it on this PC: stop reminding.
+    Task ClearPendingUploadAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // Null when the active provider does not report its storage (Google Drive).
+    Task<CloudStorageUsage?> GetStorageUsageAsync(GameId game, CancellationToken cancellationToken = default);
+
+    // Archives no shared version points to; RemoveUnusedFilesAsync deletes what FindUnusedFilesAsync found.
+    Task<CloudUnusedFiles> FindUnusedFilesAsync(GameId game, CancellationToken cancellationToken = default);
+
+    Task<CloudSyncResult> RemoveUnusedFilesAsync(GameId game, CloudUnusedFiles files, CancellationToken cancellationToken = default);
+}

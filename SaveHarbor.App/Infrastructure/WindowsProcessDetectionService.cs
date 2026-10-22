@@ -5,26 +5,21 @@ namespace SaveHarbor.App.Infrastructure;
 
 public sealed class WindowsProcessDetectionService : IProcessDetectionService
 {
-    private static readonly string[] ProcessNameHints =
-    [
-        "Windrose",
-        "R5"
-    ];
+    public bool IsGameRunning(IGameDefinition game) => game.ProcessNames.Any(IsProcessRunning);
 
-    public bool IsWindroseRunning()
+    private static bool IsProcessRunning(string processName)
     {
-        return Process.GetProcesses()
-            .Any(process =>
+        var processes = Process.GetProcessesByName(processName);
+        try
+        {
+            return processes.Length > 0;
+        }
+        finally
+        {
+            foreach (var process in processes)
             {
-                try
-                {
-                    return ProcessNameHints.Any(hint =>
-                        process.ProcessName.Contains(hint, StringComparison.OrdinalIgnoreCase));
-                }
-                catch
-                {
-                    return false;
-                }
-            });
+                process.Dispose();
+            }
+        }
     }
 }

@@ -1,0 +1,4 @@
+[
+  { "key": "min_supported_app_version", "value": "2.3.0" },
+  { "key": "schema_version", "value": "1" }
+]

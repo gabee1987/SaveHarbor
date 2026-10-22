@@ -1,6 +1,15 @@
 using System.IO;
+using System.Windows;
+using System.Windows.Documents;
+using System.Windows.Media;
 using Microsoft.Win32;
+using SaveHarbor.App.Domain;
+using SaveHarbor.App.Localization;
 using SaveHarbor.App.Services;
+using SaveHarbor.App.Utilities;
+using SaveHarbor.App.ViewModels;
+using SaveHarbor.App.Views.Shell;
+using SaveHarbor.App.Views.Dialogs;
 
 namespace SaveHarbor.App.Infrastructure;
 
@@ -8,17 +17,37 @@ public sealed class WpfDialogService : IDialogService
 {
     public void ShowInfo(string title, string message)
     {
-        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+        ShowDialog(title, UiTextCatalog.Get("Dialog.OperationCompleted"), message, "i", UiTextCatalog.Get("Dialog.Ok"), null, "AccentBrush");
     }
 
     public void ShowError(string title, string message)
     {
-        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        ShowDialog(title, UiTextCatalog.Get("Dialog.NeedsAttention"), message, "!", UiTextCatalog.Get("Dialog.Ok"), null, "DangerBrush");
     }
 
     public bool Confirm(string title, string message)
     {
-        return System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) == System.Windows.MessageBoxResult.Yes;
+        return ShowDialog(
+            title,
+            UiTextCatalog.Get("Dialog.ConfirmAction"),
+            message,
+            "!",
+            UiTextCatalog.Get("Dialog.Continue"),
+            UiTextCatalog.Get("Dialog.Cancel"),
+            "WarnBrush") == true;
+    }
+
+    // For actions that delete something: red accent and an explicit action name instead of "Continue".
+    public bool ConfirmDanger(string title, string message, string actionText)
+    {
+        return ShowDialog(
+            title,
+            UiTextCatalog.Get("Dialog.ConfirmRemoval"),
+            message,
+            "!",
+            actionText,
+            UiTextCatalog.Get("Dialog.Cancel"),
+            "DangerBrush") == true;
     }
 
     public string? SelectZipFile(string initialDirectory)
@@ -32,4 +61,113 @@ public sealed class WpfDialogService : IDialogService
 
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
+
+    // Backups and world saves in one list first, so the user does not have to know which kind they were sent.
+    public string? SelectImportFile(string initialDirectory, string saveFileFilter)
+    {
+        var saveFilePatterns = saveFileFilter[(saveFileFilter.IndexOf('|') + 1)..];
+        var dialog = new OpenFileDialog
+        {
+            Title = "Import a world",
+            Filter = $"World backups and saves|*.zip;{saveFilePatterns}|SaveHarbor backup (*.zip)|*.zip|{saveFileFilter}",
+            InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public void ShowWorldInspector(WorldInspectorViewModel viewModel, Uri skinDictionary)
+    {
+        new WorldInspectorWindow(skinDictionary) { Owner = FindOwner(), DataContext = viewModel }.ShowDialog();
+    }
+
+    public string? SelectFolder(string title, string initialDirectory)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = title,
+            InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    }
+
+    public CloudFolderChoice? ConfigureCloudFolder(
+        Uri skinDictionary,
+        string gameDisplayName,
+        string currentFolderId,
+        IReadOnlyList<SavedCloudFolder> savedFolders,
+        Func<string, CancellationToken, Task<CloudSetupTestResult>> testAccessAsync,
+        Func<string, Task> forgetSavedFolderAsync)
+    {
+        var owner = FindOwner();
+
+        var window = new CloudFolderSetupWindow(skinDictionary, gameDisplayName, currentFolderId, savedFolders, testAccessAsync, forgetSavedFolderAsync)
+        {
+            Owner = owner
+        };
+
+        return window.ShowDialog() == true ? new CloudFolderChoice(window.FolderInputValue, window.TestedFolderName) : null;
+    }
+
+    public bool ShowReleaseNotes(string title, string markdown, bool canSkip)
+    {
+        var document = MarkdownLite.ToFlowDocument(string.IsNullOrWhiteSpace(markdown) ? UiTextCatalog.Get("Update.NoNotes") : markdown);
+        document.FontFamily = new FontFamily("Segoe UI");
+        document.FontSize = 13;
+        document.SetResourceReference(FlowDocument.ForegroundProperty, "InkBrush");
+
+        var window = new AppDialogWindow
+        {
+            Owner = FindOwner(),
+            Width = 560,
+            DialogTitle = title,
+            Subtitle = UiTextCatalog.Get("Update.NotesSubtitle"),
+            Document = document,
+            IconText = "i",
+            PrimaryText = UiTextCatalog.Get("Dialog.Close"),
+            CancelText = canSkip ? UiTextCatalog.Get("Update.Skip") : string.Empty,
+            CancelVisibility = canSkip ? Visibility.Visible : Visibility.Collapsed,
+            AccentBrush = System.Windows.Application.Current.TryFindResource("AccentBrush") as Brush ?? Brushes.White
+        };
+
+        window.ShowDialog();
+        return window.SecondaryChosen;
+    }
+
+    private static bool? ShowDialog(
+        string title,
+        string subtitle,
+        string message,
+        string iconText,
+        string primaryText,
+        string? cancelText,
+        string accentResourceKey)
+    {
+        var owner = FindOwner();
+
+        var accentBrush = System.Windows.Application.Current.TryFindResource(accentResourceKey) as Brush
+            ?? Brushes.White;
+
+        var window = new AppDialogWindow
+        {
+            Owner = owner,
+            DialogTitle = title,
+            Subtitle = subtitle,
+            Message = message,
+            IconText = iconText,
+            PrimaryText = primaryText,
+            CancelText = cancelText ?? string.Empty,
+            CancelVisibility = string.IsNullOrWhiteSpace(cancelText) ? Visibility.Collapsed : Visibility.Visible,
+            AccentBrush = accentBrush
+        };
+
+        return window.ShowDialog();
+    }
+
+    private static Window FindOwner() =>
+        System.Windows.Application.Current.Windows
+            .OfType<Window>()
+            .FirstOrDefault(window => window.IsActive)
+        ?? System.Windows.Application.Current.MainWindow;
 }
