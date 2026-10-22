@@ -7,9 +7,6 @@
          own shell wrapper around this view, e.g. DragonwildsShellView. -->
     <UserControl.Resources>
         <ResourceDictionary>
-            <DataTemplate x:Key="EmbersTemplate">
-                <local:EmberFieldView EmberBrush="{DynamicResource SkinEmberBrush}" />
-            </DataTemplate>
             <DataTemplate x:Key="SettingsTemplate">
                 <local:ShellSettingsView />
             </DataTemplate>
@@ -26,13 +23,13 @@
     <Grid>
         <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource SkinSmokeTemplate}" />
 
-        <!-- Embers exist only while ambient effects are on. -->
+        <!-- The game's ambient effect exists only while ambient effects are on: embers for Dragonwilds, the sea for Windrose. -->
         <ContentControl Content="{Binding}" Focusable="False" IsHitTestVisible="False">
             <ContentControl.Style>
                 <Style TargetType="ContentControl">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding AmbientEffectsEnabled}" Value="True">
-                            <Setter Property="ContentTemplate" Value="{StaticResource EmbersTemplate}" />
+                            <Setter Property="ContentTemplate" Value="{DynamicResource SkinAmbientTemplate}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

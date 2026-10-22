@@ -7,7 +7,7 @@
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
     <Grid behaviors:FoldingPanel.IsExpanded="{Binding IsWorldDetailsExpanded}" behaviors:FoldingPanel.ExpandedWidth="380" HorizontalAlignment="Left">
     <!-- Folded: the whole rail unfolds the panel again. -->
-    <Button Style="{StaticResource PanelRailButton}" Content="{ui:SpacedText Shell.WorldDetails}" Command="{Binding ToggleWorldDetailsCommand}"
+    <Button Style="{StaticResource PanelRailButton}" Content="{ui:SpacedText Shell.WorldDetails}" Command="{Binding ToggleWorldDetailsCommand}" Tag="{Binding SelectedWorldSavedText}"
             ToolTip="{ui:UiText Shell.ExpandDetailsTooltip}" AutomationProperties.Name="{ui:UiText Shell.ExpandDetailsTooltip}" />
 
     <ContentControl Style="{DynamicResource SkinFrame}" Padding="20,16" Width="380">

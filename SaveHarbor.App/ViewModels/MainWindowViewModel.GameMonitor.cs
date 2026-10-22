@@ -21,6 +21,7 @@ public partial class MainWindowViewModel
             return;
         }
 
+        NotifyRelativeTimes();
         var wasRunning = IsGameRunning;
         UpdateGameStatus();
 

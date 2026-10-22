@@ -140,8 +140,46 @@
                                     <RotateTransform Angle="90" />
                                 </TextBlock.LayoutTransform>
                             </TextBlock>
+                            <!-- Tag: a summary of the folded panel (the selected world, when it was saved), read along the rail. -->
+                            <TextBlock x:Name="Summary" Text="{TemplateBinding Tag}" FontSize="12" Foreground="{DynamicResource SkinGoldBrightBrush}"
+                                       HorizontalAlignment="Center" Margin="0,14,0,0">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
                         </StackPanel>
                     </ContentControl>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="{x:Null}">
+                            <Setter TargetName="Summary" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Chip" Property="Background" Value="{DynamicResource ToneNeutralBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Closes an overlay such as Settings: a cross in a round chip, like the fold chips. -->
+    <Style x:Key="OverlayCloseButton" TargetType="Button">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chip" Background="Transparent" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="17">
+                        <Path Data="M3,3 L11,11 M11,3 L3,11" Width="14" Height="14" Stretch="None" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.7"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />

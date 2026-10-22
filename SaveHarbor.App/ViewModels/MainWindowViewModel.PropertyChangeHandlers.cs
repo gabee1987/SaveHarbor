@@ -10,7 +10,9 @@ public partial class MainWindowViewModel
         RefreshSelectedWorldBackups();
         NotifySyncComparison();
         NotifyPlayPreflight();
+        NotifyHosting();
         OnPropertyChanged(nameof(TrayTooltip));
+        OnPropertyChanged(nameof(SelectedWorldSavedText));
         _ = RefreshWorldFactsAsync();
 
         if (!suppressSelectedWorldCloudRefresh)
@@ -38,6 +40,7 @@ public partial class MainWindowViewModel
         NotifySharingHero();
         NotifySyncComparison();
         NotifyPlayPreflight();
+        NotifyHosting();
         ApplySelectedStatusToBadges(value);
     }
 

@@ -4,27 +4,38 @@
              xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
              xmlns:vm="clr-namespace:SaveHarbor.App.ViewModels"
              xmlns:ui="clr-namespace:SaveHarbor.App.Localization">
+    <!-- The selected world's sharing at a glance, top to bottom: the group, what to do now, this PC versus the cloud,
+         and who is hosting next to the other actions. Sized to fit the panel without scrolling. -->
     <UserControl.Resources>
-        <!-- One side of the comparison: which version, what happened since, and when. New progress is highlighted. -->
+        <!-- One side of the comparison: the version large on the left, what happened since, when and its size beside it.
+             New progress is highlighted. -->
         <DataTemplate x:Key="SyncSideTemplate" DataType="{x:Type vm:SyncSide}">
-            <StackPanel Margin="0,6,0,0">
-                <TextBlock Text="{Binding Version}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="24" FontWeight="Bold"
-                           Foreground="{DynamicResource SkinGoldTextBrush}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Detail}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,1,0,0">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasNews}" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
-                                    <Setter Property="FontWeight" Value="SemiBold" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <TextBlock Text="{Binding When}" Style="{DynamicResource SkinMuted}" FontSize="11.5" Margin="0,1,0,0" />
-            </StackPanel>
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Version}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="28" FontWeight="Bold"
+                           Foreground="{DynamicResource SkinGoldTextBrush}" VerticalAlignment="Center" MinWidth="44" Margin="0,0,14,0" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Detail}" FontSize="12.5" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasNews}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding When}" Style="{DynamicResource SkinMuted}" FontSize="11.5" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding Extra}" Style="{DynamicResource SkinMuted}" FontSize="11.5" Margin="0,1,0,0"
+                               Visibility="{Binding HasExtra, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
+            </Grid>
         </DataTemplate>
 
         <!-- Corner ribbon on the side that holds the newer copy. -->
@@ -45,14 +56,21 @@
         </Style>
     </UserControl.Resources>
 
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
-            <!-- SaveHarbor Cloud, or no provider chosen yet: how this PC shares, with the next step. -->
-            <Border Style="{DynamicResource SkinSettingRow}" Margin="0,0,0,12"
+            <!-- SaveHarbor Cloud, or no provider chosen yet: how this PC shares, when it last checked, and the next step. -->
+            <Border Style="{DynamicResource SkinSettingRow}" Padding="14,7" Margin="0,0,0,10"
                     Visibility="{Binding HasSharingHero, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -64,7 +82,9 @@
                             <TextBlock Text="{Binding CloudStaleText}" Foreground="{DynamicResource MutedBrush}" FontSize="11.5" />
                         </Border>
                     </StackPanel>
-                    <Button Grid.Column="1"
+                    <TextBlock Grid.Column="1" Text="{Binding CloudCheckedText}" Style="{DynamicResource SkinMuted}" FontSize="11.5" VerticalAlignment="Center"
+                               Margin="12,0,0,0" ToolTip="{ui:UiText Shell.CheckedTooltip}" />
+                    <Button Grid.Column="2"
                             Content="{Binding SharingActionText, Converter={x:Static converters:SpacedCapsConverter.Instance}}"
                             Command="{Binding RunSharingActionCommand}"
                             Style="{DynamicResource SkinButton}"
@@ -81,21 +101,36 @@
                 <TextBlock Text="{Binding CloudDetailText}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,4,0,0" />
             </StackPanel>
 
-            <!-- What to do now, with the one action that resolves it. -->
+            <!-- What to do now: the state's icon, what it means and what happens after, and the one action that resolves it. -->
             <ContentControl Content="{Binding SelectedSyncAdvice}" Style="{DynamicResource SkinOptionalContent}">
                 <ContentControl.ContentTemplate>
                     <DataTemplate DataType="{x:Type vm:SyncAdvice}">
-                        <Border Style="{DynamicResource SkinToneBorder}" Padding="14,10">
+                        <Border Style="{DynamicResource SkinToneBorder}" Padding="12,9">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Headline}" Style="{DynamicResource SkinToneText}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                    <TextBlock Text="{Binding Explanation}" Foreground="{DynamicResource InkBrush}" Opacity="0.85" FontSize="12" TextWrapping="Wrap" LineHeight="18" Margin="0,3,0,0" />
+                                <Border Style="{DynamicResource SkinToneBorder}" Width="36" Height="36" CornerRadius="18" BorderThickness="1.5" VerticalAlignment="Center" Margin="0,0,12,0">
+                                    <Path Style="{DynamicResource SkinSyncIcon}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Path.LayoutTransform>
+                                            <ScaleTransform ScaleX="0.85" ScaleY="0.85" />
+                                        </Path.LayoutTransform>
+                                    </Path>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock TextWrapping="Wrap" LineHeight="19">
+                                        <Run Text="{Binding Headline, Mode=OneWay}" FontSize="15" FontWeight="SemiBold" Foreground="{Binding Foreground, ElementName=ToneProbe}" />
+                                        <Run Text="  " />
+                                        <Run Text="{Binding Explanation, Mode=OneWay}" FontSize="12.5" Foreground="{DynamicResource InkBrush}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Hint}" Style="{DynamicResource SkinMuted}" FontSize="11.5" TextTrimming="None" TextWrapping="Wrap" Margin="0,3,0,0"
+                                               Visibility="{Binding HasHint, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <!-- Carries the tone colour for the headline run. -->
+                                    <TextBlock x:Name="ToneProbe" Style="{DynamicResource SkinToneText}" Visibility="Collapsed" />
                                 </StackPanel>
-                                <Button Grid.Column="1"
+                                <Button Grid.Column="2"
                                         Content="{Binding ActionLabel, Converter={x:Static converters:SpacedCapsConverter.Instance}}"
                                         Command="{Binding DataContext.RunRecommendedSyncActionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         Style="{DynamicResource SkinButton}"
@@ -111,16 +146,16 @@
 
             <!-- This PC versus the cloud, side by side. The medallion between them says how they relate; the side with
                  the newer copy glows and carries a NEWER ribbon. -->
-            <Grid Margin="0,14,0,0" Visibility="{Binding LocalSide, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+            <Grid Margin="0,10,0,0" Visibility="{Binding LocalSide, Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="78" />
+                    <ColumnDefinition Width="86" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <Rectangle Grid.Column="1" Height="1" VerticalAlignment="Center" Fill="{DynamicResource SkinGlowLineBrush}" />
 
-                <Border Style="{DynamicResource SkinSideCard}" Tag="{Binding SelectedSyncAdvice.LocalIsNewer, FallbackValue=False}" ToolTip="{ui:UiText Shell.ThisPcTooltip}">
+                <Border Style="{DynamicResource SkinSideCard}" Padding="14,9,12,9" Tag="{Binding SelectedSyncAdvice.LocalIsNewer, FallbackValue=False}" ToolTip="{ui:UiText Shell.ThisPcTooltip}">
                     <Grid>
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
@@ -128,12 +163,6 @@
                                 <TextBlock Text="{ui:SpacedText Shell.ThisPc}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" VerticalAlignment="Center" Margin="7,0,0,0" />
                             </StackPanel>
                             <ContentControl Content="{Binding LocalSide}" ContentTemplate="{StaticResource SyncSideTemplate}" Focusable="False" />
-                            <Button Content="{ui:UiText Shell.RemoveFromPc}"
-                                    Command="{Binding RemoveLocalWorldCommand}"
-                                    Style="{DynamicResource SkinDangerLink}"
-                                    HorizontalAlignment="Left"
-                                    Margin="0,9,0,0"
-                                    ToolTip="{ui:UiText Shell.RemoveFromPcTooltip}" />
                         </StackPanel>
                         <ContentControl Style="{StaticResource NewerRibbon}"
                                         Visibility="{Binding SelectedSyncAdvice.LocalIsNewer, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
@@ -144,17 +173,17 @@
                     <ContentControl.ContentTemplate>
                         <DataTemplate DataType="{x:Type vm:SyncAdvice}">
                             <StackPanel>
-                                <Border Style="{DynamicResource SkinToneBorder}" Width="48" Height="48" CornerRadius="24" BorderThickness="1.5" HorizontalAlignment="Center">
+                                <Border Style="{DynamicResource SkinToneBorder}" Width="44" Height="44" CornerRadius="22" BorderThickness="1.5" HorizontalAlignment="Center">
                                     <Path Style="{DynamicResource SkinSyncIcon}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                                 <TextBlock Text="{Binding Relation}" Style="{DynamicResource SkinToneText}" FontSize="10.5" FontWeight="SemiBold"
-                                           TextAlignment="Center" TextWrapping="Wrap" Margin="2,6,2,0" />
+                                           TextAlignment="Center" TextWrapping="Wrap" Margin="2,5,2,0" />
                             </StackPanel>
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
                 </ContentControl>
 
-                <Border Grid.Column="2" Style="{DynamicResource SkinSideCard}" Tag="{Binding SelectedSyncAdvice.CloudIsNewer, FallbackValue=False}" ToolTip="{ui:UiText Header.LatestTooltip}">
+                <Border Grid.Column="2" Style="{DynamicResource SkinSideCard}" Padding="14,9,12,9" Tag="{Binding SelectedSyncAdvice.CloudIsNewer, FallbackValue=False}" ToolTip="{ui:UiText Header.LatestTooltip}">
                     <Grid>
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
@@ -162,13 +191,6 @@
                                 <TextBlock Text="{ui:SpacedText Shell.InTheCloud}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" VerticalAlignment="Center" Margin="7,0,0,0" />
                             </StackPanel>
                             <ContentControl Content="{Binding CloudSide}" ContentTemplate="{StaticResource SyncSideTemplate}" Focusable="False" />
-                            <Button Content="{ui:UiText Shell.RemoveFromCloud}"
-                                    Command="{Binding RemoveCloudWorldCommand}"
-                                    Style="{DynamicResource SkinDangerLink}"
-                                    HorizontalAlignment="Left"
-                                    Margin="0,9,0,0"
-                                    Visibility="{Binding CanRemoveSelectedFromCloud, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                    ToolTip="{ui:UiText Shell.RemoveFromCloudTooltip}" />
                         </StackPanel>
                         <ContentControl Style="{StaticResource NewerRibbon}"
                                         Visibility="{Binding SelectedSyncAdvice.CloudIsNewer, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
@@ -176,64 +198,97 @@
                 </Border>
             </Grid>
 
-            <TextBlock Margin="0,8,0,0"
-                       Style="{DynamicResource SkinMuted}"
-                       FontSize="11.5"
-                       ToolTip="{Binding CloudSessionTooltip}"
-                       Visibility="{Binding HasSessionLock, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Run Text="{ui:UiText Shell.Host}" />
-                <Run Text=": " />
-                <Run Text="{Binding CloudSessionText, Mode=OneWay}" Foreground="{DynamicResource InkBrush}" />
-            </TextBlock>
-            <TextBlock Text="{Binding CloudLockText}"
-                       Style="{DynamicResource SkinMuted}"
-                       FontSize="11.5"
-                       Margin="0,2,0,0"
-                       Visibility="{Binding HasCloudLockText, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <!-- Who may host the world right now. -->
+            <ContentControl Content="{Binding Hosting}" Style="{DynamicResource SkinOptionalContent}" Margin="0,10,0,0">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate DataType="{x:Type vm:HostingInfo}">
+                        <Border Style="{DynamicResource SkinSideCard}" Padding="10,8" ToolTip="{Binding DataContext.CloudSessionTooltip, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{DynamicResource SkinToneBorder}" Width="32" Height="32" CornerRadius="16" BorderThickness="1.5" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <Path Style="{DynamicResource SkinSyncIcon}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Path.LayoutTransform>
+                                            <ScaleTransform ScaleX="0.75" ScaleY="0.75" />
+                                        </Path.LayoutTransform>
+                                    </Path>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" Style="{DynamicResource SkinToneText}" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Detail}" Style="{DynamicResource SkinMuted}" FontSize="11.5" TextTrimming="None" TextWrapping="Wrap" Margin="0,1,0,0" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </StackPanel>
+    </ScrollViewer>
 
-            <WrapPanel Margin="0,14,0,0">
-                <Button Content="{ui:SpacedText Actions.Connect}"
-                        Command="{Binding ConnectCloudCommand}"
-                        Style="{DynamicResource SkinButton}"
-                        Margin="0,0,8,8"
-                        Visibility="{Binding IsCloudConnected, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
-                        ToolTip="{ui:UiText Actions.ConnectTooltip}" />
-                <Button Content="{ui:SpacedText Actions.Check}"
-                        Command="{Binding CheckCloudCommand}"
-                        Style="{DynamicResource SkinButton}"
-                        Margin="0,0,8,8"
-                        ToolTip="{ui:UiText Actions.CheckTooltip}" />
-                <Button Content="{ui:SpacedText Actions.Upload}"
-                        Command="{Binding UploadCloudCommand}"
-                        Style="{DynamicResource SkinButton}"
-                        Margin="0,0,8,8"
-                        ToolTip="{ui:UiText Actions.UploadTooltip}" />
-                <Button Content="{ui:SpacedText Actions.Download}"
-                        Command="{Binding DownloadCloudCommand}"
-                        Style="{DynamicResource SkinButton}"
-                        Margin="0,0,8,8"
-                        ToolTip="{ui:UiText Actions.DownloadTooltip}" />
-                <Button Content="{ui:SpacedText Actions.StartSession}"
-                        Command="{Binding StartCloudSessionCommand}"
-                        Style="{DynamicResource SkinButton}"
-                        Margin="0,0,8,8"
-                        Visibility="{Binding HasSessionLock, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
-                        ToolTip="{ui:UiText Actions.StartSessionTooltip}" />
-                <Button Content="{ui:SpacedText Actions.EndSession}"
-                        Command="{Binding EndCloudSessionCommand}"
-                        Style="{DynamicResource SkinButton}"
-                        Margin="0,0,8,8"
-                        Visibility="{Binding IsOwnSession, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        ToolTip="{ui:UiText Actions.EndSessionTooltip}" />
-            </WrapPanel>
-
+    <!-- Pinned at the bottom: the rare remove links on the left, the everyday actions in the bottom-right corner. -->
+    <Grid Grid.Row="1" Margin="0,12,0,0" VerticalAlignment="Bottom">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <Button Content="{Binding SetupCloudLinkText}"
                     Command="{Binding SetupCloudCommand}"
                     Style="{DynamicResource SkinLinkButton}"
-                    HorizontalAlignment="Left"
                     FontSize="11.5"
-                    Margin="0,2,0,0"
+                    Margin="0,0,18,0"
+                    Visibility="{Binding HasSharingHero, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
                     ToolTip="{ui:UiText Actions.SetupCloudTooltip}" />
+            <Button Content="{ui:UiText Shell.RemoveFromPc}"
+                    Command="{Binding RemoveLocalWorldCommand}"
+                    Style="{DynamicResource SkinDangerLink}"
+                    Margin="0,0,18,0"
+                    Visibility="{Binding LocalSide, Converter={x:Static converters:NullToCollapsedConverter.Instance}}"
+                    ToolTip="{ui:UiText Shell.RemoveFromPcTooltip}" />
+            <Button Content="{ui:UiText Shell.RemoveFromCloud}"
+                    Command="{Binding RemoveCloudWorldCommand}"
+                    Style="{DynamicResource SkinDangerLink}"
+                    Margin="0,0,18,0"
+                    Visibility="{Binding CanRemoveSelectedFromCloud, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    ToolTip="{ui:UiText Shell.RemoveFromCloudTooltip}" />
         </StackPanel>
-    </ScrollViewer>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Content="{ui:SpacedText Actions.Connect}"
+                    Command="{Binding ConnectCloudCommand}"
+                    Style="{DynamicResource SkinButton}"
+                    Margin="8,0,0,0"
+                    Visibility="{Binding IsCloudConnected, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
+                    ToolTip="{ui:UiText Actions.ConnectTooltip}" />
+            <Button Content="{ui:SpacedText Actions.Check}"
+                    Command="{Binding CheckCloudCommand}"
+                    Style="{DynamicResource SkinButton}"
+                    Margin="8,0,0,0"
+                    ToolTip="{ui:UiText Actions.CheckTooltip}" />
+            <Button Content="{ui:SpacedText Actions.Upload}"
+                    Command="{Binding UploadCloudCommand}"
+                    Style="{DynamicResource SkinButton}"
+                    Margin="8,0,0,0"
+                    ToolTip="{ui:UiText Actions.UploadTooltip}" />
+            <Button Content="{ui:SpacedText Actions.Download}"
+                    Command="{Binding DownloadCloudCommand}"
+                    Style="{DynamicResource SkinButton}"
+                    Margin="8,0,0,0"
+                    ToolTip="{ui:UiText Actions.DownloadTooltip}" />
+            <Button Content="{ui:SpacedText Actions.StartSession}"
+                    Command="{Binding StartCloudSessionCommand}"
+                    Style="{DynamicResource SkinButton}"
+                    Margin="8,0,0,0"
+                    Visibility="{Binding HasSessionLock, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}"
+                    ToolTip="{ui:UiText Actions.StartSessionTooltip}" />
+            <Button Content="{ui:SpacedText Actions.EndSession}"
+                    Command="{Binding EndCloudSessionCommand}"
+                    Style="{DynamicResource SkinButton}"
+                    Margin="8,0,0,0"
+                    Visibility="{Binding IsOwnSession, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    ToolTip="{ui:UiText Actions.EndSessionTooltip}" />
+        </StackPanel>
+    </Grid>
+    </Grid>
 </UserControl>

@@ -74,13 +74,13 @@
     </Style>
 
     <!-- Palatino capitals like the game's CHARACTER / FLAGSHIP / MAP menu; the active tab is underlined in crimson. -->
+    <!-- The hand is on the header only; set on the TabItem it would also cover the tab's page. -->
     <Style x:Key="SkinTabItem" TargetType="TabItem">
-        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                    <StackPanel Orientation="Horizontal" Background="Transparent" Cursor="Hand">
                         <Path x:Name="Separator" Data="{DynamicResource SkinDiamondGeometry}" Fill="{DynamicResource SkinFrameBrush}"
                               Width="5" Height="5" Stretch="Uniform" Margin="14,0,14,4" VerticalAlignment="Center" />
                         <Grid>

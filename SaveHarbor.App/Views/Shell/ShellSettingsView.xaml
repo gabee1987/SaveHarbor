@@ -26,12 +26,12 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- The hand is on the menu entry only, not on the page it opens. -->
         <Style x:Key="SettingsNavItem" TargetType="TabItem">
-            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Grid Margin="0,0,0,4">
+                        <Grid Margin="0,0,0,4" Background="Transparent" Cursor="Hand">
                             <Border x:Name="Chrome" Background="Transparent" CornerRadius="4" Padding="14,10" />
                             <Border x:Name="Marker" Width="3" HorizontalAlignment="Left" CornerRadius="1.5" Margin="0,8" Background="Transparent" />
                             <TextBlock x:Name="Label" Text="{TemplateBinding Header}" Margin="16,10,10,10" FontFamily="{DynamicResource AppDisplayFontFamily}"
@@ -95,7 +95,11 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <ContentControl Style="{DynamicResource SkinPageHeading}" Content="{ui:SpacedText Shell.Settings}" FontSize="26" Margin="0,0,0,18" />
+                <Grid Margin="0,0,0,18">
+                    <ContentControl Style="{DynamicResource SkinPageHeading}" Content="{ui:SpacedText Shell.Settings}" FontSize="26" Margin="0,0,48,0" />
+                    <Button Style="{StaticResource OverlayCloseButton}" Command="{Binding CloseSettingsCommand}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            ToolTip="{ui:UiText Settings.CloseTooltip}" AutomationProperties.Name="{ui:UiText Settings.CloseTooltip}" />
+                </Grid>
 
                 <TabControl Grid.Row="1" Style="{StaticResource SettingsTabs}" ItemContainerStyle="{StaticResource SettingsNavItem}" SelectedIndex="{Binding Settings.SelectedPage}">
                     <TabItem Header="{ui:UiText Settings.NavSharing}">

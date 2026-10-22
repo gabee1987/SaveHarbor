@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -9,6 +10,11 @@ public partial class MainWindowViewModel
     public bool IsWorldListExpanded => !_settingsStore.Current.WorldListCollapsed;
 
     public bool IsWorldDetailsExpanded => !_settingsStore.Current.WorldDetailsCollapsed;
+
+    // Shown along the folded details rail; null hides it.
+    public string? SelectedWorldSavedText => SelectedWorld is { } world
+        ? $"Saved {DisplayFormatter.FormatAge(world.LastModifiedAt)} · {DisplayFormatter.FormatBytes(world.SizeBytes)}"
+        : null;
 
     [RelayCommand]
     private void ToggleWorldList()

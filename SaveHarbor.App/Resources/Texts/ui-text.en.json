@@ -147,6 +147,7 @@
 
   "Shell.GameRunning": "Game is running",
   "Shell.Worlds": "YOUR WORLDS",
+  "Shell.CheckedTooltip": "When SaveHarbor last compared this world with the cloud. Check reads it again.",
   "Shell.CollapseWorldsTooltip": "Fold the world list away. The selected world stays selected.",
   "Shell.ExpandWorldsTooltip": "Show your worlds.",
   "Shell.NoWorlds": "No worlds on this PC yet. Create a world in the game, or connect the cloud and download your group's world from the list below.",
@@ -227,7 +228,7 @@
   "Settings.KeepBackupsHint": "Older SaveHarbor backups of this game are deleted automatically. The newest backup of every world, recent safety backups and backups of removed worlds are always kept. Your world files are never touched.",
   "Settings.ProviderHint": "SaveHarbor Cloud keeps your group's worlds in the SaveHarbor project on Supabase. Google Drive uses a shared folder in your group's Drive.",
   "Settings.AmbientEffects": "Ambient effects",
-  "Settings.AmbientEffectsHint": "Slowly drifting embers in the background.",
+  "Settings.AmbientEffectsHint": "A slow sea swell behind Windrose, drifting embers behind Dragonwilds.",
   "Settings.InviteLinks": "Invite links",
   "Settings.RegisterInviteLinks": "Register",
   "Settings.RegisterInviteLinksTooltip": "Make saveharbor://join links open this copy of SaveHarbor. Only your Windows user is changed.",
@@ -238,6 +239,7 @@
   "Settings.OpenLogs": "LOGS",
   "Settings.OpenData": "APP DATA",
   "Settings.Back": "BACK",
+  "Settings.CloseTooltip": "Close Settings (Esc). Every change is already saved.",
 
   "Inspector.Title": "ALL WORLD INFO",
   "Inspector.Loading": "Reading the world save…",

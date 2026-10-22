@@ -1,7 +1,13 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Drifting ash instead of embers. -->
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:shell="clr-namespace:SaveHarbor.App.Views.Shell">
     <SolidColorBrush x:Key="SkinEmberBrush" Color="#D9D2C5" />
+
+    <!-- Ambient effect ("Ambient effects" in Settings): a slow sea swell and a turning compass rose instead of embers. -->
+    <SolidColorBrush x:Key="SkinSwellBrush" Color="#9FB4BF" />
+    <DataTemplate x:Key="SkinAmbientTemplate">
+        <shell:SeaSwellView SwellBrush="{DynamicResource SkinSwellBrush}" />
+    </DataTemplate>
 
     <!-- Ink-washed backdrop with two crimson brush strokes, echoing the game's key art. Static: no animation. -->
     <DataTemplate x:Key="SkinSmokeTemplate">
