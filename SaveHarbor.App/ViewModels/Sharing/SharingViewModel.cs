@@ -118,6 +118,7 @@ public sealed partial class SharingViewModel : ObservableObject
         if (Onboarding is { } previous)
         {
             previous.Completed -= OnOnboardingCompleted;
+            previous.CancelBrowserSignIn();
         }
 
         var otherGameHasGroup = Enum.GetValues<GameId>().Any(other => other != _game && _services.Groups.HasGroupConfigured(other));

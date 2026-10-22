@@ -1,0 +1,86 @@
+/* Privacy and terms pages: static, no scripts. Colours follow styles.css (Windrose, dark and light). */
+:root {
+  --bg: #141516;
+  --panel: #18191b;
+  --line: #3d3b37;
+  --ink: #eee8dc;
+  --muted: #a9a296;
+  --accent: #e5a64a;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ece8e0;
+    --panel: #ffffff;
+    --line: #d2ccc0;
+    --ink: #1d1b18;
+    --muted: #5c564d;
+    --accent: #8a5a12;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.6 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+}
+
+main {
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 20px 16px 32px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+
+.logo {
+  vertical-align: -5px;
+}
+
+h2 {
+  font-size: 17px;
+  margin: 28px 0 8px;
+}
+
+p,
+li {
+  overflow-wrap: anywhere;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 6px;
+  border-top: 1px solid var(--line);
+}

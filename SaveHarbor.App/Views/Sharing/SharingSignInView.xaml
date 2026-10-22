@@ -37,6 +37,25 @@
                 </TextBox>
                 <Button Content="{ui:UiText Sharing.EmailSend}" Command="{Binding SendCodeCommand}" Style="{DynamicResource SkinPlayButton}"
                         FontSize="15" MinHeight="46" Margin="0,14,0,0" />
+
+                <!-- Only when the cloud offers it; the browser takes over until the player is back. -->
+                <StackPanel Visibility="{Binding CanUseGoogle, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Margin="0,20,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Height="1" Background="{DynamicResource LineSoftBrush}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{ui:UiText Sharing.Or}" Foreground="{DynamicResource MutedBrush}" Margin="12,0" />
+                        <Border Grid.Column="2" Height="1" Background="{DynamicResource LineSoftBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Button Content="{ui:UiText Sharing.GoogleSignIn}" ToolTip="{ui:UiText Sharing.GoogleSignInTooltip}" Command="{Binding SignInWithGoogleCommand}"
+                            Style="{DynamicResource SkinButton}" FontSize="15" MinHeight="46" Margin="0,20,0,0" />
+                    <Button Content="{ui:UiText Sharing.GoogleCancel}" ToolTip="{ui:UiText Sharing.GoogleCancelTooltip}" Command="{Binding CancelBrowserSignInCommand}"
+                            Style="{DynamicResource SkinLinkButton}" HorizontalAlignment="Center" Margin="0,14,0,0"
+                            Visibility="{Binding IsWaitingForBrowser, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
             </StackPanel>
 
             <!-- 2. Code -->

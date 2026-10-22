@@ -57,4 +57,13 @@ public static class SupabaseErrorCodes
     public const string OtpExpired = "otp_expired";
     public const string EmailRateLimit = "over_email_send_rate_limit";
     public const string RequestRateLimit = "over_request_rate_limit";
+    public const string FlowStateNotFound = "flow_state_not_found";
+    public const string FlowStateExpired = "flow_state_expired";
+    public const string BadCodeVerifier = "bad_code_verifier";
+
+    // Raised by the app during a browser sign-in.
+    public const string BrowserSignInCancelled = "browser_sign_in_cancelled";
+    public const string BrowserSignInTimedOut = "browser_sign_in_timed_out";
+    public const string BrowserSignInFailed = "browser_sign_in_failed";
+    public const string CallbackPortsBusy = "callback_ports_busy";
 }

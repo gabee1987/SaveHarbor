@@ -22,10 +22,11 @@ public sealed class SupabaseHarness : IDisposable
         Http = new SupabaseHttp(Options, new NullAppLogger(), Handler);
         SessionStore = new SupabaseSessionStore(Paths, new NullAppLogger());
         Auth = new SupabaseAuthClient(Http, SessionStore, new NullAppLogger(), Clock);
+        OAuth = new SupabaseOAuthSignIn(Http, Options, Auth, Browser, new NullAppLogger());
         Rest = new SupabaseRest(Http, Auth);
         Storage = new SupabaseStorage(Http, Auth, Options);
         Settings = new CloudProviderSettingsService(new CloudProviderOptions(), new FakeCloudProvider(), Paths, new NullAppLogger());
-        Groups = new SupabaseGroupService(Auth, Rest, Settings, new NullAppLogger());
+        Groups = new SupabaseGroupService(Auth, OAuth, Rest, Settings, new NullAppLogger());
         Provider = new SupabaseCloudProvider(Options, Auth, Rest, Storage, Groups, new NullAppLogger(), Clock, appVersion ?? new Version(2, 3, 0));
     }
 
@@ -44,6 +45,10 @@ public sealed class SupabaseHarness : IDisposable
     public SupabaseSessionStore SessionStore { get; }
 
     public SupabaseAuthClient Auth { get; }
+
+    public RecordingBrowserLauncher Browser { get; } = new();
+
+    public SupabaseOAuthSignIn OAuth { get; }
 
     public SupabaseRest Rest { get; }
 

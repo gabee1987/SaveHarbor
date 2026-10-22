@@ -82,10 +82,36 @@ It requests sign-in codes, so running it twice within 30 seconds hits the per-ad
    public by design; row-level security protects the data.
 
 9. Companion web page (`web/`, plan 08): set the repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
-   (Settings → Secrets and variables → Actions → Variables; the keepalive workflow uses the same two), then Settings →
+   (Settings → Secrets and variables → Actions → Variables; the keepalive workflow uses the same two), and
+   `LEGAL_OPERATOR_NAME` and `LEGAL_CONTACT_EMAIL` for the about, privacy and terms pages (`about.html`, `privacy.html`, `terms.html`;
+   filled in by `web/scripts/fill-legal.mjs`, so they never sit in the repository), then Settings →
    Pages → Source: **GitHub Actions**. Every push to `main` that changes `web/` runs the `pages` workflow, which tests,
    builds and publishes `https://<owner>.github.io/SaveHarbor/`. The page signs in with the same e-mail code and never
-   creates an account. GitHub Pages is a third-party host; the compliance note of plan 00 §6 applies.
+   creates an account that way (Google sign-in, step 10, can). GitHub Pages is a third-party host; the compliance note
+   of plan 00 §6 applies.
+
+10. Google sign-in (optional; the app and the page show **Continue with Google** only while it is on). Google is a
+    third-party identity provider: it learns that the person signs in to SaveHarbor, and Supabase stores the name and
+    picture URL Google sends in `auth.users.raw_user_meta_data` (SaveHarbor does not use them). Needs a compliance
+    review (GDPR: record of processing, privacy notice) before use outside hobby use.
+    1. Google Cloud Console → a project for SaveHarbor → Google Auth Platform → Branding: app name `SaveHarbor`,
+       support e-mail, and the Pages address as home page. Audience: **External**. Data access: the scopes `openid`,
+       `.../auth/userinfo.email` and `.../auth/userinfo.profile` only (no sensitive scopes, so no verification).
+    2. Clients → Create client → **Web application**. Authorised redirect URI:
+       `https://<project-ref>.supabase.co/auth/v1/callback`. No JavaScript origins are needed.
+    3. Supabase Dashboard → Authentication → Sign In / Providers → Google: enable, paste the client ID and client
+       secret. The secret lives only there and in Google; never in the repository, the app or GitHub.
+    4. Supabase Dashboard → Authentication → URL Configuration: Site URL `https://<owner>.github.io/SaveHarbor/`
+       (where a failed or unlisted redirect ends). Redirect URLs: add exactly
+       `http://127.0.0.1:53287/auth/callback`, `http://127.0.0.1:53288/auth/callback`,
+       `http://127.0.0.1:53289/auth/callback` (the desktop app tries these ports in turn) and
+       `https://<owner>.github.io/SaveHarbor/` (the page). For the page's dev server add
+       `http://localhost:5287/SaveHarbor/`; a phone on the LAN needs `http://<pc-ip>:5287/SaveHarbor/`. No wildcards.
+       The local stack accepts every `127.0.0.1` address because its Site URL is on that host, so only the hosted
+       project shows a missing entry: the browser then lands on the Site URL instead of returning to the app.
+    5. Check: `curl -s https://<project-ref>.supabase.co/auth/v1/settings -H "apikey: <publishable key>"` shows
+       `"google":true`. An existing e-mail account with the same verified address becomes the same account (Supabase
+       links the identities), so groups stay as they are.
 
 The built-in e-mail sender is rate-limited and meant for development. If codes arrive late, configure custom SMTP
 (see plan 07 §6). A custom SMTP provider is a third-party service and needs a compliance review outside hobby use.

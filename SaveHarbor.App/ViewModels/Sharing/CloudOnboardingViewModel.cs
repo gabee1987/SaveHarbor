@@ -6,8 +6,8 @@ using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.ViewModels;
 
-// SaveHarbor Cloud sign-in, one question per screen: e-mail, the code from the e-mail, the name friends see, then a
-// group. Leaving at any step keeps a valid state: signed out, or signed in without a group.
+// SaveHarbor Cloud sign-in, one question per screen: e-mail (or Google), the code from the e-mail, the name friends see,
+// then a group. Leaving at any step keeps a valid state: signed out, or signed in without a group.
 public sealed partial class CloudOnboardingViewModel : ObservableObject
 {
     public const int ResendDelaySeconds = 30;
@@ -81,7 +81,7 @@ public sealed partial class CloudOnboardingViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCodeCommand), nameof(VerifyCommand), nameof(ResendCommand), nameof(UseDifferentEmailCommand))]
     [NotifyCanExecuteChangedFor(nameof(ConfirmNameCommand), nameof(UseGroupCommand), nameof(JoinCommand), nameof(CreateCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ChooseGroupModeCommand), nameof(FinishCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ChooseGroupModeCommand), nameof(FinishCommand), nameof(SignInWithGoogleCommand))]
     private bool isBusy;
 
     [ObservableProperty]
@@ -130,12 +130,16 @@ public sealed partial class CloudOnboardingViewModel : ObservableObject
     // Raised when the player is done and the group can be shown.
     public event EventHandler? Completed;
 
-    // Refreshes the group list when the window opens already signed in.
+    // Refreshes the group list when the window opens already signed in; otherwise asks which sign-ins the cloud offers.
     public async Task InitializeAsync()
     {
         if (Step == CloudOnboardingStep.Group)
         {
             await RunAsync(LoadGroupsAsync);
+        }
+        else if (Step == CloudOnboardingStep.Email)
+        {
+            await LoadSignInOptionsAsync();
         }
     }
 
@@ -169,11 +173,15 @@ public sealed partial class CloudOnboardingViewModel : ObservableObject
         }
 
         ShowInfo(string.Empty);
-        await LoadGroupsAsync();
-
-        // Returning players pick one of their groups straight away; new players say who they are first.
-        Step = HasGroups ? CloudOnboardingStep.Group : CloudOnboardingStep.Name;
+        await ContinueAfterSignInAsync();
     });
+
+    // Returning players pick one of their groups straight away; new players say who they are first.
+    private async Task ContinueAfterSignInAsync()
+    {
+        await LoadGroupsAsync();
+        Step = HasGroups ? CloudOnboardingStep.Group : CloudOnboardingStep.Name;
+    }
 
     private bool CanResend() => !IsBusy && ResendAvailableIn == 0;
 
