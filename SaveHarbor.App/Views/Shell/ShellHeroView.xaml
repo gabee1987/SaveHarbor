@@ -98,8 +98,16 @@
                                     <StackPanel>
                                         <Button Content="{ui:SpacedText Shell.Play}"
                                                 Command="{Binding StartGameCommand}"
-                                                Style="{DynamicResource SkinPlayButton}"
-                                                ToolTip="{ui:UiText Shell.PlayTooltip}" />
+                                                Style="{DynamicResource SkinPlayButton}">
+                                            <!-- What Play does, then what it will do for this world from the last cloud check. -->
+                                            <Button.ToolTip>
+                                                <StackPanel MaxWidth="340">
+                                                    <TextBlock Text="{ui:UiText Shell.PlayTooltip}" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding PlayPreflightText}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,6,0,0"
+                                                               Visibility="{Binding HasPlayPreflight, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                </StackPanel>
+                                            </Button.ToolTip>
+                                        </Button>
                                         <Button Content="{ui:SpacedText Shell.Join}"
                                                 Command="{Binding JoinGameCommand}"
                                                 Style="{DynamicResource SkinButton}"

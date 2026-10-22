@@ -17,3 +17,9 @@ public sealed record CloudWorldOverview(
 {
     public static CloudWorldOverview NotConnected { get; } = new(false, [], []);
 }
+
+// What one cloud refresh read: the provider's connection, every world of the game, and the selected world's state.
+public sealed record CloudRefresh(
+    CloudConnectionStatus Connection,
+    CloudWorldOverview Overview,
+    CloudSyncStatus? SelectedStatus);

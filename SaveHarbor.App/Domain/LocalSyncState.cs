@@ -19,6 +19,9 @@ public sealed class LocalSyncState
     public DateTimeOffset? LastUploadedAtUtc { get; set; }
     public string LastLocalBackupPath { get; set; } = string.Empty;
     public DateTimeOffset? LastCloudCheckAtUtc { get; set; }
+    // Set when a session starts on this PC and cleared once its progress is shared (or the player dismisses it):
+    // while set and the game is closed, the window says the progress is not shared yet. Survives restarts.
+    public DateTimeOffset? PendingUploadSinceUtc { get; set; }
 
     public static LocalSyncState CreateNew(GameWorld world)
     {

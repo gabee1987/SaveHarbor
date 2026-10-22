@@ -196,7 +196,7 @@ public sealed partial class CloudOnboardingViewModel : ObservableObject
     private void ConfirmName()
     {
         _saveDisplayName(DisplayName);
-        ShowGroupStep(GroupSetupMode.Choose);
+        ShowGroupStep(InviteCode.Length > 0 ? GroupSetupMode.Join : GroupSetupMode.Choose);
     }
 
     private async Task RequestCodeAsync()

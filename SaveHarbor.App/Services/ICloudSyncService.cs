@@ -23,6 +23,9 @@ public interface ICloudSyncService
 
     Task<CloudWorldOverview> GetOverviewAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, CancellationToken cancellationToken = default);
 
+    // The connection, the world list and the selected world's state from one snapshot.
+    Task<CloudRefresh> RefreshAllAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, GameWorld? selectedWorld, CancellationToken cancellationToken = default);
+
     Task<CloudSyncResult> UploadCurrentAsync(GameWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
@@ -32,6 +35,12 @@ public interface ICloudSyncService
     Task<CloudSyncResult> HeartbeatSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
 
     Task<CloudSyncResult> EndSessionAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // Since when this PC has progress from a session that is not shared yet; null when there is none.
+    Task<DateTimeOffset?> GetPendingUploadAsync(GameWorld world, CancellationToken cancellationToken = default);
+
+    // The player shared the progress another way or chose to keep it on this PC: stop reminding.
+    Task ClearPendingUploadAsync(GameWorld world, CancellationToken cancellationToken = default);
 
     // Null when the active provider does not report its storage (Google Drive).
     Task<CloudStorageUsage?> GetStorageUsageAsync(GameId game, CancellationToken cancellationToken = default);

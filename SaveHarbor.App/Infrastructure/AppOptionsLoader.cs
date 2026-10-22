@@ -194,6 +194,14 @@ public static class AppOptionsLoader
     public static GameId? ReadGameArgument(IReadOnlyList<string> args) =>
         GameIdExtensions.TryParseStorageKey(ReadArgument(args, "--game") ?? string.Empty, out var game) ? game : null;
 
+    // "supabase" or "googledrive" (the names the app keeps its state under); null for anything else.
+    public static string? ReadProviderArgument(IReadOnlyList<string> args) => ReadArgument(args, "--provider")?.Trim().ToLowerInvariant() switch
+    {
+        "supabase" => CloudProviderKind.Supabase,
+        "googledrive" => CloudProviderKind.GoogleDrive,
+        _ => null
+    };
+
     private static string? ReadArgument(IReadOnlyList<string> args, string name)
     {
         for (var index = 0; index < args.Count - 1; index++)

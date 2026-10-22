@@ -15,8 +15,49 @@ public sealed partial class CloudSyncService
             return CloudWorldOverview.NotConnected;
         }
 
-        // Manifests come from friends: ids that could not be a world are dropped, and duplicates keep the newest.
         var snapshot = await cloudProvider.GetSnapshotAsync(game, cancellationToken);
+        return await BuildOverviewAsync(game, snapshot, localWorlds, cancellationToken);
+    }
+
+    // The connection, the world list and the selected world's state from one connection check and one snapshot, so a
+    // refresh after a command costs one round trip instead of one per part of the window.
+    public async Task<CloudRefresh> RefreshAllAsync(
+        GameId game,
+        IReadOnlyList<GameWorld> localWorlds,
+        GameWorld? selectedWorld,
+        CancellationToken cancellationToken = default)
+    {
+        var selected = selectedWorld?.Game == game ? selectedWorld : null;
+        var connection = await cloudProvider.GetConnectionStatusAsync(game, cancellationToken);
+        if (!connection.IsConnected)
+        {
+            var notConnected = selected is null ? null : await NotConnectedStatusAsync(selected, connection, cancellationToken);
+            return new CloudRefresh(connection, CloudWorldOverview.NotConnected, notConnected);
+        }
+
+        var snapshot = await cloudProvider.GetSnapshotAsync(game, cancellationToken);
+        var overview = await BuildOverviewAsync(game, snapshot, localWorlds, cancellationToken);
+        if (selected is null)
+        {
+            return new CloudRefresh(connection, overview, null);
+        }
+
+        var manifest = snapshot.Manifests
+            .Where(candidate => string.Equals(candidate.WorldId, selected.WorldId, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(candidate => candidate.LatestVersion?.VersionNumber ?? -1)
+            .FirstOrDefault();
+        var sessionLock = snapshot.LocksByWorldId.GetValueOrDefault(selected.WorldId);
+        var status = await BuildStatusAsync(selected, connection, manifest, sessionLock, cancellationToken);
+        return new CloudRefresh(connection, overview, status);
+    }
+
+    private async Task<CloudWorldOverview> BuildOverviewAsync(
+        GameId game,
+        CloudGroupSnapshot snapshot,
+        IReadOnlyList<GameWorld> localWorlds,
+        CancellationToken cancellationToken)
+    {
+        // Manifests come from friends: ids that could not be a world are dropped, and duplicates keep the newest.
         var now = snapshot.ServerTimeUtc ?? Now;
         var manifests = snapshot.Manifests
             .Where(manifest => manifest.LatestVersion is not null && SafePath.IsSafeSegment(manifest.WorldId))

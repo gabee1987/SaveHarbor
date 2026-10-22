@@ -36,5 +36,7 @@ public sealed class AppDataPathProvider : IAppDataPathProvider
 
     public string CloudProviderSettingsPath => Path.Combine(AppDataRoot, "cloud-provider-settings.json");
 
+    public string CloudCacheRoot => Path.Combine(AppDataRoot, "cloud-cache");
+
     public string AppSettingsPath => Path.Combine(AppDataRoot, "app-settings.json");
 }

@@ -11,6 +11,9 @@ public partial class MainWindowViewModel
     private bool cloudChoicePostponed;
     private readonly HashSet<GameId> cloudGroupPrompted = [];
 
+    // From a saveharbor://join link, for the next Sharing page.
+    private string? pendingInviteCode;
+
     // How sharing stood when Settings opened, so closing it reads the cloud again only after a change.
     private (string Provider, bool SignedIn, string? Group) sharingOpenedWith;
 
@@ -61,6 +64,25 @@ public partial class MainWindowViewModel
         await SetupSharedFolderAsync();
     }
 
+    // A second start of SaveHarbor, or an invite link: an invite opens the Sharing page with its code filled in (joining
+    // still needs the player's click); otherwise --game switches to that game when switching is possible.
+    public async Task HandleActivationAsync(IReadOnlyList<string> args)
+    {
+        if (InviteLink.Find(args) is { } code)
+        {
+            pendingInviteCode = code;
+            AddActivity("Info", "Opened an invite link. Check the group, then join.");
+            IsSettingsOpen = false;
+            await OpenSharingAsync();
+            return;
+        }
+
+        if (AppOptionsLoader.ReadGameArgument(args) is { } game && game != _activeGame.Current.Id && CanSwitchGame)
+        {
+            _activeGame.SetActive(game);
+        }
+    }
+
     private bool IsSaveHarborCloudAvailable => _providerSelector.AvailableKinds.Contains(CloudProviderKind.Supabase);
 
     private bool IsCloudGroupReady(GameId game) => _cloudGroups.IsSignedIn && _cloudGroups.HasGroupConfigured(game);
@@ -71,8 +93,7 @@ public partial class MainWindowViewModel
         {
             CloudStatus = null;
             ClearCloudOverview();
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("provider");
             Settings?.Refresh();
         }
         catch (Exception ex)
@@ -109,6 +130,8 @@ public partial class MainWindowViewModel
             game.Id,
             game.DisplayName);
         sharing.CloseRequested += (_, _) => IsSettingsOpen = false;
+        sharing.InviteFromLink = pendingInviteCode;
+        pendingInviteCode = null;
         return sharing;
     }
 
@@ -127,8 +150,7 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync("Checking the cloud...", async () =>
         {
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("sharing");
             Settings?.Refresh();
             OnPropertyChanged(nameof(PlayerDisplayName));
 
@@ -169,8 +191,7 @@ public partial class MainWindowViewModel
         await RunBusyAsync("Saving cloud folder setup...", async () =>
         {
             await _cloudSetupService.SaveSharedFolderAsync(game.Id, choice.Input, choice.FolderName);
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("folder");
 
             StatusText = "Cloud folder setup saved.";
             AddActivity("Success", StatusText);

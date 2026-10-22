@@ -78,42 +78,14 @@ public partial class MainWindowViewModel
         WorldSyncBadges = badges;
     }
 
-    private async Task RefreshCloudOverviewAsync()
-    {
-        var game = _activeGame.Current.Id;
-        await RefreshSharingHeroAsync();
-        try
-        {
-            var overview = await _cloudSyncService.GetOverviewAsync(game, Worlds.ToArray());
-            if (game != _activeGame.Current.Id)
-            {
-                return;
-            }
-
-            WorldSyncBadges = overview.LocalWorlds
-                .Select(summary => (summary.WorldId, Badge: SyncAdvisor.Badge(summary.State, summary.HasLocalChanges)))
-                .Where(item => item.Badge is not null)
-                .ToDictionary(item => item.WorldId, item => item.Badge!, StringComparer.OrdinalIgnoreCase);
-
-            CloudOnlyWorlds.Clear();
-            foreach (var manifest in overview.CloudOnlyWorlds)
-            {
-                CloudOnlyWorlds.Add(CloudWorldEntry.From(manifest));
-            }
-
-            ApplySelectedStatusToBadges(CloudStatus);
-        }
-        catch (Exception ex)
-        {
-            var error = _errorHandler.Handle(ex, "Refresh cloud world list", AppLogKeyword.CloudSync);
-            AddActivity("Error", FormatActivityError(error));
-        }
-    }
-
     private void ClearCloudOverview()
     {
         WorldSyncBadges = new Dictionary<string, SyncBadge>();
         CloudOnlyWorlds.Clear();
+        worldSummaries = new Dictionary<string, WorldSyncSummary>();
+        hasLiveCloudOverview = false;
+        CloudStaleSince = null;
+        NotifyPlayPreflight();
     }
 
     private bool CanRunRecommendedSyncAction() => !IsBusy && SelectedSyncAdvice?.HasAction == true;

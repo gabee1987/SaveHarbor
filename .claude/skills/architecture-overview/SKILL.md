@@ -37,8 +37,15 @@ installer's and updater's hook arguments and exits for them, then creates `App`.
 `Infrastructure/Updates/VelopackUpdateService` (GitHub releases, options under `SaveHarbor:Updates`, `--update-source
 <folder>` for a local feed); it is `Disabled` outside a Velopack install (`dotnet run`, an unzipped folder).
 
-Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds,
-start game monitor timer, `PromptCloudSetupIfNeededAsync` (Settings on the Sharing page when no provider is chosen and SaveHarbor
+`Program.Main` also keeps one SaveHarbor per Windows user (`Infrastructure/SingleInstanceGuard`): a second start
+(shortcut or `saveharbor://join/<CODE>` link, registered in HKCU by `ProtocolRegistration` from the Velopack hooks or
+Settings) hands its arguments to the running app (`App.Activate` → `MainWindowViewModel.HandleActivationAsync`).
+
+Startup: `MainWindow.Show()` → `MainWindowViewModel.InitializeAsync()` → scan worlds, show the cached cloud overview
+(`Infrastructure/Cloud/CloudSnapshotCache`, display only, marked "as of HH:mm") and read the live one with
+`RefreshCloudAsync` (`MainWindowViewModel.CloudRefresh.cs`: one `ICloudSyncService.RefreshAllAsync` = one connection
+check and one snapshot for the Sharing line, the world list and the selected world; requests within 250 ms share
+one refresh), start game monitor timer, `PromptCloudSetupIfNeededAsync` (Settings on the Sharing page when no provider is chosen and SaveHarbor
 Cloud is configured, or when SaveHarbor Cloud has no group yet; the Drive folder prompt for Google Drive), and an update check 10 s later that
 never blocks the UI (`MainWindowViewModel.Updates.cs`: banner, footer version, Settings "Check for updates").
 

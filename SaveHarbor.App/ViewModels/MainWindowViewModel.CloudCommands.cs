@@ -39,12 +39,7 @@ public partial class MainWindowViewModel
             AddActivity("Success", result.Message);
             _toastService.Success("Cloud connected", result.Status.AccountEmail ?? result.Status.ProviderName);
 
-            if (SelectedWorld is not null)
-            {
-                await RefreshCloudStatusAsync(showToast: false);
-            }
-
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("connect");
         });
 
         if (needsGroupSetup)
@@ -58,8 +53,12 @@ public partial class MainWindowViewModel
     {
         await RunBusyAsync("Checking cloud status...", async () =>
         {
-            await RefreshCloudStatusAsync(showToast: true);
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("check");
+            if (CloudStatus is { } status)
+            {
+                _toastService.Info(status.Title, status.Detail);
+                AddActivity("Info", $"{status.Title}: {status.Detail}");
+            }
         });
     }
 
@@ -90,8 +89,8 @@ public partial class MainWindowViewModel
             await RefreshSelectedWorldFromDiskAsync();
             var result = await _cloudSyncService.UploadCurrentAsync(SelectedWorld!);
             await RefreshBackupStatsAsync();
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
+            await RefreshCloudAsync("upload");
+            await RefreshPendingUploadAsync();
 
             if (!result.IsSuccess)
             {
@@ -157,8 +156,7 @@ public partial class MainWindowViewModel
             else
             {
                 await RefreshSelectedWorldFromDiskAsync();
-                await RefreshCloudStatusAsync(showToast: false);
-                await RefreshCloudOverviewAsync();
+                await RefreshCloudAsync("download");
             }
 
             StatusText = result.Message;

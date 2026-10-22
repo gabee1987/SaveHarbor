@@ -58,6 +58,11 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Path Data="{DynamicResource SkinCloudGeometry}" Stroke="{DynamicResource SkinGoldBrush}" StrokeThickness="1.2" Width="17" Height="12" Stretch="Uniform" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding SharingHeroText}" Foreground="{DynamicResource InkBrush}" FontSize="13.5" TextWrapping="Wrap" VerticalAlignment="Center" Margin="9,0,0,0" />
+                        <!-- The world list comes from the last run until the cloud answers. -->
+                        <Border Style="{DynamicResource SkinPill}" Margin="10,0,0,0" VerticalAlignment="Center" ToolTip="{ui:UiText Sharing.StaleTooltip}"
+                                Visibility="{Binding IsCloudStale, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding CloudStaleText}" Foreground="{DynamicResource MutedBrush}" FontSize="11.5" />
+                        </Border>
                     </StackPanel>
                     <Button Grid.Column="1"
                             Content="{Binding SharingActionText, Converter={x:Static converters:SpacedCapsConverter.Instance}}"
@@ -139,9 +144,8 @@
                     <ContentControl.ContentTemplate>
                         <DataTemplate DataType="{x:Type vm:SyncAdvice}">
                             <StackPanel>
-                                <Border Style="{DynamicResource SkinToneBorder}" Width="46" Height="46" CornerRadius="23" BorderThickness="1.5" HorizontalAlignment="Center">
-                                    <TextBlock Text="{Binding Direction}" Style="{DynamicResource SkinToneText}" FontFamily="Segoe UI Symbol" FontSize="21"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" />
+                                <Border Style="{DynamicResource SkinToneBorder}" Width="48" Height="48" CornerRadius="24" BorderThickness="1.5" HorizontalAlignment="Center">
+                                    <Path Style="{DynamicResource SkinSyncIcon}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                                 <TextBlock Text="{Binding Relation}" Style="{DynamicResource SkinToneText}" FontSize="10.5" FontWeight="SemiBold"
                                            TextAlignment="Center" TextWrapping="Wrap" Margin="2,6,2,0" />

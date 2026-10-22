@@ -81,6 +81,9 @@ public sealed partial class SharingViewModel : ObservableObject
     // The group joined, created or switched to while the page was open, for the main window's toast.
     public string? ConnectedGroupName { get; private set; }
 
+    // An invite code from a saveharbor://join link: the next sign-in screen opens on joining with it filled in.
+    public string? InviteFromLink { get; set; }
+
     // "Decide later": the page asks Settings to close.
     public event EventHandler? CloseRequested;
 
@@ -91,7 +94,7 @@ public sealed partial class SharingViewModel : ObservableObject
         switch (_services.Selector.ActiveKind)
         {
             case CloudProviderKind.Supabase when IsCloudAvailable:
-                if (_services.Groups.IsSignedIn && _services.Groups.HasGroupConfigured(_game))
+                if (_services.Groups.IsSignedIn && _services.Groups.HasGroupConfigured(_game) && InviteFromLink is null)
                 {
                     await ShowGroupAsync();
                 }
@@ -121,6 +124,13 @@ public sealed partial class SharingViewModel : ObservableObject
         var onboarding = new CloudOnboardingViewModel(
             _services.Groups, _services.Player, _services.ErrorHandler, _game, otherGameHasGroup, Profile.Save, _time);
         onboarding.Completed += OnOnboardingCompleted;
+        if (InviteFromLink is { } invite)
+        {
+            onboarding.InviteCode = invite;
+            mode = GroupSetupMode.Join;
+            InviteFromLink = null;
+        }
+
         if (mode is { } groupMode && _services.Groups.IsSignedIn)
         {
             onboarding.ShowGroupStep(groupMode);

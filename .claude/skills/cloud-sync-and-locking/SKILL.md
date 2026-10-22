@@ -55,8 +55,11 @@ the last sync is **not** detected (only version numbers are compared).
    cloud once per `HeartbeatIntervalSeconds` (5 min). A session started without launching the game expires after
    20 min.
 3. **Pre-2.3 locks are matched by MachineName.** Two Windows users on one PC are told apart only once both run 2.3.
-4. **Game close does not upload**: auto-end only clears the lock, so progress is not shared unless
-   the user uploads manually. The planned flow uploads then releases.
+4. **Game close uploads, then releases (since CP6).** `AutoEndCloudSessionAfterGameClosedAsync` waits for the save
+   to settle (`SaveSettleWaiter`: 3 s without a write, at most 30 s), uploads (no new version when nothing changed),
+   then ends the session. A failed upload or a save with a health problem still releases the lock, and
+   `LocalSyncState.PendingUploadSinceUtc` (set when the session started) keeps the "not shared yet" banner with
+   Retry upload / Dismiss, also across restarts (for example after the app was closed while the game ran).
 5. **Stale lock UX**: expired foreign locks are silently ignored; the UI should say
    "<player>'s session expired at <time>, you can take over".
 

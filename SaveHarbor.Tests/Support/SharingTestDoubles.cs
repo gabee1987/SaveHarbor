@@ -39,6 +39,8 @@ public sealed class StubCloudSyncService : ICloudSyncService
 
     public Task<CloudWorldOverview> GetOverviewAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
+    public Task<CloudRefresh> RefreshAllAsync(GameId game, IReadOnlyList<GameWorld> localWorlds, GameWorld? selectedWorld, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
     public Task<CloudSyncResult> UploadCurrentAsync(GameWorld world, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
     public Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -46,6 +48,10 @@ public sealed class StubCloudSyncService : ICloudSyncService
     public Task<CloudSyncResult> HeartbeatSessionAsync(GameWorld world, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
     public Task<CloudSyncResult> EndSessionAsync(GameWorld world, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+    public Task<DateTimeOffset?> GetPendingUploadAsync(GameWorld world, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+    public Task ClearPendingUploadAsync(GameWorld world, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 }
 
 // Google Drive folders for the Sharing page's Drive screen.

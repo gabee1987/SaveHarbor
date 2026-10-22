@@ -33,5 +33,7 @@ public sealed class TestPathProvider(TempDirectory root) : IAppDataPathProvider
 
     public string CloudProviderSettingsPath => root.Combine("appdata", "cloud-provider-settings.json");
 
+    public string CloudCacheRoot => root.Combine("appdata", "cloud-cache");
+
     public string AppSettingsPath => root.Combine("appdata", "app-settings.json");
 }

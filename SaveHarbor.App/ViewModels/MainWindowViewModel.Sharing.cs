@@ -114,41 +114,26 @@ public partial class MainWindowViewModel
         return string.Join(" · ", parts);
     }
 
-    // Reads the connection of SaveHarbor Cloud; the group list once per run, so member counts are current and groups
-    // the player left elsewhere are dropped.
-    private async Task RefreshSharingHeroAsync()
+    // Only SaveHarbor Cloud has the line; Google Drive and the local test cloud keep their own status lines.
+    private bool ShowsSharingConnection => _providerSelector.ActiveKind == CloudProviderKind.Supabase && IsSaveHarborCloudAvailable;
+
+    // The group list once per run, so member counts are current and groups the player left elsewhere are dropped.
+    private async Task ListCloudGroupsOnceAsync()
     {
-        if (_providerSelector.ActiveKind != CloudProviderKind.Supabase || !IsSaveHarborCloudAvailable)
+        if (!ShowsSharingConnection || cloudGroupsListedThisRun || !_cloudGroups.IsSignedIn)
         {
-            SharingConnection = null;
-            NotifySharingHero();
             return;
         }
 
         try
         {
-            if (!cloudGroupsListedThisRun && _cloudGroups.IsSignedIn)
-            {
-                await _cloudGroups.ListGroupsAsync();
-                cloudGroupsListedThisRun = true;
-            }
+            await _cloudGroups.ListGroupsAsync();
+            cloudGroupsListedThisRun = true;
         }
         catch (Exception ex)
         {
             _logger.Warning(AppLogKeyword.CloudSync, "SaveHarbor Cloud groups could not be listed: {Message}", ex.Message);
         }
-
-        try
-        {
-            SharingConnection = await _cloudSyncService.GetConnectionStatusAsync(_activeGame.Current.Id);
-        }
-        catch (Exception ex)
-        {
-            _logger.Warning(AppLogKeyword.CloudSync, "SaveHarbor Cloud status could not be read: {Message}", ex.Message);
-            SharingConnection = null;
-        }
-
-        NotifySharingHero();
     }
 
     private void NotifySharingHero()

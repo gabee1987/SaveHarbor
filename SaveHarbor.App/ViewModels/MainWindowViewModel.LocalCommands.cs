@@ -45,8 +45,9 @@ public partial class MainWindowViewModel
             }
 
             await RefreshBackupStatsAsync();
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
+            ShowCachedCloudOverview();
+            await RefreshCloudAsync("scan");
+            await RefreshPendingUploadAsync();
             StatusText = Worlds.Count == 0
                 ? $"No {ActiveGameName} worlds found."
                 : $"Found {Worlds.Count} world{(Worlds.Count == 1 ? string.Empty : "s")}.";

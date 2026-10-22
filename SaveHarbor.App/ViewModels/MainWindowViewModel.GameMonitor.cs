@@ -1,5 +1,6 @@
 using System.IO;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -50,8 +51,16 @@ public partial class MainWindowViewModel
         if (wasRunning && hasObservedGameRunningDuringSession && SelectedWorld is not null && HasOwnCloudSession())
         {
             await AutoEndCloudSessionAfterGameClosedAsync(SelectedWorld);
+            RestoreFromTray();
             return;
         }
+
+        if (wasRunning)
+        {
+            RestoreFromTray();
+        }
+
+        RestoreFromTrayIfGameNeverStarted();
 
         await RefreshIfWorldsChangedAsync();
     }
@@ -91,43 +100,86 @@ public partial class MainWindowViewModel
         }
     }
 
+    // The game closed on this PC's session: wait until the save is finished, share it, then release the lock. When
+    // sharing fails the lock is released anyway, so friends are not blocked, and the banner keeps the progress in view.
     private async Task AutoEndCloudSessionAfterGameClosedAsync(GameWorld world)
     {
         isAutoEndingSession = true;
+        IsBusy = true;
+        NotifyCommandStates();
         try
         {
-            StatusText = $"{ActiveGameName} closed. Ending cloud session...";
+            StatusText = $"{ActiveGameName} closed. Waiting for the save to finish...";
             AddActivity("Info", StatusText);
-
-            var result = await _cloudSyncService.EndSessionAsync(world);
-            await RefreshCloudStatusAsync(showToast: false);
-            await RefreshCloudOverviewAsync();
-
-            hasObservedGameRunningDuringSession = false;
-            StatusText = result.Message;
-
-            if (!result.IsSuccess)
+            var adapter = _activeGame.Current.SaveAdapter;
+            await SaveSettleWaiter.WaitAsync(adapter, world, SaveSettleWaiter.StableFor, SaveSettleWaiter.MaxWait);
+            if (SelectedWorld is { } selected && IsSameWorld(world, selected))
             {
-                AddActivity("Warning", result.Message);
-                _toastService.Warning("Session not ended", result.Message);
-                return;
+                await RefreshSelectedWorldFromDiskAsync();
             }
 
-            AddActivity("Success", $"{ActiveGameName} closed. Session ended automatically.");
-            _toastService.Success("Session ended", $"{ActiveGameName} closed, so SaveHarbor cleared your active session.");
+            var current = await adapter.ReadWorldAsync(world.SavePath) ?? world;
+            StatusText = $"Sharing {current.WorldName}...";
+            var upload = await ShareAfterGameClosedAsync(current);
+            var end = await _cloudSyncService.EndSessionAsync(current);
+            hasObservedGameRunningDuringSession = false;
+            await RefreshBackupStatsAsync();
+            await RefreshCloudAsync("game closed");
+            await RefreshPendingUploadAsync();
+
+            StatusText = upload.Message;
+            if (upload.IsSuccess)
+            {
+                AddActivity("Success", $"{ActiveGameName} closed. {upload.Message}");
+                _toastService.Success("Progress shared", upload.Message);
+                NotifyTray("Progress shared", upload.Message);
+            }
+            else
+            {
+                AddActivity("Warning", $"{ActiveGameName} closed, but the progress was not shared: {upload.Message}");
+                _toastService.Warning("Progress not shared yet", upload.Message);
+                NotifyTray("Progress not shared yet", upload.Message);
+            }
+
+            if (!end.IsSuccess)
+            {
+                AddActivity("Warning", end.Message);
+                _toastService.Warning("Session not ended", end.Message);
+            }
         }
         catch (Exception ex)
         {
-            var error = _errorHandler.Handle(ex, "Auto end cloud session", AppLogKeyword.CloudSession);
-            StatusText = "Could not auto-end session.";
+            var error = _errorHandler.Handle(ex, "Share after the game closed", AppLogKeyword.CloudSession);
+            StatusText = "Could not share the progress or end the session.";
             AddActivity("Error", FormatActivityError(error));
             _toastService.Warning("Session still active", error.UserMessage);
+            await RefreshPendingUploadAsync();
         }
         finally
         {
             isAutoEndingSession = false;
+            IsBusy = false;
             UpdateGameStatus();
             NotifyCommandStates();
+        }
+    }
+
+    // A copy the game would not load as it is, or one it swapped for another, is not shared without the player.
+    private async Task<CloudSyncResult> ShareAfterGameClosedAsync(GameWorld world)
+    {
+        if (_activeGame.Current.SaveAdapter.CheckHealth(world)?.FirstOrDefault(notice => notice.Issue is not SaveHealthIssue.Leftovers) is { } problem)
+        {
+            return new CloudSyncResult(false, CloudSyncState.Error, $"{problem.Title}. Check the world, then share it with Retry upload.");
+        }
+
+        try
+        {
+            return await _cloudSyncService.UploadCurrentAsync(world);
+        }
+        catch (Exception ex)
+        {
+            var error = _errorHandler.Handle(ex, "Upload after the game closed", AppLogKeyword.CloudUpload);
+            return new CloudSyncResult(false, CloudSyncState.Error, error.UserMessage);
         }
     }
 

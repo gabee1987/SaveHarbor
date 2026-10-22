@@ -31,9 +31,10 @@ public enum SyncAction
 
 public sealed record SyncBadge(string Text, SyncTone Tone);
 
-// What the player should do about the selected world, in plain words. Direction shows where the newer copy is:
-// "→" this PC has the newer copy, "←" the cloud has it, "=" both are the same, "≠" both changed. Relation says the
-// same in a word or two, under the symbol.
+// What the player should do about the selected world, in plain words. Direction says where the newer copy is, and
+// picks the comparison's icon (SkinSyncIcon): "→" this PC has the newer copy, "←" the cloud has it, "=" both are the
+// same, "≠" both changed, "…" a friend plays, "!" blocked, "?" not checked. Relation says it in a word or two, under
+// the icon.
 public sealed record SyncAdvice(string Headline, string Explanation, SyncAction Action, string ActionLabel, SyncTone Tone, string Direction)
 {
     public bool HasAction => Action != SyncAction.None;

@@ -79,6 +79,21 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
+    public bool MinimizeToTray
+    {
+        get => _settings.Current.MinimizeToTrayWhilePlaying;
+        set
+        {
+            if (value == _settings.Current.MinimizeToTrayWhilePlaying)
+            {
+                return;
+            }
+
+            _settings.Update(settings => settings.MinimizeToTrayWhilePlaying = value);
+            OnPropertyChanged();
+        }
+    }
+
     public string SaveFolder => _activeGame.Current.SaveAdapter.SaveRootPath;
 
     public string BackupFolder => _paths.GetBackupRoot(_activeGame.Current.Id);

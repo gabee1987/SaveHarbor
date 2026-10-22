@@ -24,6 +24,9 @@
                      BorderThickness="0"
                      Padding="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding StartGameCommand}" />
+                </ListBox.InputBindings>
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type domain:GameWorld}">
                         <StackPanel>

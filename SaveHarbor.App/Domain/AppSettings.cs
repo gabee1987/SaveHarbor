@@ -26,6 +26,9 @@ public sealed class AppSettings
 
     public bool AmbientEffects { get; set; } = true;
 
+    // After Play starts the game, the window waits in the notification area until the game closes.
+    public bool MinimizeToTrayWhilePlaying { get; set; } = true;
+
     // An update the player chose to skip ("2.4.0"); automatic checks do not offer it again.
     public string SkippedUpdateVersion { get; set; } = string.Empty;
 

@@ -175,6 +175,34 @@
                                               AutomationProperties.Name="{ui:UiText Settings.AmbientEffects}" />
                                 </Grid>
                             </Border>
+                            <Border Style="{StaticResource SettingLine}" BorderThickness="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,20,0">
+                                        <TextBlock Text="{ui:UiText Settings.MinimizeToTray}" Style="{StaticResource SettingTitle}" />
+                                        <TextBlock Text="{ui:UiText Settings.MinimizeToTrayHint}" Style="{StaticResource SettingHint}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{DynamicResource SkinToggle}" VerticalAlignment="Center" IsChecked="{Binding Settings.MinimizeToTray}"
+                                              AutomationProperties.Name="{ui:UiText Settings.MinimizeToTray}" />
+                                </Grid>
+                            </Border>
+                            <Border Style="{StaticResource SettingLine}" BorderThickness="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,20,0">
+                                        <TextBlock Text="{ui:UiText Settings.InviteLinks}" Style="{StaticResource SettingTitle}" />
+                                        <TextBlock Text="{Binding Settings.InviteLinksStatus}" Style="{StaticResource SettingHint}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="{ui:SpacedText Settings.RegisterInviteLinks}" Command="{Binding Settings.RegisterInviteLinksCommand}"
+                                            Style="{DynamicResource SkinButton}" VerticalAlignment="Center" ToolTip="{ui:UiText Settings.RegisterInviteLinksTooltip}" />
+                                </Grid>
+                            </Border>
                         </StackPanel>
                     </TabItem>
 
