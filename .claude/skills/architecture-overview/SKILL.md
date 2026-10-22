@@ -21,6 +21,7 @@ Single WPF project `SaveHarbor.App` (solution `SaveHarbor.sln`). ~6.6k lines. No
 | `Localization/` | `UiTextCatalog` + `{ui:UiText}` markup extension | Reads `Resources/Texts/ui-text.en.json` |
 | `Resources/Styles/` | `DarkTheme.xaml` (brushes + styles) | Only theme dictionary today |
 | `Configuration/` | Encrypted Google client secret (`.enc`, git-ignored) | Never commit secrets |
+| `web/` (repository root) | Companion web page (plan 08): Vite + React + TypeScript, read-only view of a group's worlds, locks, versions and who is online; GitHub Pages via `.github/workflows/pages.yml` | Reads only through RLS (`group_summaries`, `get_group_snapshot`, `world_versions`, `get_invite_code`); listens on the group's private channel without tracking presence; exact dependency versions, no install scripts (`web/.npmrc`); `npm test` / `npm run build` in `web/` |
 
 ## Composition root
 

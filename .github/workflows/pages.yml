@@ -1,0 +1,80 @@
+name: pages
+
+# Tests and builds the companion web page (web/), and publishes it to GitHub Pages from main.
+# Needs the repository variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY (public values, not secrets) and
+# Settings › Pages › Source: GitHub Actions.
+on:
+  push:
+    branches: [develop, main]
+    paths: ['web/**', '.github/workflows/pages.yml']
+  pull_request:
+    paths: ['web/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # web/.npmrc turns off install scripts, so no dependency runs code while installing.
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        # The page is built for the hosted project only on main; other runs build against a placeholder.
+        env:
+          ON_MAIN: ${{ github.ref == 'refs/heads/main' }}
+          HOSTED_URL: ${{ vars.SUPABASE_URL }}
+          HOSTED_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ "$ON_MAIN" = "true" ]; then
+            if [ -z "$HOSTED_URL" ] || [ -z "$HOSTED_KEY" ]; then
+              echo "::error::Set the repository variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY."
+              exit 1
+            fi
+            export VITE_SUPABASE_URL="$HOSTED_URL" VITE_SUPABASE_PUBLISHABLE_KEY="$HOSTED_KEY"
+          else
+            export VITE_SUPABASE_URL=https://TEST_REF.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_TEST
+          fi
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -503,5 +503,7 @@ Testing
 Releases/
 web/node_modules/
 web/dist/
+web/.env.local
+web/.env.*.local
 supabase/.temp/
 supabase/.branches/

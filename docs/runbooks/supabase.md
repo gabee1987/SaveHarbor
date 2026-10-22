@@ -81,6 +81,12 @@ It requests sign-in codes, so running it twice within 30 seconds hits the per-ad
 8. Copy the project URL and the **publishable** key into `SaveHarbor.App/appsettings.json` (plan 03 §1). Both are
    public by design; row-level security protects the data.
 
+9. Companion web page (`web/`, plan 08): set the repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
+   (Settings → Secrets and variables → Actions → Variables; the keepalive workflow uses the same two), then Settings →
+   Pages → Source: **GitHub Actions**. Every push to `main` that changes `web/` runs the `pages` workflow, which tests,
+   builds and publishes `https://<owner>.github.io/SaveHarbor/`. The page signs in with the same e-mail code and never
+   creates an account. GitHub Pages is a third-party host; the compliance note of plan 00 §6 applies.
+
 The built-in e-mail sender is rate-limited and meant for development. If codes arrive late, configure custom SMTP
 (see plan 07 §6). A custom SMTP provider is a third-party service and needs a compliance review outside hobby use.
 
@@ -99,7 +105,8 @@ The built-in e-mail sender is rate-limited and meant for development. If codes a
 - **Backup before risky migrations:** download the `saves` bucket in the dashboard and run
   `npx supabase db dump --linked -f backup.sql` (keep the file outside the repository).
 - **Rotate the publishable key:** requires a new app release because the key ships in `appsettings.json`; disable the
-  old key only after friends have updated. Update the `SUPABASE_PUBLISHABLE_KEY` repository variable too.
+  old key only after friends have updated. Update the `SUPABASE_PUBLISHABLE_KEY` repository variable too, and run the
+  `pages` workflow by hand so the companion page uses the new key.
 - **Raise `min_supported_app_version`:** only together with a breaking schema migration, and only after the app
   release that understands it is live (README, "Releasing a new version"). Older apps then show "Update required"
   and stop writing until they update.
