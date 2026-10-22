@@ -24,10 +24,17 @@ public sealed class TrayIcon : IDisposable
     private const int WmRightButtonUp = 0x205;
     private const int BalloonUserClick = 0x405;
     private const int IconId = 1;
+    private const int ImageIcon = 1;
+    private const int SmallIconWidth = 49;
+    private const int SmallIconHeight = 50;
+
+    // The icon the compiler embeds from <ApplicationIcon> has this resource id; it is also the id of Windows' generic
+    // application icon, the fallback.
     private static readonly IntPtr ApplicationIcon = new(32512);
 
     private readonly HwndSource source;
     private readonly int taskbarCreatedMessage = RegisterWindowMessageW("TaskbarCreated");
+    private readonly IntPtr ownIcon = LoadOwnIcon();
     private string tooltip = string.Empty;
     private bool isShown;
 
@@ -79,7 +86,15 @@ public sealed class TrayIcon : IDisposable
     {
         Hide();
         source.RemoveHook(OnMessage);
+        if (ownIcon != IntPtr.Zero)
+        {
+            DestroyIcon(ownIcon);
+        }
     }
+
+    // SaveHarbor's icon at the notification area's size, so Windows does not scale a larger image down.
+    private static IntPtr LoadOwnIcon() =>
+        LoadImageW(GetModuleHandleW(null), ApplicationIcon, ImageIcon, GetSystemMetrics(SmallIconWidth), GetSystemMetrics(SmallIconHeight), 0);
 
     private NotifyIconData Data(int flags) => new()
     {
@@ -88,7 +103,7 @@ public sealed class TrayIcon : IDisposable
         uID = IconId,
         uFlags = flags,
         uCallbackMessage = CallbackMessage,
-        hIcon = LoadIconW(IntPtr.Zero, ApplicationIcon),
+        hIcon = ownIcon != IntPtr.Zero ? ownIcon : LoadIconW(IntPtr.Zero, ApplicationIcon),
         szTip = Truncate(tooltip, 127),
         szInfo = string.Empty,
         szInfoTitle = string.Empty
@@ -177,6 +192,19 @@ public sealed class TrayIcon : IDisposable
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr LoadIconW(IntPtr instance, IntPtr iconName);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr LoadImageW(IntPtr instance, IntPtr name, int type, int width, int height, int flags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(IntPtr icon);
+
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr GetModuleHandleW(string? moduleName);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int RegisterWindowMessageW(string name);

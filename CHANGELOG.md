@@ -26,8 +26,20 @@ Your worlds, backups and settings stay where they are, in `%LOCALAPPDATA%\SaveHa
 - **Automatic updates:** SaveHarbor checks for new versions, downloads them in the background and asks before restarting. It never restarts while your game is running.
 - **Installer:** a normal Windows installer with a Start-menu entry and a desktop shortcut. No admin rights needed.
 - The version is shown in the footer and in Settings, with **Check for updates**.
+- **Shared when the game closes:** after you play with **Play**, SaveHarbor waits until the game has finished saving, uploads your progress and frees the world for your friends. Turn off **Share progress when the game closes** in Settings › Sharing to be asked each time instead.
+- **Upload reminder:** progress that is not shared yet stays in a banner with **Upload now** until you upload it.
+- **Out of the way while you play:** the window moves to the notification area during a session and comes back when the game closes.
+- **Live updates (SaveHarbor Cloud):** a friend's new version, or a friend starting or finishing a session, appears within seconds with a short notice. A dot next to the cloud status shows **Live**; without a connection SaveHarbor checks every minute.
+- **Who is online:** the group shows which friends have SaveHarbor open. Turn off **Show me as online** in Settings › Sharing to stay hidden.
+- **Companion web page:** see from your phone who is playing and the newest version of each world. Sign in with the same e-mail code. The page only shows; playing, uploading and downloading stay in the app.
+- **Join links:** a saveharbor://join link from a friend opens SaveHarbor with the invite code filled in. A second start of SaveHarbor brings the open window forward instead.
+- **Shortcuts:** Ctrl+U uploads, Ctrl+R refreshes, Esc closes Settings.
+- A new app icon.
 
 ### Changed
 
 - Settings shows how much cloud storage your group uses and can clean up files left over from interrupted uploads.
 - An app that is too old for your group's cloud now says **Update required** instead of writing files it does not understand.
+- **Sharing in Settings:** choosing where to share, signing in, the group with its members and invite code, and your player name are now on one Sharing page; Settings is split into pages.
+- **Faster start:** the last cloud status is shown at once, marked with when it was checked, while SaveHarbor checks again in the background. An upload of a world that has not changed since the last version is skipped.
+- **Play checks first:** before starting the game, Play says when a newer version is in the cloud or a friend is playing the world.
