@@ -147,6 +147,8 @@
 
   "Shell.GameRunning": "Game is running",
   "Shell.Worlds": "YOUR WORLDS",
+  "Shell.CollapseWorldsTooltip": "Fold the world list away. The selected world stays selected.",
+  "Shell.ExpandWorldsTooltip": "Show your worlds.",
   "Shell.NoWorlds": "No worlds on this PC yet. Create a world in the game, or connect the cloud and download your group's world from the list below.",
   "Shell.ChooseWorld": "Choose a world",
   "Shell.ChooseWorldHint": "Pick a world on the left to see its sharing status and play it.",
@@ -197,6 +199,8 @@
   "Shell.Join": "JOIN A FRIEND",
   "Shell.JoinTooltip": "Only starts the game, so you can join a friend who is hosting. Nothing is synced or locked.",
   "Shell.WorldDetails": "WORLD DETAILS",
+  "Shell.CollapseDetailsTooltip": "Fold the world details away, so Sharing has more room.",
+  "Shell.ExpandDetailsTooltip": "Show the world details.",
   "Shell.NoDetails": "Details appear here when a world is selected and its save can be read.",
   "Shell.WorldRules": "WORLD RULES",
   "Shell.NoWorldBackups": "No backups of this world yet.",

@@ -86,6 +86,77 @@
         </Setter>
     </Style>
 
+    <!-- Folds a main window panel into its rail. A chevron centred in a round chip; Tag "Right" points it right. -->
+    <Style x:Key="PanelToggleButton" TargetType="Button">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chip" Background="Transparent" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="14">
+                        <Path x:Name="Chevron" Data="M7.5,2 L3.5,6 L7.5,10" Width="12" Height="12" Stretch="None"
+                              Stroke="{TemplateBinding Foreground}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="Right">
+                            <Setter TargetName="Chevron" Property="Data" Value="M4.5,2 L8.5,6 L4.5,10" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Chip" Property="Background" Value="{DynamicResource ToneNeutralBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A folded panel: the whole rail unfolds it. The chip on top, the panel's name below it, read top to bottom. -->
+    <Style x:Key="PanelRailButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <ContentControl Style="{DynamicResource SkinFrame}" Padding="4,24,4,16" Focusable="False">
+                        <StackPanel>
+                            <Border x:Name="Chip" Width="28" Height="28" CornerRadius="14" BorderThickness="1" HorizontalAlignment="Center"
+                                    Background="Transparent" BorderBrush="{DynamicResource LineBrush}">
+                                <Path Data="M4.5,2 L8.5,6 L4.5,10" Width="12" Height="12" Stretch="None"
+                                      Stroke="{TemplateBinding Foreground}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{TemplateBinding Content}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="13"
+                                       Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" Margin="0,16,0,0">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                        </StackPanel>
+                    </ContentControl>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Chip" Property="Background" Value="{DynamicResource ToneNeutralBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryButtonForegroundBrush}" />
