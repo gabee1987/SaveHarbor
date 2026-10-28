@@ -269,6 +269,7 @@
   "Inspector.MoveLeftovers": "Move copies aside",
   "Inspector.MoveLeftoversTooltip": "Moves the unfinished copies out of the game's save folder into SaveHarbor's data folder. Nothing is deleted.",
   "Inspector.PrivacyNote.Dragonwilds": "The world password and owner ID are never read or shown.",
+  "Inspector.PrivacyNote.Enshrouded": "Only the world file is shared. Characters, settings and the Adventure Sharing list stay on this PC and are never read.",
   "Inspector.PrivacyNote.Windrose": "Only the world is shared. Characters and accounts stay on this PC and are only counted.",
   "Inspector.Close": "CLOSE",
 

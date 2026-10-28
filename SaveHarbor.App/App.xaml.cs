@@ -9,6 +9,7 @@ using SaveHarbor.App.Infrastructure.Cloud;
 using SaveHarbor.App.Infrastructure.Cloud.Supabase;
 using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
+using SaveHarbor.App.Infrastructure.Games.Enshrouded;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
 using SaveHarbor.App.Infrastructure.Migrations;
 using SaveHarbor.App.Infrastructure.Updates;
@@ -54,6 +55,8 @@ public partial class App : Application
                 services.AddSingleton<IGameDefinition, WindroseGameDefinition>();
                 services.AddSingleton<DragonwildsSaveAdapter>();
                 services.AddSingleton<IGameDefinition, DragonwildsGameDefinition>();
+                services.AddSingleton<EnshroudedSaveAdapter>();
+                services.AddSingleton<IGameDefinition, EnshroudedGameDefinition>();
                 services.AddSingleton<IGameRegistry, GameRegistry>();
                 services.AddSingleton<IActiveGameContext>(serviceProvider => new ActiveGameContext(
                     serviceProvider.GetRequiredService<IGameRegistry>(),

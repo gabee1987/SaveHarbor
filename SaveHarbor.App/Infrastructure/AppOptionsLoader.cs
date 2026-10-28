@@ -182,7 +182,7 @@ public static class AppOptionsLoader
             var legacy = game == GameId.Windrose ? configuration.GetSection("SaveHarbor:GameLauncher") : null;
             byGame[game] = new GameOptions
             {
-                LaunchUri = FirstNonEmpty(section["LaunchUri"], legacy?["LaunchUri"], DefaultLaunchUri(game)),
+                LaunchUri = FirstNonEmpty(section["LaunchUri"], legacy?["LaunchUri"], GameDefaults.LaunchUri(game)),
                 ExecutablePath = FirstNonEmpty(section["ExecutablePath"], legacy?["ExecutablePath"], string.Empty),
                 SaveRoot = section["SaveRoot"] ?? string.Empty
             };
@@ -214,13 +214,6 @@ public static class AppOptionsLoader
 
         return null;
     }
-
-    private static string DefaultLaunchUri(GameId game) => game switch
-    {
-        GameId.Windrose => "steam://rungameid/3041230",
-        GameId.Dragonwilds => "steam://rungameid/1374490",
-        _ => string.Empty
-    };
 
     private static string FirstNonEmpty(params string?[] values) =>
         values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;

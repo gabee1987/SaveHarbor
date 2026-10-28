@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:SaveHarbor.App.Views.Controls"
-        xmlns:domain="clr-namespace:SaveHarbor.App.Domain"
+        xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
         xmlns:dragonwilds="clr-namespace:SaveHarbor.App.Views.Dragonwilds"
+        xmlns:enshrouded="clr-namespace:SaveHarbor.App.Views.Enshrouded"
         xmlns:windrose="clr-namespace:SaveHarbor.App.Views.Windrose"
         xmlns:ui="clr-namespace:SaveHarbor.App.Localization"
         mc:Ignorable="d"
@@ -19,29 +20,29 @@
         FontSize="13"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <!-- Each game has its own shell. Only the active game's template is instantiated, so the other game's
-             views and resources are created when the user switches to it. -->
-        <DataTemplate x:Key="WindroseShellTemplate">
-            <windrose:WindroseShellView />
-        </DataTemplate>
-        <DataTemplate x:Key="DragonwildsShellTemplate">
-            <dragonwilds:DragonwildsShellView />
-        </DataTemplate>
+        <!-- Each game has its own shell, keyed "<GameId>ShellTemplate". Only the active game's template is
+             instantiated, so another game's views and resources are created when the user switches to it. -->
+        <converters:GameShellTemplateConverter x:Key="GameShellTemplateConverter">
+            <converters:GameShellTemplateConverter.Templates>
+                <ResourceDictionary>
+                    <DataTemplate x:Key="WindroseShellTemplate">
+                        <windrose:WindroseShellView />
+                    </DataTemplate>
+                    <DataTemplate x:Key="DragonwildsShellTemplate">
+                        <dragonwilds:DragonwildsShellView />
+                    </DataTemplate>
+                    <DataTemplate x:Key="EnshroudedShellTemplate">
+                        <enshrouded:EnshroudedShellView />
+                    </DataTemplate>
+                </ResourceDictionary>
+            </converters:GameShellTemplateConverter.Templates>
+        </converters:GameShellTemplateConverter>
     </Window.Resources>
 
     <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <ContentControl Content="{Binding}" Focusable="False">
-            <ContentControl.Style>
-                <Style TargetType="ContentControl">
-                    <Setter Property="ContentTemplate" Value="{StaticResource WindroseShellTemplate}" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding ActiveGameId}" Value="{x:Static domain:GameId.Dragonwilds}">
-                            <Setter Property="ContentTemplate" Value="{StaticResource DragonwildsShellTemplate}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ContentControl.Style>
-        </ContentControl>
+        <ContentControl Content="{Binding}"
+                        ContentTemplate="{Binding ActiveGameId, Converter={StaticResource GameShellTemplateConverter}}"
+                        Focusable="False" />
 
         <controls:ToastHostView HorizontalAlignment="Right"
                                 VerticalAlignment="Bottom"
