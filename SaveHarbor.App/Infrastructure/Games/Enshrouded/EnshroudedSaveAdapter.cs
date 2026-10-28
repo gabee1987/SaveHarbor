@@ -14,6 +14,8 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
     private const string LocalLabel = "Local";
     private const string SteamLabel = "Steam Cloud";
     private const string AsideFolderName = "saveharbor-aside";
+    private const string WorldExtension = ".ksd";
+    private const string ArchiveFileName = "world" + WorldExtension;
 
     private readonly record struct WorldLocation(string Label, bool IsReadOnly);
 
@@ -99,6 +101,9 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
 
     public IReadOnlyList<string> GetPayloadFiles(GameWorld world) => [world.SavePath];
 
+    // The slot number means nothing on another PC, so backups carry the world without it.
+    public string GetArchiveFileName(string worldPath) => ArchiveFileName;
+
     // The slot depends on what the folder holds right now, so it is resolved each time and never remembered.
     public string GetExpectedWorldPath(GameSaveRoot root, string worldId)
     {
@@ -118,10 +123,23 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
     public string? GetSaveFormatVersion(string worldPath) =>
         EnshroudedSaveHeader.TryRead(worldPath)?.FormatVersion.ToString(CultureInfo.InvariantCulture);
 
-    // Placing downloaded worlds (with the slot rename) is the next step of the Enshrouded plan (06-tasks.md T3); until
-    // then every restore and import of an Enshrouded payload is refused here, before anything is written.
-    public void ValidatePayload(string payloadRoot, string expectedWorldId) =>
-        throw new InvalidDataException("Enshrouded worlds cannot be placed yet.");
+    // The payload must be exactly one Enshrouded world file whose header GUID is the world it would become. Backups
+    // made before the archive name was "world.ksd" carry "world<N>.ksd"; both are accepted.
+    public void ValidatePayload(string payloadRoot, string expectedWorldId)
+    {
+        var files = Directory.GetFiles(payloadRoot);
+        if (files.Length != 1 || !string.Equals(Path.GetExtension(files[0]), WorldExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("The backup does not contain exactly one Enshrouded world file. Nothing was changed.");
+        }
+
+        if (new FileInfo(files[0]).Length > MaxImportBytes
+            || EnshroudedSaveHeader.TryRead(files[0]) is not { } header
+            || !string.Equals(header.WorldId, expectedWorldId, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("The backup does not contain this Enshrouded world. Nothing was changed.");
+        }
+    }
 
     public void StageGameFiles(GameWorld world, string payloadRoot)
     {

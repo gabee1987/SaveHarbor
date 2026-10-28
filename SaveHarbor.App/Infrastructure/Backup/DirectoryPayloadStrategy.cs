@@ -16,7 +16,7 @@ internal sealed class DirectoryPayloadStrategy(string stagingRoot) : IPayloadStr
         return [];
     }
 
-    public void Restore(string payloadRoot, GameWorld target, BackupManifest manifest, CancellationToken cancellationToken)
+    public void Restore(string payloadRoot, GameWorld target, BackupManifest manifest, IGameSaveAdapter adapter, CancellationToken cancellationToken)
     {
         VerifyPayload(payloadRoot, manifest);
         ReplaceDirectory(payloadRoot, target.SavePath, cancellationToken);

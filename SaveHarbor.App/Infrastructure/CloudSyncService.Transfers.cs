@@ -9,6 +9,10 @@ public sealed partial class CloudSyncService
     public async Task<CloudSyncResult> DownloadLatestAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudDownload, "Starting cloud download for world {WorldId}", world.WorldId);
+        if (world.IsReadOnly)
+        {
+            return await DownloadIntoWritableRootAsync(world, cancellationToken);
+        }
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (status.State == CloudSyncState.UpdateRequired)
@@ -90,6 +94,10 @@ public sealed partial class CloudSyncService
     public async Task<CloudSyncResult> UploadCurrentAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudUpload, "Starting cloud upload for world {WorldId}", world.WorldId);
+        if (await RefuseReadOnlyWithWritableCopyAsync(world, AppLogKeyword.CloudUpload, cancellationToken) is { } refused)
+        {
+            return refused;
+        }
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (status.State == CloudSyncState.UpdateRequired)

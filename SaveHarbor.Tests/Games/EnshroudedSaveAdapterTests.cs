@@ -13,7 +13,7 @@ public sealed class EnshroudedSaveAdapterTests : IDisposable
     {
         LocalRoot = temp.Combine("Saved Games", "keen games", "Enshrouded", "default");
         SteamRoot = temp.Combine("Steam", "userdata", "12345", "1203620", "remote");
-        Adapter = new EnshroudedSaveAdapter(new FixedLocator(new EnshroudedSaveRoots(LocalRoot, [new EnshroudedSteamRoot("12345", SteamRoot)])));
+        Adapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoots(LocalRoot, [new EnshroudedSteamRoot("12345", SteamRoot)])));
     }
 
     private string LocalRoot { get; }
@@ -25,11 +25,6 @@ public sealed class EnshroudedSaveAdapterTests : IDisposable
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     public void Dispose() => temp.Dispose();
-
-    private sealed class FixedLocator(EnshroudedSaveRoots roots) : IEnshroudedSaveRootLocator
-    {
-        public EnshroudedSaveRoots Locate() => roots;
-    }
 
     [Fact]
     public async Task DiscoverWorldsAsync_LocalAndSteamFolders_ListsOnlyWorldFiles()
@@ -306,5 +301,50 @@ public sealed class EnshroudedSaveAdapterTests : IDisposable
     public void Locator_FindSteamRoots_NoSteam_ReturnsEmpty(string? steamPath)
     {
         Assert.Empty(EnshroudedSaveRootLocator.FindSteamRoots(steamPath));
+    }
+
+    [Fact]
+    public void ValidatePayload_OneWorldFileOfTheExpectedWorld_IsAccepted()
+    {
+        var payload = temp.Combine("payload");
+        EnshroudedSaveBuilder.Write(payload, "world.ksd", EnshroudedSaveBuilder.WorldIdOne);
+        Directory.CreateDirectory(Path.Combine(payload, BackupPayloadLayout.GameFilesFolderName));
+
+        Adapter.ValidatePayload(payload, EnshroudedSaveBuilder.WorldIdOne);
+    }
+
+    [Theory]
+    [InlineData("other-world")]
+    [InlineData("two-files")]
+    [InlineData("wrong-extension")]
+    [InlineData("not-a-save")]
+    public void ValidatePayload_AnythingElse_IsRefused(string shape)
+    {
+        var payload = temp.Combine("payload");
+        Directory.CreateDirectory(payload);
+        switch (shape)
+        {
+            case "other-world":
+                EnshroudedSaveBuilder.Write(payload, "world.ksd", EnshroudedSaveBuilder.WorldIdTwo);
+                break;
+            case "two-files":
+                EnshroudedSaveBuilder.Write(payload, "world.ksd", EnshroudedSaveBuilder.WorldIdOne);
+                EnshroudedSaveBuilder.Write(payload, "world1.ksd", EnshroudedSaveBuilder.WorldIdOne);
+                break;
+            case "wrong-extension":
+                EnshroudedSaveBuilder.Write(payload, "world.sav", EnshroudedSaveBuilder.WorldIdOne);
+                break;
+            default:
+                File.WriteAllText(Path.Combine(payload, "world.ksd"), "TEST_CONTENT");
+                break;
+        }
+
+        Assert.Throws<InvalidDataException>(() => Adapter.ValidatePayload(payload, EnshroudedSaveBuilder.WorldIdOne));
+    }
+
+    [Fact]
+    public void GetArchiveFileName_DropsTheSlot()
+    {
+        Assert.Equal("world.ksd", Adapter.GetArchiveFileName(Path.Combine(LocalRoot, "world7.ksd")));
     }
 }

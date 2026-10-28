@@ -13,10 +13,7 @@ public static class AppOptionsLoader
 {
     public static AppLoggingOptions LoadLoggingOptions()
     {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
+        var configuration = BuildConfiguration();
 
         var defaults = new AppLoggingOptions();
         var section = configuration.GetSection(AppLoggingOptions.SectionName);
@@ -52,10 +49,7 @@ public static class AppOptionsLoader
 
     public static CloudProviderOptions LoadCloudProviderOptions()
     {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
+        var configuration = BuildConfiguration();
 
         var defaults = new CloudProviderOptions();
         var section = configuration.GetSection(CloudProviderOptions.SectionName);
@@ -123,10 +117,7 @@ public static class AppOptionsLoader
     // --update-source <folder> replaces GitHub with a folder of packed releases, for trying an update before publishing it.
     public static UpdateOptions LoadUpdateOptions(IReadOnlyList<string> args)
     {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
+        var configuration = BuildConfiguration();
 
         var defaults = new UpdateOptions();
         var section = configuration.GetSection(UpdateOptions.SectionName);
@@ -139,6 +130,23 @@ public static class AppOptionsLoader
             AutoDownload = ReadBool(section[nameof(UpdateOptions.AutoDownload)], defaults.AutoDownload),
             LocalSourceFolder = ReadArgument(args, "--update-source") ?? string.Empty
         };
+    }
+
+    // Development adds appsettings.Development.json and environment variables ("SAVEHARBOR__CloudProvider__Supabase__Url");
+    // Production reads appsettings.json only, so nothing on the machine can redirect a published build.
+    private static IConfiguration BuildConfiguration()
+    {
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
+        if (AppEnvironment.IsDevelopment)
+        {
+            builder
+                .AddJsonFile($"appsettings.{AppEnvironment.Development}.json", optional: true, reloadOnChange: false)
+                .AddEnvironmentVariables();
+        }
+
+        return builder.Build();
     }
 
     private static SupabaseOptions ReadSupabaseOptions(IConfigurationSection section)
@@ -170,10 +178,7 @@ public static class AppOptionsLoader
 
     public static IReadOnlyDictionary<GameId, GameOptions> LoadGameOptions()
     {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .Build();
+        var configuration = BuildConfiguration();
 
         var byGame = new Dictionary<GameId, GameOptions>();
         foreach (var game in Enum.GetValues<GameId>())

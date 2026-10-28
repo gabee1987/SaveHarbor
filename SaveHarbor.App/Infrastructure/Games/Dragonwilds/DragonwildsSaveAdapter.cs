@@ -168,6 +168,8 @@ public sealed class DragonwildsSaveAdapter(GameOptionsProvider optionsProvider) 
 
     public IReadOnlyList<string> GetPayloadFiles(GameWorld world) => [world.SavePath];
 
+    public string GetArchiveFileName(string worldPath) => Path.GetFileName(worldPath);
+
     // Dragonwilds saves carry no format folder; the file-set strategy already checks names and hashes.
     public string? GetSaveFormatVersion(string worldPath) => null;
 

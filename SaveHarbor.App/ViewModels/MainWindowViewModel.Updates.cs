@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using SaveHarbor.App.Domain;
+using SaveHarbor.App.Infrastructure;
 
 namespace SaveHarbor.App.ViewModels;
 
@@ -37,7 +38,9 @@ public partial class MainWindowViewModel
     {
         get
         {
-            var current = $"v{_updates.CurrentVersion.ToString(3)}";
+            var current = AppEnvironment.IsDevelopment
+                ? $"v{_updates.CurrentVersion.ToString(3)} · {AppEnvironment.Development}"
+                : $"v{_updates.CurrentVersion.ToString(3)}";
             return UpdateState switch
             {
                 AppUpdateState.Ready => $"{current} · {_updates.Available?.Version} ready",
