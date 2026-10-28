@@ -27,7 +27,7 @@ public sealed class BackupHarness : IDisposable
         Paths = new TestPathProvider(temp);
         WindroseAdapter = new WindroseSaveAdapter(options, Paths);
         DragonwildsAdapter = new DragonwildsSaveAdapter(options);
-        EnshroudedAdapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoot(EnshroudedRoot, IsSteamCloud: true)));
+        EnshroudedAdapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoot(EnshroudedRoot, IsSteamCloud: true)), Paths);
         Settings = new AppSettingsStore(Paths);
         Backups = new ZipBackupService(Paths, new StubGameRegistry(
             new StubGameDefinition(GameId.Windrose, WindroseAdapter),

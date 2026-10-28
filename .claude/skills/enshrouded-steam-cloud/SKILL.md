@@ -28,7 +28,9 @@ The game numbers slots from 1 in its menu: `world0.ksd` is slot 1. Existing play
 
 - **P6 passed:** with the game closed and Steam running, an older version (save counter 18) was written over `remote\world1.ksd` after Steam had synced counter 20. Starting the game showed no Steam conflict dialog, the world loaded in the older state, kept its GUID, and after playing Steam synced the new file (`remotecache.vdf` SHA-1 equal to the file, `syncstate` 1).
 - Two copies of one GUID (P3/P4 test copies) made the game give one copy a new GUID on save. Hence rule 5.
-- **Untested:** removing a world file from `remote` (does Steam delete its cloud copy or restore the file on next launch?); a conflict when the same account played the world on a second PC that Steam had not synced yet. Steam then shows its own conflict dialog; the user should keep the newer one.
+- **A world file deleted from `remote` comes back:** Steam Cloud restored it the next time the game started. SaveHarbor therefore never deletes Enshrouded worlds; Remove from this PC tells the player to delete the world inside the game (`IGameDefinition.RemoveWorldInGameHint`).
+- **Older copies are caught by the save counter:** `EnshroudedWorldLedger` keeps the highest counter seen per world on this PC; a lower one raises the `WorldReplaced` health notice, which stops the share after the game closes and makes a manual upload ask first. SaveHarbor's own restores and downloads, and "Keep world as it is", set the baseline.
+- **Untested:** that deleting a world inside the game also removes Steam's cloud copy; a conflict when the same account played the world on a second PC that Steam had not synced yet. Steam then shows its own conflict dialog; the user should keep the newer one.
 
 ## Diagnosing user reports
 

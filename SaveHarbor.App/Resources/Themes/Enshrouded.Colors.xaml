@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- "Lantern in the shroud": cool slate glass, parchment text, antique gold for structure, amber only for warnings. -->
+    <RadialGradientBrush x:Key="AppBackgroundBrush" Center="0.5,0.1" GradientOrigin="0.5,0.1" RadiusX="1.0" RadiusY="0.95">
+        <GradientStop Color="#1B2127" Offset="0" />
+        <GradientStop Color="#151A1E" Offset="0.55" />
+        <GradientStop Color="#111518" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="PanelBrush" Color="#232B33" />
+    <SolidColorBrush x:Key="PanelAltBrush" Color="#1C2229" />
+    <SolidColorBrush x:Key="InputBrush" Color="#151A1F" />
+    <SolidColorBrush x:Key="LineBrush" Color="#3C4650" />
+    <SolidColorBrush x:Key="LineSoftBrush" Color="#2C343C" />
+    <SolidColorBrush x:Key="InkBrush" Color="#EDE4D0" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#B3AE9F" />
+    <SolidColorBrush x:Key="SubtleBrush" Color="#7D7A6E" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#CDAA5E" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#DEBD72" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#A98A48" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#E8705F" />
+    <SolidColorBrush x:Key="WarnBrush" Color="#E39A46" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#86C66C" />
+    <SolidColorBrush x:Key="InfoBrush" Color="#8DB4D6" />
+
+    <SolidColorBrush x:Key="OrnamentBrush" Color="#8F7A48" />
+    <SolidColorBrush x:Key="PrimaryButtonForegroundBrush" Color="#1A1710" />
+    <SolidColorBrush x:Key="PlayCardBackgroundBrush" Color="#26303A" />
+
+    <SolidColorBrush x:Key="ToneAccentBackgroundBrush" Color="#33301F" />
+    <SolidColorBrush x:Key="ToneAccentBorderBrush" Color="#B8984F" />
+    <SolidColorBrush x:Key="ToneInfoBackgroundBrush" Color="#1F2D3A" />
+    <SolidColorBrush x:Key="ToneInfoBorderBrush" Color="#5F84A6" />
+    <SolidColorBrush x:Key="ToneSuccessBackgroundBrush" Color="#1F3024" />
+    <SolidColorBrush x:Key="ToneSuccessBorderBrush" Color="#5A8A4A" />
+    <SolidColorBrush x:Key="ToneWarnBackgroundBrush" Color="#3A2C1A" />
+    <SolidColorBrush x:Key="ToneWarnBorderBrush" Color="#B4762F" />
+    <SolidColorBrush x:Key="ToneNeutralBackgroundBrush" Color="#202830" />
+
+    <SolidColorBrush x:Key="HoverSurfaceBrush" Color="#2A333C" />
+    <SolidColorBrush x:Key="HoverLineBrush" Color="#5A6672" />
+    <SolidColorBrush x:Key="PressedSurfaceBrush" Color="#161B20" />
+    <SolidColorBrush x:Key="InputHoverBrush" Color="#192026" />
+    <SolidColorBrush x:Key="ItemHoverBrush" Color="#2A333C" />
+    <SolidColorBrush x:Key="ItemSelectedBrush" Color="#1C2229" />
+
+    <FontFamily x:Key="AppDisplayFontFamily">/SaveHarbor.App;component/Resources/Fonts/#Cinzel, Georgia</FontFamily>
+    <Visibility x:Key="ShowOrnamentGlyphs">Visible</Visibility>
+    <!-- An original flame above a short line, drawn on the shared 24-unit icon grid. -->
+    <PathGeometry x:Key="GameIconGeometry" Figures="M12,2 C15,6 17,8.5 17,12 C17,15 14.8,17 12,17 C9.2,17 7,15 7,12 C7,10 8,8.5 9.5,7.5 C9.5,9.5 10.5,10.5 11.5,10.8 C10.8,8 11,5 12,2 Z M5,20 L19,20 L19,21.5 L5,21.5 Z" />
+</ResourceDictionary>

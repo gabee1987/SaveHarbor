@@ -13,7 +13,7 @@ public sealed class EnshroudedSaveAdapterTests : IDisposable
     {
         Root = temp.Combine("Steam", "userdata", "12345", "1203620", "remote");
         LocalTab = temp.Combine("Saved Games", "keen games", "Enshrouded", "default");
-        Adapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoot(Root, IsSteamCloud: true)));
+        Adapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoot(Root, IsSteamCloud: true)), new TestPathProvider(temp));
     }
 
     // The Steam Cloud folder SaveHarbor manages.
@@ -66,7 +66,7 @@ public sealed class EnshroudedSaveAdapterTests : IDisposable
     [Fact]
     public async Task DiscoverWorldsAsync_NoFolderYet_ListsNothing()
     {
-        var adapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(null));
+        var adapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(null), new TestPathProvider(temp));
 
         Assert.Empty(await adapter.DiscoverWorldsAsync(Token));
         Assert.Empty(await adapter.DiscoverSaveRootsAsync(Token));

@@ -27,6 +27,8 @@ public sealed class DragonwildsGameDefinition(GameOptionsProvider optionsProvide
 
     public string? RemoveWorldNote => null;
 
+    public string? RemoveWorldInGameHint => null;
+
     public string PlayHint => "Play hosts this world for your group. Join only starts the game, so you can join a friend's world.";
 
     public IGameSaveAdapter SaveAdapter => saveAdapter;

@@ -20,15 +20,21 @@ public sealed class EnshroudedGameDefinition(GameOptionsProvider optionsProvider
     // The game writes the world and a rolling copy of it when it closes.
     public TimeSpan SaveSettleDelay => TimeSpan.FromSeconds(15);
 
-    // The Enshrouded colours and skin follow with the theme work; until then the game wears the Windrose look.
-    public Uri ThemeDictionary { get; } = new("/Resources/Themes/Windrose.Colors.xaml", UriKind.Relative);
+    public Uri ThemeDictionary { get; } = new("/Resources/Themes/Enshrouded.Colors.xaml", UriKind.Relative);
 
-    public Uri SkinDictionary { get; } = new("/SaveHarbor.App;component/Resources/Themes/Windrose/Windrose.Theme.xaml", UriKind.Relative);
+    public Uri SkinDictionary { get; } = new("/SaveHarbor.App;component/Resources/Themes/Enshrouded/Enshrouded.Theme.xaml", UriKind.Relative);
 
-    // SaveHarbor writes shared worlds into the game's Local save folder, never into the Steam Cloud one.
-    public string? PostRestoreHint => "Open this world from the Local tab in Enshrouded.";
+    // SaveHarbor manages the game's Steam Cloud folder (EnshroudedSaveRootLocator), shown as the "SAVEGAMES:STEAM" tab.
+    public string? PostRestoreHint => "Open this world from the SAVEGAMES:STEAM tab in Enshrouded.";
 
-    public string? RemoveWorldNote => "If the world also exists in your Steam Cloud tab, Enshrouded keeps that copy.";
+    public string? RemoveWorldNote => null;
+
+    // Steam Cloud restores a world file deleted from outside the game the next time the game starts (seen on the
+    // owner's PC, 2026-10-28), so only a deletion inside the game removes the world for good.
+    public string? RemoveWorldInGameHint =>
+        "Enshrouded keeps this world in Steam Cloud, so if SaveHarbor deleted the file, Steam would bring it back the next time the game starts.\n\n"
+        + "Delete the world inside Enshrouded instead, on the SAVEGAMES:STEAM tab. Steam then removes its cloud copy too, and SaveHarbor notices that the world is gone.\n\n"
+        + "To keep a copy, make a backup first: Backups tab → Back up now. The shared cloud copy is not touched either way.";
 
     public string PlayHint => "Play hosts this world for your group. Join only starts the game, so you can join a friend's world.";
 

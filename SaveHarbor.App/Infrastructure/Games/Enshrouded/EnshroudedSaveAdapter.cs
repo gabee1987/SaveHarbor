@@ -10,7 +10,7 @@ namespace SaveHarbor.App.Infrastructure.Games.Enshrouded;
 // places there is a normal Steam Cloud world for the game, and Steam backs it up like one; the owner verified that
 // Steam takes a file written there with the game closed without a sync conflict. Character, global and settings files
 // are never touched.
-public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : IGameSaveAdapter
+public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator, IAppDataPathProvider pathProvider) : IGameSaveAdapter
 {
     private const long MaxImportBytes = 256L * 1024 * 1024;
     private const string SteamCloudLabel = "Steam Cloud";
@@ -18,6 +18,8 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
     private const string AsideFolderName = "saveharbor-aside";
     private const string WorldExtension = ".ksd";
     private const string ArchiveFileName = "world" + WorldExtension;
+
+    private readonly EnshroudedWorldLedger ledger = new(pathProvider);
 
     public WorldPayloadKind PayloadKind => WorldPayloadKind.FileSet;
 
@@ -161,9 +163,34 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
 
     public void RememberWorldState(string worldPath)
     {
+        if (EnshroudedSaveHeader.TryRead(worldPath) is { } header)
+        {
+            ledger.Remember(header.WorldId, header.SaveCounter);
+        }
     }
 
-    public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world) => null;
+    // A save counter below the highest one this PC has seen means an older copy of the world is in place. Sharing it
+    // would hand the group a world without the newer progress, so the share after the game closes refuses it and a
+    // manual upload asks first. "Keep world as it is" in the world info accepts the copy.
+    public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world)
+    {
+        if (EnshroudedSaveHeader.TryRead(world.SavePath) is not { } header
+            || ledger.Observe(header.WorldId, header.SaveCounter) is not { } newer)
+        {
+            return [];
+        }
+
+        return
+        [
+            new SaveHealthNotice(
+                SaveHealthIssue.WorldReplaced,
+                "An older copy of this world is in place",
+                $"Its save counter is {header.SaveCounter.ToString(CultureInfo.InvariantCulture)}, but on this PC it already reached "
+                + $"{newer.HighestSaveCounter.ToString(CultureInfo.InvariantCulture)} ({newer.SeenAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}). "
+                + "Something put an earlier file back, most likely Steam Cloud. Check the world in the game before sharing it. If progress is "
+                + "missing, download the shared version or restore a SaveHarbor backup; if the world is fine, keep it as it is.")
+        ];
+    }
 
     public IReadOnlyList<string> MoveLeftoversAside(GameWorld world) => [];
 

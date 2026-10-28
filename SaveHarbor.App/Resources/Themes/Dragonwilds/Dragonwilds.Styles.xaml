@@ -5,6 +5,7 @@
          Every skin defines the same Skin* keys. -->
     <sys:String x:Key="SkinWordmarkKicker">RUNESCAPE</sys:String>
     <sys:String x:Key="SkinWordmarkTitle">DRAGONWILDS</sys:String>
+    <Visibility x:Key="SkinWorldSubtitleVisibility">Collapsed</Visibility>
     <SolidColorBrush x:Key="SkinGoldBrush" Color="#C9A24A" />
     <SolidColorBrush x:Key="SkinGoldBrightBrush" Color="#EBD08A" />
     <SolidColorBrush x:Key="SkinParchmentBrush" Color="#E9DDB5" />

@@ -60,11 +60,18 @@
                                     </ContentControl.Content>
                                 </ContentControl>
                             </Grid>
-                            <TextBlock Style="{DynamicResource SkinMuted}" FontSize="11.5" Margin="0,3,0,0">
-                                <Run Text="{Binding LastModifiedAt, Mode=OneWay, Converter={x:Static converters:RelativeAgeConverter.Instance}}" />
-                                <Run Text=" · " />
-                                <Run Text="{Binding SizeBytes, Mode=OneWay, Converter={x:Static converters:ByteSizeConverter.Instance}}" />
-                            </TextBlock>
+                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                <!-- The subtitle only where the skin shows it (Enshrouded: the slot, as the game numbers it). -->
+                                <TextBlock Style="{DynamicResource SkinMuted}" FontSize="11.5" Visibility="{DynamicResource SkinWorldSubtitleVisibility}">
+                                    <Run Text="{Binding Subtitle, Mode=OneWay}" />
+                                    <Run Text=" · " />
+                                </TextBlock>
+                                <TextBlock Style="{DynamicResource SkinMuted}" FontSize="11.5">
+                                    <Run Text="{Binding LastModifiedAt, Mode=OneWay, Converter={x:Static converters:RelativeAgeConverter.Instance}}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding SizeBytes, Mode=OneWay, Converter={x:Static converters:ByteSizeConverter.Instance}}" />
+                                </TextBlock>
+                            </StackPanel>
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

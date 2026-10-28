@@ -21,6 +21,10 @@ public interface IGameDefinition
     // What removing a world from this PC cannot do for this game (for example Steam Cloud bringing it back), shown in
     // the removal confirmation and the activity log. Null when there is nothing to add.
     string? RemoveWorldNote { get; }
+
+    // When set, SaveHarbor does not delete the world's files itself, because the game's own sync would bring them back
+    // (Enshrouded and Steam Cloud). Removing a world from this PC then shows this text, which says where to delete it.
+    string? RemoveWorldInGameHint { get; }
     string PlayHint { get; }
     IGameSaveAdapter SaveAdapter { get; }
 }

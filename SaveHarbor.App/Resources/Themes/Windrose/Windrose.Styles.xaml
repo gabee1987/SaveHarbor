@@ -6,6 +6,7 @@
          Skin* keys; "Gold" names are the skin's highlight metal (brass here). -->
     <sys:String x:Key="SkinWordmarkKicker">SAVEHARBOR</sys:String>
     <sys:String x:Key="SkinWordmarkTitle">WINDROSE</sys:String>
+    <Visibility x:Key="SkinWorldSubtitleVisibility">Collapsed</Visibility>
     <SolidColorBrush x:Key="SkinGoldBrush" Color="#B89A63" />
     <SolidColorBrush x:Key="SkinGoldBrightBrush" Color="#F1EADB" />
     <SolidColorBrush x:Key="SkinParchmentBrush" Color="#E8E1D2" />
