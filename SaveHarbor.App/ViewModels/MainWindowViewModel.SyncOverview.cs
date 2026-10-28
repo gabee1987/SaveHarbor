@@ -126,7 +126,7 @@ public partial class MainWindowViewModel
 
         await RunBusyAsync($"Downloading {entry.WorldName}...", async () =>
         {
-            var profile = (await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync()).FirstOrDefault();
+            var profile = (await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync()).FirstOrDefault(root => root.CanReceiveWorlds);
             if (profile is null)
             {
                 _dialogService.ShowError($"No {ActiveGameName} save folder", $"Start {ActiveGameName} once and close it, then download again.");

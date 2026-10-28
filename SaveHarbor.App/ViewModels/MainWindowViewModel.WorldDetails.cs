@@ -88,7 +88,10 @@ public partial class MainWindowViewModel
     {
         var expanded = OtherWorldBackupGroups.Where(group => group.IsExpanded).Select(group => group.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var selectedKey = SelectedWorld is null ? null : FileNameSanitizer.MakeSafeFileName(SelectedWorld.WorldName);
-        var localNames = Worlds.ToDictionary(world => FileNameSanitizer.MakeSafeFileName(world.WorldName), world => world.WorldName, StringComparer.OrdinalIgnoreCase);
+        // Several worlds can share a name (Enshrouded names are not unique), so the first one in the list names the group.
+        var localNames = Worlds
+            .DistinctBy(world => FileNameSanitizer.MakeSafeFileName(world.WorldName), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(world => FileNameSanitizer.MakeSafeFileName(world.WorldName), world => world.WorldName, StringComparer.OrdinalIgnoreCase);
 
         var groups = gameBackups
             .Select(backup => (Backup: backup, Parsed: BackupFileName.TryParse(backup.FileName, out var name, out _), Name: name))

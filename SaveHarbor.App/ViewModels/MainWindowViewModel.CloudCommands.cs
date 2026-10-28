@@ -173,7 +173,7 @@ public partial class MainWindowViewModel
     private async Task<CloudSyncResult> DownloadCloudWithoutLocalWorldAsync()
     {
         var profiles = await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync();
-        var profile = profiles.FirstOrDefault();
+        var profile = profiles.FirstOrDefault(root => root.CanReceiveWorlds);
         if (profile is null)
         {
             return new CloudSyncResult(

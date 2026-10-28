@@ -55,6 +55,7 @@ public partial class App : Application
                 services.AddSingleton<IGameDefinition, WindroseGameDefinition>();
                 services.AddSingleton<DragonwildsSaveAdapter>();
                 services.AddSingleton<IGameDefinition, DragonwildsGameDefinition>();
+                services.AddSingleton<IEnshroudedSaveRootLocator, EnshroudedSaveRootLocator>();
                 services.AddSingleton<EnshroudedSaveAdapter>();
                 services.AddSingleton<IGameDefinition, EnshroudedGameDefinition>();
                 services.AddSingleton<IGameRegistry, GameRegistry>();

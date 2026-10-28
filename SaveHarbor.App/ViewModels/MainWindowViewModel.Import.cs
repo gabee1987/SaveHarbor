@@ -156,7 +156,7 @@ public partial class MainWindowViewModel
 
     private async Task<GameSaveRoot?> FindSaveRootAsync()
     {
-        var profile = (await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync()).FirstOrDefault();
+        var profile = (await _activeGame.Current.SaveAdapter.DiscoverSaveRootsAsync()).FirstOrDefault(root => root.CanReceiveWorlds);
         if (profile is null)
         {
             _toastService.Warning("Profile not found", $"Start {ActiveGameName} once, close it, then import again.");

@@ -39,12 +39,12 @@ The game writes the main file and a new rolling copy together on autosave and on
 | 0 | 4 | Magic `SV2C` |
 | 4 | 2 | Format version = 2 |
 | 6 | 2 | Header size = 48 (`0x30`) |
-| 8 | 4 | Payload size (file length − 48) |
+| 8 | 4 | File length (observed; not checked) |
 | 12 | 16 | **World GUID** — stable across saves and rolling copies; unique per world |
 | 28 | 4 | **Save counter** — increments on every save |
 | 32 | 8 | **Unix timestamp (s)** of the save |
 | 40 | 8 | Unknown |
-| 48 | … | `S2BH` block table, then zstd frames (`28 B5 2F FD`). SaveHarbor never parses or edits this |
+| 48 | … | `S2BH` blocks. The first one is uncompressed: GUID copy at +14, world name as `u32` length at +71 and UTF-8 bytes at +75 (observed on 1.0, `EnshroudedWorldNameReader`). The rest is compressed; SaveHarbor never parses or edits it |
 
 World file check = name matches `^world\d+\.ksd$` (ignore case) **and** header passes (magic, version 2, size 48, length ≥ 48). Character files have the same header, so the name check is what excludes them.
 
@@ -54,7 +54,8 @@ World file check = name matches `^world\d+\.ksd$` (ignore case) **and** header p
 - Verified: a world renamed to another slot loads; an older copy placed over a newer one loads; the same GUID in two slots shows **two** worlds (the game does not deduplicate) → SaveHarbor maps same GUID → same slot.
 - Slot resolution for a root: file whose header GUID matches → reuse; else the smallest free `N` from 0.
 - Archives carry the file as `world.ksd` (uploader's slot number stripped); restore writes it to the resolved slot.
-- Display name: not readable from the header (it sits inside compressed blocks). Local fallback `"Enshrouded world <N>"`; the shared name comes from the cloud manifest. Subtitle shows `Slot <N> · Local|Steam Cloud`.
+- Display name: read from the first `S2BH` block (see the header table); every check must pass, else `"Enshrouded world <N>"`. Subtitle shows `Slot <N> · Local|Steam Cloud`.
+- **The game re-keys a duplicate.** A copy of a world that the game saved while another copy with the same GUID existed got a new GUID (observed 2026-10-28; owner confirmation pending). Never let the same GUID sit in two places the game can see if it must keep its identity.
 - `GetSaveFormatVersion` → `"2"` from the header; a different version is never restored into this game.
 
 ## Never

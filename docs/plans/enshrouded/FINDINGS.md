@@ -6,10 +6,16 @@ One line per unrelated defect or surprise met during implementation. Do not fix 
 
 - 2026-10-28 (CP1): the shell is chosen by `GameShellTemplateConverter` on `ActiveGameId` instead of the plan's `DataTemplateSelector`: the window's content (the view model) does not change on a game switch, so a selector would never re-run. Adding a game still adds one `DataTemplate` to `MainWindow.xaml`, but no trigger, and a game without a template throws instead of silently showing Windrose. Until CP4 Enshrouded points `ThemeDictionary`/`SkinDictionary` and its shell at the Windrose skin.
 
+- 2026-10-28 (CP2): **the game gave a copied world a new GUID.** The P4 test copy in the Local folder (same GUID as the Steam Cloud original, which also sat in two more Steam slots after P3) was saved once by the game and now carries a different GUID, with counter 2; the Steam original kept its GUID over 18 saves. Working assumption: Enshrouded re-keys a world when it finds the same GUID twice. Consequence for CP3: a world shared from the Steam Cloud tab and later downloaded into Local on the same PC would change identity on its next save. Owner test pending (open the now-unique Local world, save, quit; the GUID must stay and the counter become 3).
+- 2026-10-28 (CP2): header field at offset 8 holds the **file length**, not file length − 48 as the save-format skill said (skill corrected). Not checked by the reader.
+- 2026-10-28 (CP2): the Local root is built from `%USERPROFILE%\Saved Games`; a user who relocated the Saved Games known folder needs the Settings save-folder override. Reading the known folder (`SHGetKnownFolderPath`) is a possible later improvement.
+- 2026-10-28 (CP2): a world that is in a read-only root (`GameWorld.IsReadOnly`, set for Steam Cloud worlds) is refused by `ZipBackupService.RestoreBackupAsync` and `RemoveWorldAsync` before anything is written. `ValidatePayload` still refuses every Enshrouded payload until CP3, so no download or import can place a world yet.
+- 2026-10-28 (CP2): the same GUID can appear several times in the world list (the owner's P3 test copies). The view models select worlds by `WorldId`, so selecting one such entry may show another; CP5's duplicate notice covers it, and CP3 must not rely on `WorldId` alone to pick the Local copy.
+
 ## Build baseline
 
-CP1 start: 0 warnings, 542 passed, 1 skipped (opt-in Supabase stack test). CP1 end: 0 warnings, 557 passed, 1 skipped.
+CP1 start: 0 warnings, 542 passed, 1 skipped (opt-in Supabase stack test). CP1 end: 0 warnings, 557 passed, 1 skipped. CP2 end: 0 warnings, 634 passed, 1 skipped.
 
 ## World name spike (T2.6)
 
-(record outcome)
+**Found, implemented without zstd.** Directly after the 48-byte header an uncompressed `S2BH` block starts. In all three distinct 1.0 worlds checked (Local and Steam Cloud) it repeats the header GUID at block offset 14 and holds the world name as a `u32` byte length at block offset 71 followed by UTF-8 bytes (file offsets 119 and 123). The bytes between differ per world and per save but have kept the same size. `EnshroudedWorldNameReader` reads the first 251 bytes and accepts the name only when the block magic and the GUID copy match, the length is 1–128 and the bytes are valid UTF-8 without control characters; otherwise the world is shown as "Enshrouded world <N>". The layout is observed, not documented, so a game update may move it; the reader then fails closed.
