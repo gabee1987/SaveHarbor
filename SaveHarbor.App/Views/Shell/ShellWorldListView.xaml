@@ -39,39 +39,39 @@
                 </ListBox.InputBindings>
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type domain:GameWorld}">
+                        <!-- The name has the full width to itself; the sync badge and the details follow on their own rows. -->
                         <StackPanel>
-                            <Grid>
+                            <TextBlock Text="{Binding WorldName}"
+                                       ToolTip="{Binding WorldName}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource InkBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <!-- Sync state from the last cloud check; hidden while the cloud is not connected. -->
+                            <ContentControl Style="{DynamicResource SkinSyncBadge}" HorizontalAlignment="Left" Margin="0,4,0,0">
+                                <ContentControl.Content>
+                                    <MultiBinding Converter="{x:Static converters:WorldSyncBadgeConverter.Instance}">
+                                        <Binding Path="WorldId" />
+                                        <Binding Path="DataContext.WorldSyncBadges" RelativeSource="{RelativeSource AncestorType=ListBox}" />
+                                    </MultiBinding>
+                                </ContentControl.Content>
+                            </ContentControl>
+                            <Grid Margin="0,4,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding WorldName}"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource InkBrush}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <!-- Sync state from the last cloud check; hidden while the cloud is not connected. -->
-                                <ContentControl Grid.Column="1" Style="{DynamicResource SkinSyncBadge}" Margin="8,0,0,0">
-                                    <ContentControl.Content>
-                                        <MultiBinding Converter="{x:Static converters:WorldSyncBadgeConverter.Instance}">
-                                            <Binding Path="WorldId" />
-                                            <Binding Path="DataContext.WorldSyncBadges" RelativeSource="{RelativeSource AncestorType=ListBox}" />
-                                        </MultiBinding>
-                                    </ContentControl.Content>
-                                </ContentControl>
-                            </Grid>
-                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                                 <!-- The subtitle only where the skin shows it (Enshrouded: the slot, as the game numbers it). -->
                                 <TextBlock Style="{DynamicResource SkinMuted}" FontSize="11.5" Visibility="{DynamicResource SkinWorldSubtitleVisibility}">
                                     <Run Text="{Binding Subtitle, Mode=OneWay}" />
                                     <Run Text=" · " />
                                 </TextBlock>
-                                <TextBlock Style="{DynamicResource SkinMuted}" FontSize="11.5">
+                                <TextBlock Grid.Column="1" Style="{DynamicResource SkinMuted}" FontSize="11.5">
                                     <Run Text="{Binding LastModifiedAt, Mode=OneWay, Converter={x:Static converters:RelativeAgeConverter.Instance}}" />
                                     <Run Text=" · " />
                                     <Run Text="{Binding SizeBytes, Mode=OneWay, Converter={x:Static converters:ByteSizeConverter.Instance}}" />
                                 </TextBlock>
-                            </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
