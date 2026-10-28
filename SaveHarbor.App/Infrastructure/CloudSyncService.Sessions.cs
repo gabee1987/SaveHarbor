@@ -7,10 +7,6 @@ public sealed partial class CloudSyncService
     public async Task<CloudSyncResult> StartSessionAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
         logger.Debug(AppLogKeyword.CloudSession, "Starting cloud session for world {WorldId}", world.WorldId);
-        if (await RefuseReadOnlyWithWritableCopyAsync(world, AppLogKeyword.CloudSession, cancellationToken) is { } refused)
-        {
-            return refused;
-        }
 
         var status = await RefreshStatusAsync(world, cancellationToken);
         if (status.State == CloudSyncState.UpdateRequired)

@@ -1,46 +1,45 @@
 ---
 name: enshrouded-steam-cloud
-description: How Enshrouded's two save tabs (Local and Steam Cloud) map to folders, how Steam tracks the remote folder, and SaveHarbor's policy of writing only to the Local folder. Use when implementing Enshrouded discovery, download/restore targets, user hints, or diagnosing "the game shows two copies / my world went back in time".
+description: How Enshrouded's two save tabs (Local and Steam Cloud) map to folders, how Steam tracks the remote folder, and SaveHarbor's policy of managing only the signed-in account's Steam Cloud folder (verified that Steam accepts files SaveHarbor writes there). Use when implementing Enshrouded discovery, download/restore targets, user hints, or diagnosing "the game shows two copies / my world went back in time / Steam conflict".
 ---
 
 # Enshrouded and Steam Cloud
 
 ## The two tabs
 
-Since 1.0 the character and world selection screens have a **Local** tab and a **Steam Cloud** tab. They are two folders:
+Since 1.0 the session screen has a **SAVEGAMES:LOCAL** tab and a **SAVEGAMES:STEAM** tab. They are two folders:
 
 | Tab | Folder | Steam tracking |
 |---|---|---|
-| Steam Cloud | `<Steam>\userdata\<steamid3>\1203620\remote\` | Every top-level file is hashed in `..\1203620\remotecache.vdf` and synced with Valve's servers on launch/exit. `backup\` and `migrated\` subfolders are **not** tracked |
+| Steam | `<Steam>\userdata\<steamid3>\1203620\remote\` | Every top-level file is listed in `..\1203620\remotecache.vdf` (size, times, SHA-1, `syncstate`) and synced with Valve's servers on launch/exit. `backup\` and `migrated\` subfolders are **not** tracked |
 | Local | `%USERPROFILE%\Saved Games\keen games\Enshrouded\default\` | None |
 
-Existing players' worlds live in the Steam Cloud folder (the 1.0 migration put them there).
+The game numbers slots from 1 in its menu: `world0.ksd` is slot 1. Existing players' worlds live in the Steam folder (the 1.0 migration put them there).
 
-## SaveHarbor policy (decided, plan 02 §3)
+## SaveHarbor policy (decided 2026-10-28, replaces the earlier "Local only" policy)
 
-1. **Writes go to Local only.** Downloads, restores and imports always target the Local root. SaveHarbor never creates, replaces or deletes anything under `remote\`. This avoids Steam conflict dialogs, cross-PC overwrites and any need to touch `remotecache.vdf`.
-2. **Steam Cloud worlds are listed read-only** (`GameSaveRoot.CanReceiveWorlds = false`) so a player can share an existing world once.
-3. After such a share, show once per world: "Shared from your Steam Cloud tab. From now on, play this world from the Local tab so SaveHarbor can keep it up to date." (`IGameDefinition.PostShareHint`).
-4. After every download: `PostRestoreHint` = "Open this world from the Local tab in Enshrouded."
-5. If the same GUID exists in both roots, `CheckHealth` reports one notice ("also exists in your Steam Cloud tab; play the Local one"). No automatic deletion.
-6. Removing a world removes only the Local copy; `RemoveWorldNote` says Steam Cloud keeps its own.
+1. **One managed folder per PC: the Steam Cloud folder of the signed-in account.** `EnshroudedSaveRootLocator` reads the account from `HKCU\Software\Valve\Steam\ActiveProcess\ActiveUser` (the userdata folder name); with Steam closed it takes the account whose folder changed last. A save folder chosen in Settings replaces it.
+2. Discovery, downloads, restores, imports and removals all use that folder. The **Local tab is not managed** and not listed; one folder keeps every world to one card and one copy.
+3. Steam backs the world up after every session, as for any Steam Cloud world. SaveHarbor's cloud versions and its own backups come on top.
+4. SaveHarbor writes only `world<N>.ksd` files (and moves the game's rolling copies of a removed world into `saveharbor-aside\`). It never edits `remotecache.vdf`, character, global or settings files. Writes happen only while the game is closed (the shared download flow already refuses while it runs).
+5. Never place a second copy of a world's GUID in the folder; `EnshroudedSlotMap.ResolveTargetPath` reuses the slot that holds the GUID.
 
-## Verified behaviour
+## Verified behaviour (owner's PC, 2026-10-28)
 
-- A world file placed in the Local folder (even into a folder the game had not created) appears in the Local tab and loads.
-- Replacing a world file with an older rolling copy produced no Steam conflict dialog (file in `remote`, same account). Not relied on, since the policy avoids `remote` writes.
-- **Untested:** Steam's reaction to files written into `remote` by an external tool while the same account is logged in elsewhere. Irrelevant under the policy.
+- **P6 passed:** with the game closed and Steam running, an older version (save counter 18) was written over `remote\world1.ksd` after Steam had synced counter 20. Starting the game showed no Steam conflict dialog, the world loaded in the older state, kept its GUID, and after playing Steam synced the new file (`remotecache.vdf` SHA-1 equal to the file, `syncstate` 1).
+- Two copies of one GUID (P3/P4 test copies) made the game give one copy a new GUID on save. Hence rule 5.
+- **Untested:** removing a world file from `remote` (does Steam delete its cloud copy or restore the file on next launch?); a conflict when the same account played the world on a second PC that Steam had not synced yet. Steam then shows its own conflict dialog; the user should keep the newer one.
 
 ## Diagnosing user reports
 
 | Report | Likely cause | Answer |
 |---|---|---|
-| "I see the world twice" | A copy in each tab (one shared from Steam Cloud, one downloaded to Local) | Play the Local one; the health notice says so. Optionally delete the Steam Cloud copy in-game |
-| "My progress went back" | Hosted the Steam Cloud copy after a friend's newer version was downloaded to Local | Same as above; SaveHarbor only ever updates Local |
-| "SaveHarbor doesn't see my world" | The world is in `remote` of a different Steam user folder, or a `SaveRoot` override points elsewhere | Check the roots listed in Settings |
+| "SaveHarbor doesn't see my world" | The world is on the Local tab, or in another Steam account's folder, or a Settings save folder points elsewhere | Bring a Local-tab world in with SaveHarbor's Import (pick its `world<N>.ksd` from the Local folder; it is copied into the managed folder), then delete the Local copy in the game; check the folder shown in Settings |
+| "Steam asks which version to keep" | The same Steam account played the world on another PC before Steam synced | Keep the newer one (normally "local", the one SaveHarbor just placed) |
+| "I see the world twice" | A copy with the same name in another slot (an old copy, or one on the Local tab) | Delete the old copy in the game |
 
 ## Manual verification steps (release checklist)
 
-1. Fresh PC or Windows user: Play → `...\Enshrouded\default\world0.ksd` exists, Local tab shows it, it loads.
-2. Share a Steam Cloud world → notice appears; next Play downloads into Local; health notice appears while both copies exist.
-3. Steam Cloud tab worlds unchanged (compare `remotecache.vdf` hashes before/after; they must be identical).
+1. Fresh Windows user with Steam signed in and the game started once: download a shared world → it appears on the Steam tab in the first free slot and loads.
+2. Play, quit → SaveHarbor shares; Steam's library page shows "Cloud status: Up to date"; `remotecache.vdf` SHA-1 of the file equals the file.
+3. Download a newer version over an existing world → same slot, no Steam conflict dialog, GUID unchanged.

@@ -16,8 +16,7 @@ public sealed class BackupHarness : IDisposable
         WindroseRoot = temp.Combine("windrose-profiles");
         DragonwildsRoot = temp.Combine("dragonwilds-saves");
         Directory.CreateDirectory(DragonwildsRoot);
-        EnshroudedLocalRoot = temp.Combine("enshrouded-local");
-        EnshroudedSteamRoot = temp.Combine("enshrouded-steam", "12345", "1203620", "remote");
+        EnshroudedRoot = temp.Combine("enshrouded-steam", "12345", "1203620", "remote");
 
         var options = new GameOptionsProvider(new Dictionary<GameId, GameOptions>
         {
@@ -28,8 +27,7 @@ public sealed class BackupHarness : IDisposable
         Paths = new TestPathProvider(temp);
         WindroseAdapter = new WindroseSaveAdapter(options, Paths);
         DragonwildsAdapter = new DragonwildsSaveAdapter(options);
-        EnshroudedAdapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(
-            new EnshroudedSaveRoots(EnshroudedLocalRoot, [new EnshroudedSteamRoot("12345", EnshroudedSteamRoot)])));
+        EnshroudedAdapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoot(EnshroudedRoot, IsSteamCloud: true)));
         Settings = new AppSettingsStore(Paths);
         Backups = new ZipBackupService(Paths, new StubGameRegistry(
             new StubGameDefinition(GameId.Windrose, WindroseAdapter),
@@ -45,9 +43,8 @@ public sealed class BackupHarness : IDisposable
 
     public DragonwildsSaveAdapter DragonwildsAdapter { get; }
 
-    public string EnshroudedLocalRoot { get; }
-
-    public string EnshroudedSteamRoot { get; }
+    // The Steam Cloud folder SaveHarbor manages for Enshrouded.
+    public string EnshroudedRoot { get; }
 
     public EnshroudedSaveAdapter EnshroudedAdapter { get; }
 
@@ -74,8 +71,8 @@ public sealed class BackupHarness : IDisposable
     public async Task<GameWorld> ReadEnshroudedWorldAsync(string path) =>
         (await EnshroudedAdapter.ReadWorldAsync(path, TestContext.Current.CancellationToken))!;
 
-    public async Task<GameSaveRoot> EnshroudedLocalProfileAsync() =>
-        (await EnshroudedAdapter.DiscoverSaveRootsAsync(TestContext.Current.CancellationToken)).Single(root => root.CanReceiveWorlds);
+    public async Task<GameSaveRoot> EnshroudedProfileAsync() =>
+        (await EnshroudedAdapter.DiscoverSaveRootsAsync(TestContext.Current.CancellationToken)).Single();
 
     public void Dispose() => temp.Dispose();
 }

@@ -99,7 +99,6 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
 
     public async Task RestoreBackupAsync(string backupPath, GameWorld targetWorld, CancellationToken cancellationToken = default)
     {
-        EnsureCanChange(targetWorld);
         if (!File.Exists(backupPath))
         {
             throw new FileNotFoundException("Backup archive was not found.", backupPath);
@@ -119,14 +118,6 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
             adapter.PlaceGameFiles(Path.Combine(payloadRoot, BackupPayloadLayout.GameFilesFolderName), targetWorld.SavePath);
         }, cancellationToken);
         adapter.RememberWorldState(targetWorld.SavePath);
-    }
-
-    private static void EnsureCanChange(GameWorld world)
-    {
-        if (world.IsReadOnly)
-        {
-            throw new InvalidOperationException($"{world.WorldName} is in a save folder SaveHarbor only reads, so it cannot be replaced or removed here. Nothing was changed.");
-        }
     }
 
     private async Task PruneOldBackupsAsync(GameId game, string justCreatedPath, CancellationToken cancellationToken)

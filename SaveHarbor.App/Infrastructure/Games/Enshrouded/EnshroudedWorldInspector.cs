@@ -16,7 +16,7 @@ public static class EnshroudedWorldInspector
         List<WorldFact> facts =
         [
             new(WorldFactGroup.Details, "Location", location),
-            new(WorldFactGroup.Details, "Slot", slot.ToString(CultureInfo.InvariantCulture))
+            new(WorldFactGroup.Details, "Slot", EnshroudedSlotMap.DisplaySlot(slot))
         ];
         if (header is not null)
         {

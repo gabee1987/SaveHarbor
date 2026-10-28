@@ -3,7 +3,7 @@
 **Audience:** the implementing agent. **Owner:** Gabor. **Branch:** `feature/enshrouded-support`.
 The rules of engagement, conventions and definition of done from the Dragonwilds handoff ([`../dragonwilds/09-implementation-handoff.md`](../dragonwilds/09-implementation-handoff.md) §1, §3, §5) apply unchanged. Where this file and plans 01–05 differ, this file wins.
 
-Fixed decisions (owner may override): Local folder is the only write target; GUID is the world id; slot reuse by GUID; no Steam `remote` writes; Cinzel reused as display font; no new NuGet packages.
+Fixed decisions (owner may override): ~~Local folder is the only write target~~ (replaced 2026-10-28: SaveHarbor manages the signed-in account's Steam Cloud folder, see FINDINGS.md); GUID is the world id; slot reuse by GUID; ~~no Steam `remote` writes~~ (replaced, same entry); Cinzel reused as display font; no new NuGet packages.
 
 Placeholder data only: `12345` for a Steam id folder, `TEST_WORLD_ID`, GUIDs like `00000000000000000000000000000001`.
 

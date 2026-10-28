@@ -5,47 +5,39 @@ using SaveHarbor.App.Services;
 
 namespace SaveHarbor.App.Infrastructure.Games.Enshrouded;
 
-// One world is one "world<N>.ksd" file, identified by the GUID in its header (N is only a local slot). Worlds are read
-// from the game's Local folder and from every Steam Cloud folder, but SaveHarbor only ever writes to the Local one:
-// Steam would sync any change it made in a Steam Cloud folder. Character, global and settings files are never touched.
+// One world is one "world<N>.ksd" file, identified by the GUID in its header (N is only a slot). SaveHarbor manages one
+// folder per PC: the game's Steam Cloud folder of the signed-in account (see EnshroudedSaveRootLocator). A world it
+// places there is a normal Steam Cloud world for the game, and Steam backs it up like one; the owner verified that
+// Steam takes a file written there with the game closed without a sync conflict. Character, global and settings files
+// are never touched.
 public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : IGameSaveAdapter
 {
     private const long MaxImportBytes = 256L * 1024 * 1024;
-    private const string LocalLabel = "Local";
-    private const string SteamLabel = "Steam Cloud";
+    private const string SteamCloudLabel = "Steam Cloud";
+    private const string ChosenFolderLabel = "Save folder";
     private const string AsideFolderName = "saveharbor-aside";
     private const string WorldExtension = ".ksd";
     private const string ArchiveFileName = "world" + WorldExtension;
 
-    private readonly record struct WorldLocation(string Label, bool IsReadOnly);
-
     public WorldPayloadKind PayloadKind => WorldPayloadKind.FileSet;
 
-    public string SaveRootPath => locator.Locate().LocalRoot;
+    public string SaveRootPath => locator.Locate()?.WorldsPath ?? string.Empty;
 
-    // The Local folder is always listed, even before the game created it, because it is where downloads go.
     public Task<IReadOnlyList<GameSaveRoot>> DiscoverSaveRootsAsync(CancellationToken cancellationToken = default)
     {
-        var roots = locator.Locate();
-        List<GameSaveRoot> saveRoots = [DescribeRoot("local", roots.LocalRoot, LocalLabel, canReceiveWorlds: true)];
-        saveRoots.AddRange(roots.SteamRoots.Select(steam => DescribeRoot($"steam-{steam.SteamUserId}", steam.WorldsPath, SteamLabel, canReceiveWorlds: false)));
-        return Task.FromResult<IReadOnlyList<GameSaveRoot>>(saveRoots);
+        IReadOnlyList<GameSaveRoot> roots = locator.Locate() is { } root ? [DescribeRoot(root)] : [];
+        return Task.FromResult(roots);
     }
 
     public Task<IReadOnlyList<GameWorld>> DiscoverWorldsAsync(CancellationToken cancellationToken = default)
     {
-        var roots = locator.Locate();
-        var folders = roots.SteamRoots
-            .Select(steam => (Path: steam.WorldsPath, Location: new WorldLocation(SteamLabel, IsReadOnly: true)))
-            .Prepend((Path: roots.LocalRoot, Location: new WorldLocation(LocalLabel, IsReadOnly: false)));
-
         var worlds = new List<GameWorld>();
-        foreach (var folder in folders)
+        if (locator.Locate() is { } root)
         {
-            foreach (var file in EnshroudedSlotMap.EnumerateWorldFiles(folder.Path))
+            foreach (var file in EnshroudedSlotMap.EnumerateWorldFiles(root.WorldsPath))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (ReadWorld(file, folder.Location) is { } world)
+                if (ReadWorld(file) is { } world)
                 {
                     worlds.Add(world);
                 }
@@ -54,19 +46,18 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
 
         return Task.FromResult<IReadOnlyList<GameWorld>>(worlds
             .OrderByDescending(world => world.LastModifiedAt)
-            .ThenBy(world => world.IsReadOnly)
             .ThenBy(world => world.WorldName, StringComparer.OrdinalIgnoreCase)
             .ToArray());
     }
 
     public Task<GameWorld?> ReadWorldAsync(string savePath, CancellationToken cancellationToken = default) =>
-        Task.FromResult(ReadWorld(savePath, Locate(savePath)));
+        Task.FromResult(ReadWorld(savePath));
 
     public Task<IReadOnlyList<WorldFact>> ReadWorldFactsAsync(GameWorld world, CancellationToken cancellationToken = default) =>
-        Task.FromResult(EnshroudedWorldInspector.Facts(world, Locate(world.SavePath).Label));
+        Task.FromResult(EnshroudedWorldInspector.Facts(world, LocationLabel()));
 
     public Task<IReadOnlyList<InspectionSection>> InspectWorldAsync(GameWorld world, CancellationToken cancellationToken = default) =>
-        EnshroudedWorldInspector.InspectAsync(world, Locate(world.SavePath).Label, cancellationToken);
+        EnshroudedWorldInspector.InspectAsync(world, LocationLabel(), cancellationToken);
 
     public string ImportFileFilter => "Enshrouded world (world*.ksd, world*.ksd.backup-*)|world*.ksd;world*.ksd.backup-*";
 
@@ -86,7 +77,7 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
             return Task.FromResult<ImportCandidate?>(null);
         }
 
-        var world = CreateWorld(file, header, slot, $"Slot {slot.ToString(CultureInfo.InvariantCulture)}", isReadOnly: true);
+        var world = CreateWorld(file, header, slot);
         List<InspectionItem> summary =
         [
             new("World", world.WorldName),
@@ -107,11 +98,6 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
     // The slot depends on what the folder holds right now, so it is resolved each time and never remembered.
     public string GetExpectedWorldPath(GameSaveRoot root, string worldId)
     {
-        if (!root.CanReceiveWorlds)
-        {
-            throw new InvalidOperationException("Enshrouded worlds are placed in the Local folder only.");
-        }
-
         if (!EnshroudedSaveHeader.IsWorldId(worldId))
         {
             throw new InvalidDataException("A name received from shared data is not a valid file name.");
@@ -150,11 +136,12 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
     }
 
     // After a removal the newest rolling copy was already kept with the backup (GetGameBackupCopyPath); the older ones
-    // are moved out of the "backup" folder so the game cannot offer them again.
+    // are moved out of the "backup" folder so the game cannot offer them again. Steam Cloud tracks only the files at
+    // the top of the folder, so neither folder is synced.
     public string? MoveGameFilesAside(GameWorld world)
     {
         var copies = EnshroudedSlotMap.GameCopies(world.SavePath);
-        if (world.IsReadOnly || copies.Count == 0)
+        if (copies.Count == 0)
         {
             return null;
         }
@@ -180,51 +167,37 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator) : 
 
     public IReadOnlyList<string> MoveLeftoversAside(GameWorld world) => [];
 
-    private static GameSaveRoot DescribeRoot(string rootId, string path, string label, bool canReceiveWorlds)
+    private static GameSaveRoot DescribeRoot(EnshroudedSaveRoot root)
     {
-        if (!Directory.Exists(path))
+        var label = Label(root);
+        if (!Directory.Exists(root.WorldsPath))
         {
-            return new GameSaveRoot(GameId.Enshrouded, rootId, path, path, $"{label} · not created yet", DateTimeOffset.MinValue, canReceiveWorlds);
+            return new GameSaveRoot(GameId.Enshrouded, "default", root.WorldsPath, root.WorldsPath, $"{label} · not created yet", DateTimeOffset.MinValue);
         }
 
-        var worldCount = EnshroudedSlotMap.EnumerateWorldFiles(path).Count(file => EnshroudedSaveHeader.TryRead(file) is not null);
-        var lastModified = new DateTimeOffset(Directory.GetLastWriteTimeUtc(path), TimeSpan.Zero).ToLocalTime();
-        return new GameSaveRoot(GameId.Enshrouded, rootId, path, path, $"{label} · {worldCount} world(s)", lastModified, canReceiveWorlds);
+        var worldCount = EnshroudedSlotMap.EnumerateWorldFiles(root.WorldsPath).Count(file => EnshroudedSaveHeader.TryRead(file) is not null);
+        var lastModified = new DateTimeOffset(Directory.GetLastWriteTimeUtc(root.WorldsPath), TimeSpan.Zero).ToLocalTime();
+        return new GameSaveRoot(GameId.Enshrouded, "default", root.WorldsPath, root.WorldsPath, $"{label} · {worldCount} world(s)", lastModified);
     }
 
-    private static GameWorld? ReadWorld(string path, WorldLocation location)
-    {
-        if (!EnshroudedSlotMap.TryGetSlot(path, out var slot) || EnshroudedSaveHeader.TryRead(path) is not { } header)
-        {
-            return null;
-        }
+    private static string Label(EnshroudedSaveRoot root) => root.IsSteamCloud ? SteamCloudLabel : ChosenFolderLabel;
 
-        var subtitle = $"Slot {slot.ToString(CultureInfo.InvariantCulture)} · {location.Label}";
-        return CreateWorld(new FileInfo(path), header, slot, subtitle, location.IsReadOnly);
-    }
+    private string LocationLabel() => locator.Locate() is { } root ? Label(root) : SteamCloudLabel;
 
-    private static GameWorld CreateWorld(FileInfo file, EnshroudedSaveHeader header, int slot, string subtitle, bool isReadOnly) =>
+    private static GameWorld? ReadWorld(string path) =>
+        EnshroudedSlotMap.TryGetSlot(path, out var slot) && EnshroudedSaveHeader.TryRead(path) is { } header
+            ? CreateWorld(new FileInfo(path), header, slot)
+            : null;
+
+    private static GameWorld CreateWorld(FileInfo file, EnshroudedSaveHeader header, int slot) =>
         new(
             GameId.Enshrouded,
             header.WorldId,
-            EnshroudedWorldNameReader.TryRead(file.FullName) ?? $"Enshrouded world {slot.ToString(CultureInfo.InvariantCulture)}",
-            subtitle,
+            EnshroudedWorldNameReader.TryRead(file.FullName) ?? $"Enshrouded world {EnshroudedSlotMap.DisplaySlot(slot)}",
+            $"Slot {EnshroudedSlotMap.DisplaySlot(slot)}",
             file.FullName,
             file.CreationTime,
             new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero).ToLocalTime(),
             file.Length,
-            1,
-            isReadOnly);
-
-    // A file outside every known save folder (a picked import, a test folder) is treated as Local.
-    private WorldLocation Locate(string savePath)
-    {
-        var folder = Path.GetDirectoryName(Path.GetFullPath(savePath)) ?? string.Empty;
-        return locator.Locate().SteamRoots.Any(steam => IsSameFolder(steam.WorldsPath, folder))
-            ? new WorldLocation(SteamLabel, IsReadOnly: true)
-            : new WorldLocation(LocalLabel, IsReadOnly: false);
-    }
-
-    private static bool IsSameFolder(string first, string second) =>
-        string.Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(first)), Path.TrimEndingDirectorySeparator(second), StringComparison.OrdinalIgnoreCase);
+            1);
 }

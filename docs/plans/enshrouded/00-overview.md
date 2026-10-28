@@ -44,7 +44,7 @@ Recommended execution: **03 (migration first, so uploads are accepted) â†’ 02 â†
 
 | Decision | Recommendation | Alternative |
 |---|---|---|
-| Home folder for shared worlds | The **Local** folder (`...\keen games\Enshrouded\default\`). SaveHarbor never writes into Steam's `remote` folder. Worlds found in `remote` can be shared *from* there once; after that the group plays the Local copy | Write into `remote` and rely on the "choose Local files" hint, as Dragonwilds does |
+| Home folder for shared worlds | **Replaced 2026-10-28 (FINDINGS.md): the signed-in account's Steam Cloud folder.** Originally: The **Local** folder (`...\keen games\Enshrouded\default\`). SaveHarbor never writes into Steam's `remote` folder. Worlds found in `remote` can be shared *from* there once; after that the group plays the Local copy | Write into `remote` and rely on the "choose Local files" hint, as Dragonwilds does |
 | World identity | The 16-byte GUID at header offset 12 (`WorldId` = its lowercase hex). File slot is a local detail | Slot number as id (breaks on a friend's PC) |
 | Slot allocation on download | Reuse the slot whose header has the same GUID; else first free `world<N>.ksd` with N from 0 upward | Ask the user |
 | World display name | Spike to read it from the file (time-boxed); fallback "Enshrouded world <N>" locally and the name given at first share in the cloud | Always ask |

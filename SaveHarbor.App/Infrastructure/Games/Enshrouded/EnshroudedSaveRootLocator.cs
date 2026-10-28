@@ -4,24 +4,30 @@ using SaveHarbor.App.Domain;
 
 namespace SaveHarbor.App.Infrastructure.Games.Enshrouded;
 
-// The Local folder under Saved Games, plus one Steam Cloud folder per Steam account that has played the game. A save
-// folder chosen in Settings (or SaveRoot in appsettings.json) replaces all of them with that one Local folder.
+// The Steam Cloud folder of the Steam account that is signed in (or, with Steam closed, the account that played last).
+// A save folder chosen in Settings (or SaveRoot in appsettings.json) replaces it. The game's Local tab is not managed:
+// one folder per PC keeps every world to one copy, and Steam Cloud keeps its own backup of it.
 public sealed class EnshroudedSaveRootLocator(GameOptionsProvider optionsProvider) : IEnshroudedSaveRootLocator
 {
     private const string SteamAppId = "1203620";
 
-    public EnshroudedSaveRoots Locate()
+    public EnshroudedSaveRoot? Locate()
     {
         var overrideRoot = optionsProvider.Get(GameId.Enshrouded).SaveRoot;
         if (!string.IsNullOrWhiteSpace(overrideRoot))
         {
-            return new EnshroudedSaveRoots(Environment.ExpandEnvironmentVariables(overrideRoot), []);
+            return new EnshroudedSaveRoot(Environment.ExpandEnvironmentVariables(overrideRoot), IsSteamCloud: false);
         }
 
-        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var localRoot = Path.Combine(userProfile, "Saved Games", "keen games", "Enshrouded", "default");
-        return new EnshroudedSaveRoots(localRoot, FindSteamRoots(ReadSteamPath()));
+        return ChooseSteamRoot(FindSteamRoots(ReadSteamPath()), ReadActiveSteamUserId()) is { } steam
+            ? new EnshroudedSaveRoot(steam.WorldsPath, IsSteamCloud: true)
+            : null;
     }
+
+    // The signed-in account when it has played the game; otherwise the account whose save folder changed last.
+    public static EnshroudedSteamRoot? ChooseSteamRoot(IReadOnlyList<EnshroudedSteamRoot> roots, string? activeSteamUserId) =>
+        roots.FirstOrDefault(root => string.Equals(root.SteamUserId, activeSteamUserId, StringComparison.Ordinal))
+        ?? roots.OrderByDescending(root => Directory.GetLastWriteTimeUtc(root.WorldsPath)).FirstOrDefault();
 
     public static IReadOnlyList<EnshroudedSteamRoot> FindSteamRoots(string? steamPath)
     {
@@ -43,6 +49,21 @@ public sealed class EnshroudedSaveRootLocator(GameOptionsProvider optionsProvide
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return [];
+        }
+    }
+
+    // Steam keeps the signed-in account's id (the userdata folder name) here while it runs; 0 when nobody is signed in.
+    private static string? ReadActiveSteamUserId()
+    {
+        try
+        {
+            return Registry.GetValue(@"HKEY_CURRENT_USER\Software\Valve\Steam\ActiveProcess", "ActiveUser", null) is int id and not 0
+                ? ((uint)id).ToString(System.Globalization.CultureInfo.InvariantCulture)
+                : null;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException)
+        {
+            return null;
         }
     }
 

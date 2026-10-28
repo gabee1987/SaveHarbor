@@ -22,6 +22,9 @@ public static partial class EnshroudedSlotMap
         return Directory.EnumerateFiles(worldsPath, "*", SearchOption.TopDirectoryOnly).Where(path => TryGetSlot(path, out _));
     }
 
+    // The game's menu numbers slots from 1: "world0.ksd" is slot 1.
+    public static string DisplaySlot(int slot) => (slot + 1).ToString(CultureInfo.InvariantCulture);
+
     public static bool TryGetSlot(string path, out int slot)
     {
         slot = -1;

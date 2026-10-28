@@ -5,8 +5,8 @@ using SaveHarbor.Tests.Support;
 
 namespace SaveHarbor.Tests.Cloud;
 
-// Rotating-host sharing of an Enshrouded world between two PCs (two harnesses with their own save folders, one fake
-// cloud), and worlds in the Steam Cloud folder, which SaveHarbor reads but never writes.
+// Rotating-host sharing of an Enshrouded world between two PCs: two harnesses, each with its own Steam Cloud folder, and
+// one fake cloud.
 public sealed class EnshroudedSharingTests : IDisposable
 {
     private readonly FakeCloudProvider provider = new();
@@ -59,16 +59,16 @@ public sealed class EnshroudedSharingTests : IDisposable
     [Fact]
     public async Task RotatingHost_WorldMovesBetweenSlotsOnEachPc()
     {
-        var hostPath = EnshroudedSaveBuilder.Write(first.Harness.EnshroudedLocalRoot, "world3.ksd", EnshroudedSaveBuilder.WorldIdOne);
+        var hostPath = EnshroudedSaveBuilder.Write(first.Harness.EnshroudedRoot, "world3.ksd", EnshroudedSaveBuilder.WorldIdOne);
         var hostWorld = await first.Harness.ReadEnshroudedWorldAsync(hostPath);
         Assert.True((await first.Sync(provider).UploadCurrentAsync(hostWorld, Token)).IsSuccess);
         await ServeLastUploadOfAsync(first, hostWorld);
 
-        var friendProfile = await second.Harness.EnshroudedLocalProfileAsync();
+        var friendProfile = await second.Harness.EnshroudedProfileAsync();
         var downloaded = await second.Sync(provider).DownloadCloudWorldAsync(friendProfile, EnshroudedSaveBuilder.WorldIdOne, Token);
 
         Assert.True(downloaded.IsSuccess, downloaded.Message);
-        var friendPath = Path.Combine(second.Harness.EnshroudedLocalRoot, "world0.ksd");
+        var friendPath = Path.Combine(second.Harness.EnshroudedRoot, "world0.ksd");
         Assert.Equal(File.ReadAllBytes(hostPath), File.ReadAllBytes(friendPath));
 
         SaveProgress(friendPath, saveCounter: 2);
@@ -82,75 +82,6 @@ public sealed class EnshroudedSharingTests : IDisposable
         Assert.True(back.IsSuccess, back.Message);
         Assert.Equal(File.ReadAllBytes(friendPath), File.ReadAllBytes(hostPath));
         Assert.Equal(2u, EnshroudedSaveHeader.TryRead(hostPath)!.SaveCounter);
-        Assert.Equal(["world3.ksd"], Directory.GetFiles(first.Harness.EnshroudedLocalRoot).Select(Path.GetFileName));
-    }
-
-    [Fact]
-    public async Task SteamWorld_CanBeSharedWhileItHasNoLocalCopy()
-    {
-        var steamWorld = await first.Harness.ReadEnshroudedWorldAsync(
-            EnshroudedSaveBuilder.Write(first.Harness.EnshroudedSteamRoot, "world1.ksd", EnshroudedSaveBuilder.WorldIdOne));
-
-        var result = await first.Sync(provider).UploadCurrentAsync(steamWorld, Token);
-
-        Assert.True(result.IsSuccess, result.Message);
-        Assert.Single(provider.StoredVersions);
-    }
-
-    [Fact]
-    public async Task SteamWorld_DownloadGoesToANewLocalSlotAndLeavesTheSteamFile()
-    {
-        var steamPath = EnshroudedSaveBuilder.Write(first.Harness.EnshroudedSteamRoot, "world1.ksd", EnshroudedSaveBuilder.WorldIdOne);
-        var steamBytes = File.ReadAllBytes(steamPath);
-        var steamWorld = await first.Harness.ReadEnshroudedWorldAsync(steamPath);
-        Assert.True((await first.Sync(provider).UploadCurrentAsync(steamWorld, Token)).IsSuccess);
-        await ServeLastUploadOfAsync(first, steamWorld);
-
-        var result = await first.Sync(provider).DownloadLatestAsync(steamWorld, Token);
-
-        Assert.True(result.IsSuccess, result.Message);
-        Assert.Equal(steamBytes, File.ReadAllBytes(steamPath));
-        Assert.Equal(steamBytes, File.ReadAllBytes(Path.Combine(first.Harness.EnshroudedLocalRoot, "world0.ksd")));
-    }
-
-    [Fact]
-    public async Task SteamWorld_DownloadReplacesItsLocalCopyInstead()
-    {
-        var steamPath = EnshroudedSaveBuilder.Write(first.Harness.EnshroudedSteamRoot, "world1.ksd", EnshroudedSaveBuilder.WorldIdOne);
-        var steamBytes = File.ReadAllBytes(steamPath);
-        var localPath = Path.Combine(first.Harness.EnshroudedLocalRoot, "world6.ksd");
-        Directory.CreateDirectory(first.Harness.EnshroudedLocalRoot);
-        SaveProgress(localPath, saveCounter: 4);
-        var localWorld = await first.Harness.ReadEnshroudedWorldAsync(localPath);
-        Assert.True((await first.Sync(provider).UploadCurrentAsync(localWorld, Token)).IsSuccess);
-        await ServeLastUploadOfAsync(first, localWorld);
-        var uploadedBytes = File.ReadAllBytes(localPath);
-        SaveProgress(localPath, saveCounter: 5);
-
-        var result = await first.Sync(provider).DownloadLatestAsync(await first.Harness.ReadEnshroudedWorldAsync(steamPath), Token);
-
-        Assert.True(result.IsSuccess, result.Message);
-        Assert.Equal(uploadedBytes, File.ReadAllBytes(localPath));
-        Assert.Equal(steamBytes, File.ReadAllBytes(steamPath));
-        Assert.Equal(["world6.ksd"], Directory.GetFiles(first.Harness.EnshroudedLocalRoot).Select(Path.GetFileName));
-    }
-
-    // Both copies share one sync state; sharing the older Steam copy would replace the progress made in the Local one.
-    [Fact]
-    public async Task SteamWorld_WithALocalCopy_CannotStartASessionOrBeShared()
-    {
-        var steamWorld = await first.Harness.ReadEnshroudedWorldAsync(
-            EnshroudedSaveBuilder.Write(first.Harness.EnshroudedSteamRoot, "world1.ksd", EnshroudedSaveBuilder.WorldIdOne));
-        var localWorld = await first.Harness.ReadEnshroudedWorldAsync(
-            EnshroudedSaveBuilder.Write(first.Harness.EnshroudedLocalRoot, "world0.ksd", EnshroudedSaveBuilder.WorldIdOne, saveCounter: 2));
-        Assert.True((await first.Sync(provider).UploadCurrentAsync(localWorld, Token)).IsSuccess);
-
-        var session = await first.Sync(provider).StartSessionAsync(steamWorld, Token);
-        var upload = await first.Sync(provider).UploadCurrentAsync(steamWorld, Token);
-
-        Assert.False(session.IsSuccess);
-        Assert.False(upload.IsSuccess);
-        Assert.Contains("Select that copy", upload.Message, StringComparison.Ordinal);
-        Assert.Single(provider.StoredVersions);
+        Assert.Equal(["world3.ksd"], Directory.GetFiles(first.Harness.EnshroudedRoot).Select(Path.GetFileName));
     }
 }

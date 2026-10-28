@@ -8,15 +8,15 @@ description: Enshrouded (1.0) local save locations, the world<N>.ksd file layout
 Verified on a real install on 2026-10-28 (plan `docs/plans/enshrouded/01-save-format-and-verification.md`).
 Enshrouded 1.0 (15 October 2026) replaced the Early Access layout; SaveHarbor supports **1.0 only**.
 
-## Locations (two save roots)
+## Locations (two folders; SaveHarbor manages one)
 
-| Root | Path | Notes |
+| Folder | Path | Notes |
 |---|---|---|
-| Local | `%USERPROFILE%\Saved Games\keen games\Enshrouded\default\` | The game's "Local" tab. Not tracked by Steam. May not exist until first used; the game accepts a folder SaveHarbor created. **SaveHarbor's only write target.** |
-| Steam Cloud | `<Steam>\userdata\<steamid3>\1203620\remote\` | The game's "Steam Cloud" tab. Every top-level file is tracked in `..\1203620\remotecache.vdf`. **Read-only for SaveHarbor** (share from here, never write). |
+| Local | `%USERPROFILE%\Saved Games\keen games\Enshrouded\default\` | The game's "Local" tab. Not tracked by Steam. **Not managed by SaveHarbor** (not listed, never written). |
+| Steam Cloud | `<Steam>\userdata\<steamid3>\1203620\remote\` | The game's "Steam" tab. Every top-level file is tracked in `..\1203620\remotecache.vdf`. **SaveHarbor's managed folder** for the signed-in account (see `enshrouded-steam-cloud`). |
 
-`<Steam>` = `HKCU\Software\Valve\Steam\SteamPath` (fallback `HKLM\SOFTWARE\WOW6432Node\Valve\Steam\InstallPath`). One Steam root per numeric `userdata\<steamid3>` folder that contains `1203620\remote`.
-`SaveRoot` option override → exactly one Local root. Ignore `%USERPROFILE%\Saved Games\Enshrouded\` (Early Access leftovers) and any `migrated\` folder.
+`<Steam>` = `HKCU\Software\Valve\Steam\SteamPath` (fallback `HKLM\SOFTWARE\WOW6432Node\Valve\Steam\InstallPath`). The managed account is `HKCU\Software\Valve\Steam\ActiveProcess\ActiveUser` when its `userdata` folder has `1203620\remote`, else the account whose `remote` folder changed last.
+`SaveRoot` option override → that folder instead. Ignore `%USERPROFILE%\Saved Games\Enshrouded\` (Early Access leftovers) and any `migrated\` folder.
 
 ## Files in a root
 
@@ -60,7 +60,7 @@ World file check = name matches `^world\d+\.ksd$` (ignore case) **and** header p
 
 ## Never
 
-- Never write into the Steam `remote` folder or edit `remotecache.vdf`.
+- Never edit `remotecache.vdf` or any non-world file in `remote`; write `world<N>.ksd` only while the game is closed.
 - Never delete the game's rolling copies; move them aside under `<root>\saveharbor-aside\<timestamp>\` when a world is removed.
 - Never decompress or modify the content of a `.ksd`. Byte-for-byte copies only.
 - Never put a real Steam id, world GUID or world name from a developer's PC into code, tests or docs.

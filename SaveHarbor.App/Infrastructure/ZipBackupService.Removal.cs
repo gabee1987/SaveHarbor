@@ -11,7 +11,6 @@ public sealed partial class ZipBackupService
     // world from (Windrose's archives) are moved out of its reach, rather than deleted, so nothing is lost.
     public async Task<BackupInfo> RemoveWorldAsync(GameWorld world, CancellationToken cancellationToken = default)
     {
-        EnsureCanChange(world);
         var adapter = gameRegistry.Get(world.Game).SaveAdapter;
         var isFileSet = adapter.PayloadKind == WorldPayloadKind.FileSet;
         var payloadFiles = isFileSet ? adapter.GetPayloadFiles(world) : [];
