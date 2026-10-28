@@ -24,6 +24,10 @@ public partial class MainWindowViewModel
         NotifyRelativeTimes();
         var wasRunning = IsGameRunning;
         UpdateGameStatus();
+        if (wasRunning != IsGameRunning)
+        {
+            _logger.Information(AppLogKeyword.GameLauncher, "{Game} {State}; own session: {OwnSession}", ActiveGameName, IsGameRunning ? "is running" : "closed", HasOwnCloudSession());
+        }
 
         if (IsGameRunning)
         {

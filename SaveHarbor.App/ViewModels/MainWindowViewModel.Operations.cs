@@ -117,15 +117,17 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var index = Worlds.IndexOf(SelectedWorld);
-        if (index >= 0)
-        {
-            Worlds[index] = refreshed;
-        }
-
+        // Replacing the selected item makes the world list clear its selection for a moment (SelectedWorld = null). The
+        // cloud status must survive that: the end of a Play session reads it to find this PC's own session.
         suppressSelectedWorldCloudRefresh = true;
         try
         {
+            var index = Worlds.IndexOf(SelectedWorld);
+            if (index >= 0)
+            {
+                Worlds[index] = refreshed;
+            }
+
             SelectedWorld = refreshed;
         }
         finally
