@@ -37,6 +37,8 @@ and `git switch -c <new-branch>` when a task needs a new branch.
 
 - `feature/dragonwilds-support` — Dragonwilds support, per-game separation, launch-flow UX,
   dependency upgrade. Plans live in `docs/plans/dragonwilds/`.
+- `feature/enshrouded-support` — Enshrouded as the third game (slot-mapped `.ksd` worlds, Local-folder
+  policy, own theme, Supabase row). Plans live in `docs/plans/enshrouded/`.
 
 ## End-of-task report
 

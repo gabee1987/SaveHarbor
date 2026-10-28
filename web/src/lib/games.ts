@@ -1,7 +1,8 @@
 // The games a group can share. Keys equal GameIdExtensions.ToStorageKey in the desktop app and public.games rows.
 export const games = [
   { key: 'windrose', name: 'Windrose' },
-  { key: 'dragonwilds', name: 'RuneScape: Dragonwilds' }
+  { key: 'dragonwilds', name: 'RuneScape: Dragonwilds' },
+  { key: 'enshrouded', name: 'Enshrouded' }
 ] as const;
 
 export type GameKey = (typeof games)[number]['key'];
