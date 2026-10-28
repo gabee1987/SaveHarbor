@@ -36,6 +36,10 @@ public sealed class EnshroudedGameDefinition(GameOptionsProvider optionsProvider
         + "Delete the world inside Enshrouded instead, on the SAVEGAMES:STEAM tab. Steam then removes its cloud copy too, and SaveHarbor notices that the world is gone.\n\n"
         + "To keep a copy, make a backup first: Backups tab → Back up now. The shared cloud copy is not touched either way.";
 
+    public string? SaveFolderHint =>
+        "The Steam Cloud folder of the Steam account signed in on this PC (the SAVEGAMES:STEAM tab in the game), so Steam backs up "
+        + "every world SaveHarbor places here. Worlds on the game's Local tab are not shown; to share one, use Import… on the Backups tab.";
+
     public string PlayHint => "Play hosts this world for your group. Join only starts the game, so you can join a friend's world.";
 
     public IGameSaveAdapter SaveAdapter => saveAdapter;

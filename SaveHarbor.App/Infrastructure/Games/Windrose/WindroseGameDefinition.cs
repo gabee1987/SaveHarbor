@@ -34,6 +34,8 @@ public sealed class WindroseGameDefinition(GameOptionsProvider optionsProvider, 
 
     public string? RemoveWorldInGameHint => null;
 
+    public string? SaveFolderHint => null;
+
     public string PlayHint => "Starts a cloud session first, then launches Windrose through Steam.";
 
     public IGameSaveAdapter SaveAdapter => saveAdapter;

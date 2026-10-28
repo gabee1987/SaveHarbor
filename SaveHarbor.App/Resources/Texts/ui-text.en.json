@@ -239,7 +239,7 @@
   "Settings.KeepBackupsHint": "Older SaveHarbor backups of this game are deleted automatically. The newest backup of every world, recent safety backups and backups of removed worlds are always kept. Your world files are never touched.",
   "Settings.ProviderHint": "SaveHarbor Cloud keeps your group's worlds in the SaveHarbor project on Supabase. Google Drive uses a shared folder in your group's Drive.",
   "Settings.AmbientEffects": "Ambient effects",
-  "Settings.AmbientEffectsHint": "A slow sea swell behind Windrose, drifting embers behind Dragonwilds.",
+  "Settings.AmbientEffectsHint": "A slow sea swell behind Windrose, drifting embers behind Dragonwilds, a faint shroud mist behind Enshrouded.",
   "Settings.InviteLinks": "Invite links",
   "Settings.RegisterInviteLinks": "Register",
   "Settings.RegisterInviteLinksTooltip": "Make saveharbor://join links open this copy of SaveHarbor. Only your Windows user is changed.",

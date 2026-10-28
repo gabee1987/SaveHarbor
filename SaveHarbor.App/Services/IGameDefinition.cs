@@ -25,6 +25,10 @@ public interface IGameDefinition
     // When set, SaveHarbor does not delete the world's files itself, because the game's own sync would bring them back
     // (Enshrouded and Steam Cloud). Removing a world from this PC then shows this text, which says where to delete it.
     string? RemoveWorldInGameHint { get; }
+
+    // Which of the game's save folders SaveHarbor manages, shown under the save folder in Settings. Null when the
+    // folder needs no explanation.
+    string? SaveFolderHint { get; }
     string PlayHint { get; }
     IGameSaveAdapter SaveAdapter { get; }
 }

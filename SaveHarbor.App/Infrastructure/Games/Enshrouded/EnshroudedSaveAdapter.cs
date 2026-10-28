@@ -169,27 +169,41 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator, IA
         }
     }
 
-    // A save counter below the highest one this PC has seen means an older copy of the world is in place. Sharing it
-    // would hand the group a world without the newer progress, so the share after the game closes refuses it and a
-    // manual upload asks first. "Keep world as it is" in the world info accepts the copy.
+    // Both notices make the share after the game closes refuse and a manual upload ask first.
+    // A second slot with the same GUID: the game lists the world twice, and which copy is played (or downloaded into)
+    // is no longer clear. A save counter below the highest one this PC has seen: an older copy of the world is in place,
+    // and sharing it would hand the group a world without the newer progress. "Keep world as it is" in the world info
+    // accepts that copy.
     public IReadOnlyList<SaveHealthNotice>? CheckHealth(GameWorld world)
     {
-        if (EnshroudedSaveHeader.TryRead(world.SavePath) is not { } header
-            || ledger.Observe(header.WorldId, header.SaveCounter) is not { } newer)
+        if (EnshroudedSaveHeader.TryRead(world.SavePath) is not { } header)
         {
             return [];
         }
 
-        return
-        [
-            new SaveHealthNotice(
+        var notices = new List<SaveHealthNotice>();
+        if (OtherSlotsOf(world.SavePath, header.WorldId) is { Count: > 0 } otherSlots)
+        {
+            notices.Add(new SaveHealthNotice(
+                SaveHealthIssue.DuplicateWorld,
+                "This world is in more than one slot",
+                $"Slot {DisplaySlotOf(world.SavePath)} and slot {string.Join(", ", otherSlots)} hold the same world, so Enshrouded lists it "
+                + "twice and SaveHarbor cannot tell which copy has your latest progress. Open the copies in the game, keep the newest one "
+                + "and delete the others on the SAVEGAMES:STEAM tab."));
+        }
+
+        if (ledger.Observe(header.WorldId, header.SaveCounter) is { } newer)
+        {
+            notices.Add(new SaveHealthNotice(
                 SaveHealthIssue.WorldReplaced,
                 "An older copy of this world is in place",
                 $"Its save counter is {header.SaveCounter.ToString(CultureInfo.InvariantCulture)}, but on this PC it already reached "
                 + $"{newer.HighestSaveCounter.ToString(CultureInfo.InvariantCulture)} ({newer.SeenAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}). "
                 + "Something put an earlier file back, most likely Steam Cloud. Check the world in the game before sharing it. If progress is "
-                + "missing, download the shared version or restore a SaveHarbor backup; if the world is fine, keep it as it is.")
-        ];
+                + "missing, download the shared version or restore a SaveHarbor backup; if the world is fine, keep it as it is."));
+        }
+
+        return notices;
     }
 
     public IReadOnlyList<string> MoveLeftoversAside(GameWorld world) => [];
@@ -210,6 +224,19 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator, IA
     private static string Label(EnshroudedSaveRoot root) => root.IsSteamCloud ? SteamCloudLabel : ChosenFolderLabel;
 
     private string LocationLabel() => locator.Locate() is { } root ? Label(root) : SteamCloudLabel;
+
+    // The display slots of the other world files in the same folder that carry this GUID.
+    private static IReadOnlyList<string> OtherSlotsOf(string worldPath, string worldId) =>
+        EnshroudedSlotMap.EnumerateWorldFiles(Path.GetDirectoryName(worldPath) ?? string.Empty)
+            .Where(file => !string.Equals(Path.GetFullPath(file), Path.GetFullPath(worldPath), StringComparison.OrdinalIgnoreCase))
+            .Where(file => string.Equals(EnshroudedSaveHeader.TryRead(file)?.WorldId, worldId, StringComparison.Ordinal))
+            .Select(file => EnshroudedSlotMap.TryGetSlot(file, out var slot) ? slot : -1)
+            .Order()
+            .Select(EnshroudedSlotMap.DisplaySlot)
+            .ToArray();
+
+    private static string DisplaySlotOf(string worldPath) =>
+        EnshroudedSlotMap.TryGetSlot(worldPath, out var slot) ? EnshroudedSlotMap.DisplaySlot(slot) : "?";
 
     private static GameWorld? ReadWorld(string path) =>
         EnshroudedSlotMap.TryGetSlot(path, out var slot) && EnshroudedSaveHeader.TryRead(path) is { } header

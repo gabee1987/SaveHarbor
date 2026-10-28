@@ -9,7 +9,10 @@ public enum SaveHealthIssue
     Leftovers,
 
     // The game has no archive of its own for the world, so it will not list it (Windrose).
-    GameArchiveMissing
+    GameArchiveMissing,
+
+    // The same world sits in more than one save slot, so the game lists it twice (Enshrouded).
+    DuplicateWorld
 }
 
 public sealed record SaveHealthNotice(SaveHealthIssue Issue, string Title, string Detail);
