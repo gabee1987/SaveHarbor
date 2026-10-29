@@ -52,6 +52,12 @@ public static class MarkdownLite
                 EndParagraph();
                 blocks.Add(new MarkdownBlock(MarkdownBlockKind.Bullet, ParseInline(line[2..].Trim())));
             }
+            else if (IsNumberedStep(line))
+            {
+                // "1. Download …": each step starts its own paragraph and keeps its number.
+                EndParagraph();
+                paragraph.Add(line);
+            }
             else
             {
                 paragraph.Add(line);
@@ -60,6 +66,12 @@ public static class MarkdownLite
 
         EndParagraph();
         return blocks;
+    }
+
+    private static bool IsNumberedStep(string line)
+    {
+        var digits = line.TakeWhile(char.IsAsciiDigit).Count();
+        return digits is > 0 and <= 3 && line.Length > digits + 2 && line[digits] == '.' && line[digits + 1] == ' ';
     }
 
     // "**" toggles bold; an unclosed "**" stays as text.

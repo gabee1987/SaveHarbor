@@ -27,6 +27,8 @@
 
   <ItemGroup>
     <Resource Include="Resources\Fonts\*.ttf" />
+    <!-- The patch notes (PatchNotesCatalog): the repository's CHANGELOG.md, so they always match this build. -->
+    <EmbeddedResource Include="..\CHANGELOG.md" Link="CHANGELOG.md" LogicalName="SaveHarbor.App.CHANGELOG.md" />
     <Content Include="Resources\Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Resources\Fonts\OFL.txt')" />
     <Content Include="Resources\Texts\ui-text.en.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

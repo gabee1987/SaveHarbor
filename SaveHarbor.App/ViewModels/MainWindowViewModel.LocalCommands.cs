@@ -14,6 +14,7 @@ public partial class MainWindowViewModel
         await RefreshAsync();
         StartGameMonitor();
         await PromptCloudSetupIfNeededAsync();
+        OpenPatchNotesAfterUpdate();
     }
 
     [RelayCommand]

@@ -43,6 +43,9 @@ public sealed class AppSettings
     // An update the player chose to skip ("2.4.0"); automatic checks do not offer it again.
     public string SkippedUpdateVersion { get; set; } = string.Empty;
 
+    // The version whose patch notes were opened after an update ("2.4.0"); the first start of a newer one opens them.
+    public string PatchNotesShownVersion { get; set; } = string.Empty;
+
     // Per-game save folder chosen in Settings (storage key -> path). Overrides appsettings.json.
     public Dictionary<string, string> SaveRootOverrides { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

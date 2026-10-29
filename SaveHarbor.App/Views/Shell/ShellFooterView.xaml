@@ -10,14 +10,22 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Style="{DynamicResource SkinMuted}" VerticalAlignment="Center">
-                <Run Text="{ui:UiText Shell.PlayingAs}" />
-                <Run Text="{Binding PlayerDisplayName, Mode=OneWay}" Foreground="{DynamicResource InkBrush}" />
-                <Run Text="  ·  " />
-                <Run Text="{Binding CloudProviderText, Mode=OneWay}" />
-                <Run Text="  ·  " />
-                <Run Text="{Binding AppVersionText, Mode=OneWay}" />
-            </TextBlock>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Style="{DynamicResource SkinMuted}" VerticalAlignment="Center">
+                    <Run Text="{ui:UiText Shell.PlayingAs}" />
+                    <Run Text="{Binding PlayerDisplayName, Mode=OneWay}" Foreground="{DynamicResource InkBrush}" />
+                    <Run Text="  ·  " />
+                    <Run Text="{Binding CloudProviderText, Mode=OneWay}" />
+                    <Run Text="  ·  " />
+                    <Run Text="{Binding AppVersionText, Mode=OneWay}" />
+                </TextBlock>
+                <Button Content="{ui:UiText Shell.PatchNotes}"
+                        Command="{Binding OpenPatchNotesCommand}"
+                        Style="{DynamicResource SkinLinkButton}"
+                        VerticalAlignment="Center"
+                        Margin="14,0,0,0"
+                        ToolTip="{ui:UiText Shell.PatchNotesTooltip}" />
+            </StackPanel>
             <Grid Grid.Column="1">
                 <Button Content="{ui:SpacedText Shell.Settings}"
                         Command="{Binding OpenSettingsCommand}"

@@ -103,6 +103,10 @@ public sealed class RecordingDialogService : IDialogService
     {
     }
 
+    public void ShowPatchNotes(PatchNotesViewModel viewModel, Uri skinDictionary)
+    {
+    }
+
     public string? SelectFolder(string title, string initialDirectory) => null;
 
     public CloudFolderChoice? ConfigureCloudFolder(

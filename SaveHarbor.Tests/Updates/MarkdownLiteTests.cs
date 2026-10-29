@@ -35,6 +35,17 @@ public sealed class MarkdownLiteTests
     }
 
     [Fact]
+    public void Parse_NumberedSteps_EachStartAParagraph()
+    {
+        var blocks = MarkdownLite.Parse("One time only:\n\n1. Download it\n   and run it.\n2. Start it\n10.5 % is not a step");
+
+        Assert.Equal(
+            ["One time only:", "1. Download it and run it.", "2. Start it 10.5 % is not a step"],
+            blocks.Select(block => string.Concat(block.Spans.Select(span => span.Text))));
+        Assert.All(blocks, block => Assert.Equal(MarkdownBlockKind.Paragraph, block.Kind));
+    }
+
+    [Fact]
     public void Parse_EmptyNotes_HaveNoBlocks()
     {
         Assert.Empty(MarkdownLite.Parse(string.Empty));

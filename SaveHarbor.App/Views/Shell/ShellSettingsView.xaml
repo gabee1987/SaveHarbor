@@ -232,8 +232,12 @@
                                             <TextBlock Text="{ui:UiText Settings.UpdatesUnavailable}" Style="{StaticResource SettingHint}"
                                                        Visibility="{Binding UpdatesUnavailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="{ui:SpacedText Settings.CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}"
-                                                Style="{DynamicResource SkinButton}" VerticalAlignment="Center" ToolTip="{ui:UiText Settings.CheckForUpdatesTooltip}" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="{ui:SpacedText Shell.PatchNotes}" Command="{Binding OpenPatchNotesCommand}"
+                                                    Style="{DynamicResource SkinButton}" Margin="0,0,8,0" ToolTip="{ui:UiText Shell.PatchNotesTooltip}" />
+                                            <Button Content="{ui:SpacedText Settings.CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}"
+                                                    Style="{DynamicResource SkinButton}" ToolTip="{ui:UiText Settings.CheckForUpdatesTooltip}" />
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
                                 <Border Style="{StaticResource SettingLine}" BorderThickness="0">

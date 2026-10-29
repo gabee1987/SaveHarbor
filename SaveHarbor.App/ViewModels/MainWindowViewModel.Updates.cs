@@ -4,7 +4,7 @@ using SaveHarbor.App.Infrastructure;
 
 namespace SaveHarbor.App.ViewModels;
 
-// The update banner above the header, the version in the footer and "Check for updates" in Settings.
+// The update banner above the header, the version in the footer, "Check for updates" in Settings and the patch notes.
 public partial class MainWindowViewModel
 {
     private static readonly TimeSpan FirstUpdateCheckDelay = TimeSpan.FromSeconds(10);
@@ -119,6 +119,39 @@ public partial class MainWindowViewModel
 
     [RelayCommand]
     private void Later() => DismissUpdateBanner();
+
+    // Every version's notes from the embedded CHANGELOG.md, opened on the version that is running.
+    [RelayCommand]
+    private void OpenPatchNotes() =>
+        _dialogService.ShowPatchNotes(new PatchNotesViewModel(PatchNotesCatalog.Releases, _updates.CurrentVersion.ToString(3)), _activeGame.Current.SkinDictionary);
+
+    // Once per version, at the end of the start: the first start after an update opens the patch notes. While the game
+    // runs nothing is recorded, so they open on the next start instead.
+    private void OpenPatchNotesAfterUpdate()
+    {
+        var current = _updates.CurrentVersion.ToString(3);
+        var settings = _settingsStore.Current;
+        if (settings.PatchNotesShownVersion == current)
+        {
+            return;
+        }
+
+        UpdateGameStatus();
+        if (IsGameRunning)
+        {
+            return;
+        }
+
+        var usedBefore = settings.CloudProvider.Length > 0 || settings.LastGame.Length > 0 || settings.DeviceId.Length > 0 || settings.PlayerName.Length > 0;
+        var open = PatchNotesViewModel.ShouldOpenAfterStart(settings.PatchNotesShownVersion, usedBefore, current)
+            && PatchNotesCatalog.Releases.Any(release => release.Version == current);
+        _settingsStore.Update(changed => changed.PatchNotesShownVersion = current);
+        if (open)
+        {
+            _logger.Information(AppLogKeyword.Updates, "Opening the patch notes after the update to {Version}", current);
+            OpenPatchNotes();
+        }
+    }
 
     [RelayCommand]
     private void ShowReleaseNotes()
