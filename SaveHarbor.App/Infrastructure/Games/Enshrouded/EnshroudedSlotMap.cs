@@ -64,9 +64,12 @@ public static partial class EnshroudedSlotMap
 
     // The file that already holds the world, else the first free slot. A file whose header cannot be read is never
     // chosen, and its slot is never treated as free, so an unreadable save is not overwritten.
+    // A slot with rolling copies but no world file is not free either: the world in it was deleted in the game, which
+    // deletes the file from Steam Cloud, and Steam then hides a file of that name from the game (observed 2026-10-29: a
+    // world downloaded into such a slot never appeared in the game). A slot the game never used shows up.
     public static string ResolveTargetPath(string worldsPath, string worldId)
     {
-        var usedSlots = new HashSet<int>();
+        var usedSlots = SlotsWithGameCopies(worldsPath);
         foreach (var file in EnumerateWorldFiles(worldsPath).Order(StringComparer.OrdinalIgnoreCase))
         {
             if (TryGetSlot(file, out var slot))
@@ -84,6 +87,21 @@ public static partial class EnshroudedSlotMap
         return freeSlot < 0
             ? throw new IOException("The Enshrouded save folder has no free world slot.")
             : Path.Combine(worldsPath, FileName(freeSlot));
+    }
+
+    private static HashSet<int> SlotsWithGameCopies(string worldsPath)
+    {
+        var folder = Path.Combine(worldsPath, "backup");
+        if (!Directory.Exists(folder))
+        {
+            return [];
+        }
+
+        return Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly)
+            .Select(copy => (Name: Path.GetFileName(copy), Suffix: GameCopySuffix().Match(Path.GetFileName(copy))))
+            .Select(copy => copy.Suffix.Success && TryGetSlot(copy.Name[..copy.Suffix.Index], out var slot) ? slot : -1)
+            .Where(slot => slot >= 0)
+            .ToHashSet();
     }
 
     [GeneratedRegex(@"^world([0-9]{1,9})\.ksd$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

@@ -102,7 +102,7 @@ public sealed class EnshroudedWorldSettingsTests : IDisposable
         var world = await harness.ReadEnshroudedWorldAsync(
             EnshroudedSaveBuilder.Write(harness.EnshroudedRoot, "world0.ksd", EnshroudedSaveBuilder.WorldIdOne, settingsFields: EnshroudedSaveBuilder.ObservedSettingsFields));
 
-        var rules = (await harness.EnshroudedAdapter.ReadWorldFactsAsync(world)).Where(fact => fact.Group == WorldFactGroup.Rules).ToArray();
+        var rules = (await harness.EnshroudedAdapter.ReadWorldFactsAsync(world, TestContext.Current.CancellationToken)).Where(fact => fact.Group == WorldFactGroup.Rules).ToArray();
 
         Assert.Equal(EnshroudedWorldSettingsReader.SummaryLabels, rules.Select(rule => rule.Label));
         Assert.Contains(rules, rule => rule.Label == "Mining damage" && rule.Value == "×2");
@@ -114,7 +114,7 @@ public sealed class EnshroudedWorldSettingsTests : IDisposable
         var world = await harness.ReadEnshroudedWorldAsync(
             EnshroudedSaveBuilder.Write(harness.EnshroudedRoot, "world0.ksd", EnshroudedSaveBuilder.WorldIdOne, settingsFields: EnshroudedSaveBuilder.ObservedSettingsFields));
 
-        var sections = await harness.EnshroudedAdapter.InspectWorldAsync(world);
+        var sections = await harness.EnshroudedAdapter.InspectWorldAsync(world, TestContext.Current.CancellationToken);
 
         Assert.Equal(37, sections.Single(section => section.Title == "World settings").Items.Count);
         Assert.DoesNotContain(sections.Single(section => section.Title == "World").Items, item => item.Label == "Mining damage");
@@ -125,8 +125,8 @@ public sealed class EnshroudedWorldSettingsTests : IDisposable
     {
         var world = await harness.ReadEnshroudedWorldAsync(EnshroudedSaveBuilder.Write(harness.EnshroudedRoot, "world0.ksd", EnshroudedSaveBuilder.WorldIdOne));
 
-        var sections = await harness.EnshroudedAdapter.InspectWorldAsync(world);
-        var facts = await harness.EnshroudedAdapter.ReadWorldFactsAsync(world);
+        var sections = await harness.EnshroudedAdapter.InspectWorldAsync(world, TestContext.Current.CancellationToken);
+        var facts = await harness.EnshroudedAdapter.ReadWorldFactsAsync(world, TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(sections, section => section.Title == "World settings");
         Assert.Contains(sections.Single(section => section.Title == "World").Items, item => item.Label == "World settings" && item.Value == "Not stored in a readable place");

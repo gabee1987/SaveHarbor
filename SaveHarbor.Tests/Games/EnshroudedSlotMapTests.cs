@@ -40,6 +40,37 @@ public sealed class EnshroudedSlotMapTests : IDisposable
     }
 
     [Fact]
+    public void ResolveTargetPath_SlotOfAWorldDeletedInTheGame_IsNotReused()
+    {
+        // Deleting a world in the game leaves its rolling copies; Steam then hides a new file of that name from the game.
+        Write("world0.ksd", "00000000000000000000000000000010");
+        Write(Path.Combine("backup", "world0.ksd.backup-0"), "00000000000000000000000000000010");
+        Write(Path.Combine("backup", "world1.ksd.backup-0"), "00000000000000000000000000000011");
+        Write(Path.Combine("backup", "world2.ksd.backup-9"), "00000000000000000000000000000012");
+
+        Assert.Equal(Path.Combine(temp.Path, "world3.ksd"), EnshroudedSlotMap.ResolveTargetPath(temp.Path, EnshroudedSaveBuilder.WorldIdOne));
+    }
+
+    [Fact]
+    public void ResolveTargetPath_WorldWithRollingCopies_IsStillReused()
+    {
+        var existing = Write("world1.ksd", EnshroudedSaveBuilder.WorldIdOne);
+        Write(Path.Combine("backup", "world1.ksd.backup-0"), EnshroudedSaveBuilder.WorldIdOne);
+
+        Assert.Equal(existing, EnshroudedSlotMap.ResolveTargetPath(temp.Path, EnshroudedSaveBuilder.WorldIdOne));
+    }
+
+    [Fact]
+    public void ResolveTargetPath_OtherRollingCopies_DoNotTakeASlot()
+    {
+        Write(Path.Combine("backup", "character0.ksd.backup-0"), EnshroudedSaveBuilder.WorldIdTwo);
+        Write(Path.Combine("backup", "global.ksd.backup-0"), EnshroudedSaveBuilder.WorldIdTwo);
+        Write(Path.Combine("backup", "world0.ksd_old"), EnshroudedSaveBuilder.WorldIdTwo);
+
+        Assert.Equal(Path.Combine(temp.Path, "world0.ksd"), EnshroudedSlotMap.ResolveTargetPath(temp.Path, EnshroudedSaveBuilder.WorldIdOne));
+    }
+
+    [Fact]
     public void ResolveTargetPath_UnreadableWorldFile_IsNeitherReusedNorOverwritten()
     {
         File.WriteAllText(temp.Combine("world0.ksd"), "TEST_CONTENT");

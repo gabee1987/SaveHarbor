@@ -52,7 +52,7 @@ World file check = name matches `^world\d+\.ksd$` (ignore case) **and** header p
 
 - `WorldId` = the 16 GUID bytes as 32 lowercase hex chars **in file order** (do not use `Guid.ToString()`, whose byte order differs). Cloud layout `worlds/<worldId>/…`; the slot never reaches the cloud.
 - Verified: a world renamed to another slot loads; an older copy placed over a newer one loads; the same GUID in two slots shows **two** worlds (the game does not deduplicate) → SaveHarbor maps same GUID → same slot.
-- Slot resolution for a root: file whose header GUID matches → reuse; else the smallest free `N` from 0.
+- Slot resolution for a root: file whose header GUID matches → reuse; else the smallest `N` from 0 with neither a world file nor rolling copies in `backup\` (a slot whose world was deleted in the game is hidden by Steam; see `enshrouded-steam-cloud`).
 - Archives carry the file as `world.ksd` (uploader's slot number stripped); restore writes it to the resolved slot.
 - Display name: read from the first `S2BH` block (see the header table); every check must pass, else `"Enshrouded world <N>"`. Subtitle shows `Slot <N> · Local|Steam Cloud`.
 - **The game re-keys a duplicate.** A copy of a world that the game saved while another copy with the same GUID existed got a new GUID (observed 2026-10-28; owner confirmation pending). Never let the same GUID sit in two places the game can see if it must keep its identity.
