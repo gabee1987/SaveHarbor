@@ -44,7 +44,7 @@ The game writes the main file and a new rolling copy together on autosave and on
 | 28 | 4 | **Save counter** — increments on every save |
 | 32 | 8 | **Unix timestamp (s)** of the save |
 | 40 | 8 | Unknown |
-| 48 | … | `S2BH` blocks. The first one is uncompressed: GUID copy at +14, world name as `u32` length at +71 and UTF-8 bytes at +75 (observed on 1.0, `EnshroudedWorldNameReader`). The rest is compressed; SaveHarbor never parses or edits it |
+| 48 | … | `S2BH` blocks. The first one is uncompressed: GUID copy at +14, world name as `u32` length at +71 and UTF-8 bytes at +75 (observed on 1.0, `EnshroudedWorldNameReader`), then an 18-byte tail. Worlds created or edited in 1.0 follow it with an uncompressed **world settings** block (`S2BH`, version 2, type 12, layout 3, 2 zero bytes, 127 field bytes in the order of the dedicated server's `gameSettings`: floats, 1-byte switches/choices, `u64` nanosecond durations; one trailing byte; then the next `S2BH`), read read-only by `EnshroudedWorldSettingsReader`. Early Access worlds carried over have no such block. The rest is compressed; SaveHarbor never parses or edits it |
 
 World file check = name matches `^world\d+\.ksd$` (ignore case) **and** header passes (magic, version 2, size 48, length ≥ 48). Character files have the same header, so the name check is what excludes them.
 

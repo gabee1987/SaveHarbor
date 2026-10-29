@@ -5,8 +5,8 @@ using SaveHarbor.App.Utilities;
 
 namespace SaveHarbor.App.Infrastructure.Games.Enshrouded;
 
-// The facts and the "All world info" view of one world file. Everything comes from the file header, the world name
-// next to it and the file system; the compressed world data is never read.
+// The facts and the "All world info" view of one world file. Everything comes from the file header, the uncompressed
+// blocks after it (world name, world settings) and the file system; the compressed world data is never read.
 public static class EnshroudedWorldInspector
 {
     public static IReadOnlyList<WorldFact> Facts(GameWorld world, string location)
@@ -25,6 +25,15 @@ public static class EnshroudedWorldInspector
         }
 
         facts.Add(new WorldFact(WorldFactGroup.Details, "Game copies kept", EnshroudedSlotMap.GameCopies(world.SavePath).Count.ToString(CultureInfo.InvariantCulture)));
+
+        var settings = EnshroudedWorldSettingsReader.TryRead(world.SavePath);
+        if (settings is not null)
+        {
+            facts.AddRange(EnshroudedWorldSettingsReader.SummaryLabels
+                .Select(label => settings.First(setting => setting.Label == label))
+                .Select(setting => new WorldFact(WorldFactGroup.Rules, setting.Label, setting.Value)));
+        }
+
         return facts;
     }
 
@@ -36,8 +45,22 @@ public static class EnshroudedWorldInspector
             new("World name", EnshroudedWorldNameReader.TryRead(world.SavePath) ?? "Not stored in a readable place"),
             new("World ID", header?.WorldId ?? "Not readable")
         ];
-        worldItems.AddRange(Facts(world, location).Select(fact => new InspectionItem(fact.Label, fact.Value)));
-        List<InspectionSection> sections = [new("World", worldItems), new("Save file", await DescribeFileAsync(world.SavePath, header, cancellationToken))];
+        worldItems.AddRange(Facts(world, location).Where(fact => fact.Group == WorldFactGroup.Details).Select(fact => new InspectionItem(fact.Label, fact.Value)));
+
+        // Worlds carried over from Early Access keep their settings in the compressed data, which is never read.
+        var settings = EnshroudedWorldSettingsReader.TryRead(world.SavePath);
+        if (settings is null)
+        {
+            worldItems.Add(new InspectionItem("World settings", "Not stored in a readable place"));
+        }
+
+        List<InspectionSection> sections = [new("World", worldItems)];
+        if (settings is not null)
+        {
+            sections.Add(new InspectionSection("World settings", settings.Select(setting => new InspectionItem(setting.Label, setting.Value)).ToArray()));
+        }
+
+        sections.Add(new InspectionSection("Save file", await DescribeFileAsync(world.SavePath, header, cancellationToken)));
 
         var copies = EnshroudedSlotMap.GameCopies(world.SavePath);
         if (copies.Count > 0)
