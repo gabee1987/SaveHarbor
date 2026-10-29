@@ -24,6 +24,12 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (_activeGame.Current.GetRemoveWorldInGameHint(world) is { } inGameHint)
+        {
+            _dialogService.ShowInfo($"Remove {world.WorldName} in {ActiveGameName}", inGameHint);
+            return;
+        }
+
         var cloudNote = SelectedWorldStatus?.LatestVersion is { } latest
             ? $"The shared cloud copy (v{latest.VersionNumber}) is not touched; you can download it again at any time."
             : "This world is not in the cloud, so the backup will be its only copy.";

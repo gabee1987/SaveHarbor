@@ -96,6 +96,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string SaveFolder => _activeGame.Current.SaveAdapter.SaveRootPath;
 
+    public string? SaveFolderHint => _activeGame.Current.SaveFolderHint;
+
     public string BackupFolder => _paths.GetBackupRoot(_activeGame.Current.Id);
 
     public bool HasCustomSaveFolder => _settings.Current.SaveRootOverrides.ContainsKey(_activeGame.Current.StorageKey);
@@ -104,6 +106,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(GameName));
         OnPropertyChanged(nameof(SaveFolder));
+        OnPropertyChanged(nameof(SaveFolderHint));
         OnPropertyChanged(nameof(BackupFolder));
         OnPropertyChanged(nameof(HasCustomSaveFolder));
     }

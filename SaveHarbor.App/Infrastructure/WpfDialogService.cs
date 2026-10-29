@@ -81,6 +81,11 @@ public sealed class WpfDialogService : IDialogService
         new WorldInspectorWindow(skinDictionary) { Owner = FindOwner(), DataContext = viewModel }.ShowDialog();
     }
 
+    public void ShowPatchNotes(PatchNotesViewModel viewModel, Uri skinDictionary)
+    {
+        new PatchNotesWindow(skinDictionary) { Owner = FindOwner(), DataContext = viewModel }.ShowDialog();
+    }
+
     public string? SelectFolder(string title, string initialDirectory)
     {
         var dialog = new OpenFolderDialog

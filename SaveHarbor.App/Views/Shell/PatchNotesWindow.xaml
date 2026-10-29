@@ -1,0 +1,327 @@
+<Window x:Class="SaveHarbor.App.Views.Shell.PatchNotesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:behaviors="clr-namespace:SaveHarbor.App.Views.Behaviors"
+        xmlns:converters="clr-namespace:SaveHarbor.App.Views.Converters"
+        xmlns:utilities="clr-namespace:SaveHarbor.App.Utilities"
+        xmlns:viewModels="clr-namespace:SaveHarbor.App.ViewModels"
+        xmlns:ui="clr-namespace:SaveHarbor.App.Localization"
+        Title="{ui:UiText PatchNotes.WindowTitle}"
+        Width="980"
+        Height="760"
+        MinWidth="720"
+        MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}"
+        FontFamily="Segoe UI"
+        FontSize="13">
+    <Window.Resources>
+        <ResourceDictionary>
+            <!-- The active game's skin is merged in code (see the constructor). -->
+
+            <!-- Grouped by month, newest first; the view model keeps the file's order. -->
+            <CollectionViewSource x:Key="ReleasesByMonth" Source="{Binding Releases}">
+                <CollectionViewSource.GroupDescriptions>
+                    <PropertyGroupDescription PropertyName="MonthTitle" />
+                </CollectionViewSource.GroupDescriptions>
+            </CollectionViewSource>
+
+            <!-- One stop on the timeline: a rail with a node, the version and its date. The selected stop gets the accent
+                 hairline frame, like a selected item in the game's menus. -->
+            <Style x:Key="TimelineItem" TargetType="ListBoxItem">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Rectangle Width="1" Fill="{DynamicResource SkinFrameBrush}" HorizontalAlignment="Center" />
+                                <Ellipse x:Name="Node"
+                                         Width="9"
+                                         Height="9"
+                                         Fill="{DynamicResource AppBackgroundBrush}"
+                                         Stroke="{DynamicResource SkinFrameBrush}"
+                                         StrokeThickness="1.5"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+                                <Border x:Name="Card"
+                                        Grid.Column="1"
+                                        Margin="6,3,0,3"
+                                        Padding="12,8"
+                                        CornerRadius="3"
+                                        BorderThickness="1"
+                                        BorderBrush="Transparent"
+                                        Background="Transparent">
+                                    <ContentPresenter />
+                                </Border>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                    <Setter TargetName="Card" Property="Background" Value="{DynamicResource PanelAltBrush}" />
+                                    <Setter TargetName="Node" Property="Fill" Value="{DynamicResource AccentBrush}" />
+                                    <Setter TargetName="Node" Property="Stroke" Value="{DynamicResource AccentBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Small pill: Newest, Installed. -->
+            <Style x:Key="Chip" TargetType="Border">
+                <Setter Property="CornerRadius" Value="2" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="6,1" />
+                <Setter Property="Margin" Value="6,0,0,0" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+
+            <!-- A section's tag and bullet colour follow its kind: added green, changed blue, fixed amber, other gold. -->
+            <Style x:Key="SectionTag" TargetType="Border">
+                <Setter Property="CornerRadius" Value="2" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,2" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="Background" Value="{DynamicResource ToneAccentBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ToneAccentBorderBrush}" />
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource AccentBrush}" />
+                <Style.Triggers>
+                    <!-- Text above the first "###" heading of a release has no title. -->
+                    <DataTrigger Binding="{Binding Title}" Value="">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static utilities:ChangelogSectionKind.Added}">
+                        <Setter Property="Background" Value="{DynamicResource ToneSuccessBackgroundBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ToneSuccessBorderBrush}" />
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource SuccessBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static utilities:ChangelogSectionKind.Changed}">
+                        <Setter Property="Background" Value="{DynamicResource ToneInfoBackgroundBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ToneInfoBorderBrush}" />
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource InfoBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static utilities:ChangelogSectionKind.Fixed}">
+                        <Setter Property="Background" Value="{DynamicResource ToneWarnBackgroundBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ToneWarnBorderBrush}" />
+                        <Setter Property="TextElement.Foreground" Value="{DynamicResource WarnBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="SectionBullet" TargetType="Ellipse">
+                <Setter Property="Fill" Value="{DynamicResource AccentBrush}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding DataContext.Kind, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="{x:Static utilities:ChangelogSectionKind.Added}">
+                        <Setter Property="Fill" Value="{DynamicResource SuccessBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding DataContext.Kind, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="{x:Static utilities:ChangelogSectionKind.Changed}">
+                        <Setter Property="Fill" Value="{DynamicResource InfoBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding DataContext.Kind, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="{x:Static utilities:ChangelogSectionKind.Fixed}">
+                        <Setter Property="Fill" Value="{DynamicResource WarnBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <ContentPresenter Content="{Binding}" ContentTemplate="{DynamicResource SkinSmokeTemplate}" />
+
+        <Grid Margin="28,22,28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="{ui:SpacedText PatchNotes.Title}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
+                <TextBlock Text="{ui:UiText PatchNotes.Heading}"
+                           FontFamily="{DynamicResource AppDisplayFontFamily}"
+                           FontSize="30"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource SkinGoldTextBrush}"
+                           Margin="0,2,0,0" />
+                <TextBlock Text="{Binding Subtitle}" Style="{DynamicResource SkinMuted}" TextTrimming="None" TextWrapping="Wrap" Margin="0,6,0,0" />
+            </StackPanel>
+
+            <ContentControl Grid.Row="1" Style="{DynamicResource SkinOrnamentDivider}" Margin="0,16,0,14" />
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- The timeline: months as headings, a stop per version. -->
+                <ContentControl Style="{DynamicResource SkinFrame}" Padding="14,12">
+                    <ListBox ItemsSource="{Binding Source={StaticResource ReleasesByMonth}}"
+                             SelectedItem="{Binding SelectedRelease}"
+                             ItemContainerStyle="{StaticResource TimelineItem}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             AutomationProperties.Name="{ui:UiText PatchNotes.Versions}">
+                        <ListBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <ContentControl Style="{DynamicResource SkinPanelHeading}"
+                                                        Content="{Binding Name, Converter={x:Static converters:SpacedCapsConverter.Instance}}"
+                                                        Margin="0,6,0,2" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListBox.GroupStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type viewModels:PatchNotesEntry}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Version, StringFormat=v{0}}"
+                                                   FontFamily="{DynamicResource AppDisplayFontFamily}"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource InkBrush}" />
+                                        <Border Grid.Column="1"
+                                                Style="{StaticResource Chip}"
+                                                HorizontalAlignment="Left"
+                                                Background="{DynamicResource ToneSuccessBackgroundBrush}"
+                                                BorderBrush="{DynamicResource ToneSuccessBorderBrush}"
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="{ui:UiText PatchNotes.Installed}" FontSize="10.5" Foreground="{DynamicResource SuccessBrush}" />
+                                        </Border>
+                                        <TextBlock Grid.Column="2" Text="{Binding ShortDateText}" Style="{DynamicResource SkinMuted}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding SummaryText}" Style="{DynamicResource SkinMuted}" FontSize="11.5" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ContentControl>
+
+                <!-- The selected version's notes. -->
+                <ContentControl Grid.Column="2" Style="{DynamicResource SkinFrame}" Padding="26,20">
+                    <Grid>
+                        <ScrollViewer DataContext="{Binding SelectedRelease}"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="0,0,8,0"
+                                      Visibility="{Binding Converter={x:Static converters:NullToCollapsedConverter.Instance}}">
+                            <StackPanel>
+                                <WrapPanel>
+                                    <TextBlock FontFamily="{DynamicResource AppDisplayFontFamily}"
+                                               FontSize="24"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource SkinGoldTextBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,6,0">
+                                        <Run Text="{ui:UiText App.Title}" />
+                                        <Run Text="{Binding Version, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <Border Style="{StaticResource Chip}"
+                                            Background="{DynamicResource ToneAccentBackgroundBrush}"
+                                            BorderBrush="{DynamicResource ToneAccentBorderBrush}"
+                                            Visibility="{Binding IsNewest, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBlock Text="{ui:UiText PatchNotes.Newest}" FontSize="11" Foreground="{DynamicResource AccentBrush}" />
+                                    </Border>
+                                    <Border Style="{StaticResource Chip}"
+                                            Background="{DynamicResource ToneSuccessBackgroundBrush}"
+                                            BorderBrush="{DynamicResource ToneSuccessBorderBrush}"
+                                            Visibility="{Binding IsInstalled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBlock Text="{ui:UiText PatchNotes.YourVersion}" FontSize="11" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Border>
+                                </WrapPanel>
+                                <TextBlock Text="{Binding DateText}" Style="{DynamicResource SkinMuted}" Margin="0,4,0,0" />
+                                <Rectangle Height="1" Fill="{DynamicResource SkinFrameInnerBrush}" Margin="0,14,0,4" />
+
+                                <ItemsControl ItemsSource="{Binding Sections}" Focusable="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type utilities:ChangelogSection}">
+                                            <StackPanel Margin="0,14,0,0">
+                                                <Border Style="{StaticResource SectionTag}">
+                                                    <TextBlock Text="{Binding Title, Converter={x:Static converters:SpacedCapsConverter.Instance}}" FontSize="11" FontWeight="SemiBold" />
+                                                </Border>
+                                                <ItemsControl ItemsSource="{Binding Blocks}" Focusable="False" Margin="0,8,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="{x:Type utilities:MarkdownBlock}">
+                                                            <Grid Margin="0,0,0,7">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="18" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <Ellipse x:Name="Bullet" Width="5" Height="5" Style="{StaticResource SectionBullet}"
+                                                                         HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2,7,0,0" />
+                                                                <TextBlock x:Name="Text"
+                                                                           Grid.Column="1"
+                                                                           behaviors:MarkdownText.Spans="{Binding Spans}"
+                                                                           Foreground="{DynamicResource InkBrush}"
+                                                                           FontSize="13"
+                                                                           LineHeight="19"
+                                                                           TextWrapping="Wrap" />
+                                                            </Grid>
+                                                            <DataTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding Kind}" Value="{x:Static utilities:MarkdownBlockKind.Paragraph}">
+                                                                    <Setter TargetName="Bullet" Property="Visibility" Value="Collapsed" />
+                                                                    <Setter TargetName="Text" Property="Grid.Column" Value="0" />
+                                                                    <Setter TargetName="Text" Property="Grid.ColumnSpan" Value="2" />
+                                                                    <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource MutedBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Kind}" Value="{x:Static utilities:MarkdownBlockKind.Subheading}">
+                                                                    <Setter TargetName="Bullet" Property="Visibility" Value="Collapsed" />
+                                                                    <Setter TargetName="Text" Property="Grid.Column" Value="0" />
+                                                                    <Setter TargetName="Text" Property="Grid.ColumnSpan" Value="2" />
+                                                                    <Setter TargetName="Text" Property="FontWeight" Value="SemiBold" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Kind}" Value="{x:Static utilities:MarkdownBlockKind.Heading}">
+                                                                    <Setter TargetName="Bullet" Property="Visibility" Value="Collapsed" />
+                                                                    <Setter TargetName="Text" Property="Grid.Column" Value="0" />
+                                                                    <Setter TargetName="Text" Property="Grid.ColumnSpan" Value="2" />
+                                                                    <Setter TargetName="Text" Property="FontWeight" Value="SemiBold" />
+                                                                </DataTrigger>
+                                                            </DataTemplate.Triggers>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <TextBlock Text="{ui:UiText PatchNotes.Empty}"
+                                   Style="{DynamicResource SkinMuted}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding HasReleases, Converter={x:Static converters:InverseBooleanToVisibilityConverter.Instance}}" />
+                    </Grid>
+                </ContentControl>
+            </Grid>
+
+            <Button Grid.Row="3"
+                    Content="{ui:SpacedText PatchNotes.Close}"
+                    Style="{DynamicResource SkinButton}"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0"
+                    IsCancel="True"
+                    Click="OnCloseClick" />
+        </Grid>
+    </Grid>
+</Window>

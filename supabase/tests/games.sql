@@ -2,13 +2,13 @@
 -- added later works everywhere without touching functions or policies.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(16);
 
 insert into auth.users (id, email) values
   ('e0000000-0000-4000-8000-00000000000a', 'games-a@example.invalid');
 
-select results_eq($$select key from public.games order by key$$, array['dragonwilds', 'windrose'],
-  'windrose and dragonwilds are the initial games');
+select results_eq($$select key from public.games order by key$$, array['dragonwilds', 'enshrouded', 'windrose'],
+  'windrose, dragonwilds and enshrouded are the listed games');
 select throws_ok($$insert into public.games (key) values ('Not A Key')$$, '23514', null,
   'game keys are lowercase without spaces');
 select throws_ok($$insert into public.worlds (group_id, game, world_id, world_name)
@@ -30,6 +30,11 @@ select throws_ok($$insert into storage.objects (bucket_id, name)
 select lives_ok($$insert into storage.objects (bucket_id, name)
   values ('saves', current_setting('test.g') || '/windrose/TEST_WORLD_ID/v1.zip')$$,
   'archives of a listed game can be uploaded');
+select lives_ok($$insert into storage.objects (bucket_id, name)
+  values ('saves', current_setting('test.g') || '/enshrouded/TEST_WORLD_ID/v1.zip')$$,
+  'enshrouded archives can be uploaded');
+select is(jsonb_array_length(public.get_group_snapshot(current_setting('test.g')::uuid, 'enshrouded') -> 'worlds'), 0,
+  'enshrouded works in the functions');
 reset role;
 
 -- A game added by a later migration.

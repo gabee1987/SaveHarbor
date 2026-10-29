@@ -3,6 +3,7 @@
   Dark colours are copied by hand from the desktop themes; update them together:
     windrose     SaveHarbor.App/Resources/Themes/Windrose.Colors.xaml
     dragonwilds  SaveHarbor.App/Resources/Themes/Dragonwilds.Colors.xaml
+    enshrouded   SaveHarbor.App/Resources/Themes/Enshrouded.Colors.xaml
   The light colours have no desktop counterpart (the app is dark only); they keep the same hues at text contrast of
   at least 4.5:1 on their panel colour. System fonts only: nothing is loaded from another site.
 */
@@ -44,6 +45,24 @@
   --display: Georgia, 'Times New Roman', serif;
 }
 
+:root[data-game='enshrouded'] {
+  --bg: #111518;
+  --bg-top: #1b2127;
+  --panel: #232b33;
+  --panel-alt: #1c2229;
+  --line: #3c4650;
+  --line-soft: #2c343c;
+  --ink: #ede4d0;
+  --muted: #b3ae9f;
+  --accent: #cdaa5e;
+  --accent-ink: #1a1710;
+  --danger: #e8705f;
+  --warn: #e39a46;
+  --success: #86c66c;
+  --info: #8db4d6;
+  --display: Georgia, 'Times New Roman', serif;
+}
+
 @media (prefers-color-scheme: light) {
   :root,
   :root[data-game='windrose'] {
@@ -78,6 +97,23 @@
     --warn: #8a5410;
     --success: #2f6b26;
     --info: #5b3aa8;
+  }
+
+  :root[data-game='enshrouded'] {
+    --bg: #e6e9ec;
+    --bg-top: #f3f5f7;
+    --panel: #ffffff;
+    --panel-alt: #f3f5f7;
+    --line: #c7cdd3;
+    --line-soft: #dde2e6;
+    --ink: #1a1f24;
+    --muted: #4f5760;
+    --accent: #7a5f1e;
+    --accent-ink: #ffffff;
+    --danger: #a8321f;
+    --warn: #875310;
+    --success: #2f6b26;
+    --info: #2a5e86;
   }
 }
 

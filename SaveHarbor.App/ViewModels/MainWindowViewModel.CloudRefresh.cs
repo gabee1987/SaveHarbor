@@ -89,9 +89,12 @@ public partial class MainWindowViewModel
     private static bool IsSameWorld(GameWorld first, GameWorld? second) =>
         second is not null && first.Game == second.Game && string.Equals(first.WorldId, second.WorldId, StringComparison.OrdinalIgnoreCase);
 
+    // One world can be listed more than once (an Enshrouded world in both the Local and a Steam Cloud folder); the first
+    // entry, the most recently saved one, stands for it.
     private void ApplyCloudOverview(CloudWorldOverview overview)
     {
-        WorldSyncBadges = overview.LocalWorlds
+        var localWorlds = overview.LocalWorlds.DistinctBy(summary => summary.WorldId, StringComparer.OrdinalIgnoreCase).ToArray();
+        WorldSyncBadges = localWorlds
             .Select(summary => (summary.WorldId, Badge: SyncAdvisor.Badge(summary.State, summary.HasLocalChanges)))
             .Where(item => item.Badge is not null)
             .ToDictionary(item => item.WorldId, item => item.Badge!, StringComparer.OrdinalIgnoreCase);
@@ -102,7 +105,7 @@ public partial class MainWindowViewModel
             CloudOnlyWorlds.Add(CloudWorldEntry.From(manifest));
         }
 
-        worldSummaries = overview.LocalWorlds.ToDictionary(summary => summary.WorldId, StringComparer.OrdinalIgnoreCase);
+        worldSummaries = localWorlds.ToDictionary(summary => summary.WorldId, StringComparer.OrdinalIgnoreCase);
         ApplySelectedStatusToBadges(CloudStatus);
         NotifyPlayPreflight();
     }

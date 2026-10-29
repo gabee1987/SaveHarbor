@@ -167,6 +167,8 @@ public sealed class WindroseSaveAdapter(GameOptionsProvider optionsProvider, IAp
             .ToArray();
     }
 
+    public string GetArchiveFileName(string worldPath) => Path.GetFileName(worldPath);
+
     public string GetExpectedWorldPath(GameSaveRoot root, string worldId) =>
         SafePath.CombineUnderRoot(root.WorldsPath, worldId);
 

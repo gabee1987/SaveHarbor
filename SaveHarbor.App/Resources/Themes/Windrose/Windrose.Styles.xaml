@@ -6,6 +6,7 @@
          Skin* keys; "Gold" names are the skin's highlight metal (brass here). -->
     <sys:String x:Key="SkinWordmarkKicker">SAVEHARBOR</sys:String>
     <sys:String x:Key="SkinWordmarkTitle">WINDROSE</sys:String>
+    <Visibility x:Key="SkinWorldSubtitleVisibility">Collapsed</Visibility>
     <SolidColorBrush x:Key="SkinGoldBrush" Color="#B89A63" />
     <SolidColorBrush x:Key="SkinGoldBrightBrush" Color="#F1EADB" />
     <SolidColorBrush x:Key="SkinParchmentBrush" Color="#E8E1D2" />
@@ -263,5 +264,31 @@
         <Setter Property="Padding" Value="10,3" />
         <Setter Property="Margin" Value="0,0,8,0" />
         <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Header wordmark: small kicker over the game title. -->
+    <DataTemplate x:Key="SkinWordmarkTemplate">
+        <StackPanel>
+            <TextBlock Text="{DynamicResource SkinWordmarkKicker}"
+                       FontFamily="{DynamicResource AppDisplayFontFamily}"
+                       FontSize="11"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource SkinGoldBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="{DynamicResource SkinWordmarkTitle}"
+                       FontFamily="{DynamicResource AppDisplayFontFamily}"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SkinGoldTextBrush}">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.6" />
+                </TextBlock.Effect>
+            </TextBlock>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- Around the game switch in the header: nothing in this skin. -->
+    <Style x:Key="SkinGameSwitchFrame" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
     </Style>
 </ResourceDictionary>

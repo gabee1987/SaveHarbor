@@ -2,6 +2,7 @@ using SaveHarbor.App.Domain;
 using SaveHarbor.App.Infrastructure;
 using SaveHarbor.App.Infrastructure.Games;
 using SaveHarbor.App.Infrastructure.Games.Dragonwilds;
+using SaveHarbor.App.Infrastructure.Games.Enshrouded;
 using SaveHarbor.App.Infrastructure.Games.Windrose;
 
 namespace SaveHarbor.Tests.Support;
@@ -15,6 +16,7 @@ public sealed class BackupHarness : IDisposable
         WindroseRoot = temp.Combine("windrose-profiles");
         DragonwildsRoot = temp.Combine("dragonwilds-saves");
         Directory.CreateDirectory(DragonwildsRoot);
+        EnshroudedRoot = temp.Combine("enshrouded-steam", "12345", "1203620", "remote");
 
         var options = new GameOptionsProvider(new Dictionary<GameId, GameOptions>
         {
@@ -25,10 +27,12 @@ public sealed class BackupHarness : IDisposable
         Paths = new TestPathProvider(temp);
         WindroseAdapter = new WindroseSaveAdapter(options, Paths);
         DragonwildsAdapter = new DragonwildsSaveAdapter(options);
+        EnshroudedAdapter = new EnshroudedSaveAdapter(new FixedEnshroudedLocator(new EnshroudedSaveRoot(EnshroudedRoot, IsSteamCloud: true)), Paths);
         Settings = new AppSettingsStore(Paths);
         Backups = new ZipBackupService(Paths, new StubGameRegistry(
             new StubGameDefinition(GameId.Windrose, WindroseAdapter),
-            new StubGameDefinition(GameId.Dragonwilds, DragonwildsAdapter)), Settings);
+            new StubGameDefinition(GameId.Dragonwilds, DragonwildsAdapter),
+            new StubGameDefinition(GameId.Enshrouded, EnshroudedAdapter)), Settings);
     }
 
     public string WindroseRoot { get; }
@@ -38,6 +42,11 @@ public sealed class BackupHarness : IDisposable
     public WindroseSaveAdapter WindroseAdapter { get; }
 
     public DragonwildsSaveAdapter DragonwildsAdapter { get; }
+
+    // The Steam Cloud folder SaveHarbor manages for Enshrouded.
+    public string EnshroudedRoot { get; }
+
+    public EnshroudedSaveAdapter EnshroudedAdapter { get; }
 
     public TestPathProvider Paths { get; }
 
@@ -58,6 +67,12 @@ public sealed class BackupHarness : IDisposable
 
     public async Task<GameWorld> ReadDragonwildsWorldAsync(string path) =>
         (await DragonwildsAdapter.ReadWorldAsync(path, TestContext.Current.CancellationToken))!;
+
+    public async Task<GameWorld> ReadEnshroudedWorldAsync(string path) =>
+        (await EnshroudedAdapter.ReadWorldAsync(path, TestContext.Current.CancellationToken))!;
+
+    public async Task<GameSaveRoot> EnshroudedProfileAsync() =>
+        (await EnshroudedAdapter.DiscoverSaveRootsAsync(TestContext.Current.CancellationToken)).Single();
 
     public void Dispose() => temp.Dispose();
 }

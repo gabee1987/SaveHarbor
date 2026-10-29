@@ -114,7 +114,7 @@ public sealed partial class ZipBackupService(IAppDataPathProvider pathProvider, 
         await RunWithExtractedPayloadAsync(backupPath, payloadRoot =>
         {
             adapter.ValidatePayload(payloadRoot, targetWorld.WorldId);
-            strategy.Restore(payloadRoot, targetWorld, manifest, cancellationToken);
+            strategy.Restore(payloadRoot, targetWorld, manifest, adapter, cancellationToken);
             adapter.PlaceGameFiles(Path.Combine(payloadRoot, BackupPayloadLayout.GameFilesFolderName), targetWorld.SavePath);
         }, cancellationToken);
         adapter.RememberWorldState(targetWorld.SavePath);

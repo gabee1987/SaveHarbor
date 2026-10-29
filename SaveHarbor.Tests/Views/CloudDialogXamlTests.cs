@@ -89,6 +89,24 @@ public sealed class CloudDialogXamlTests
         });
     }
 
+    [Fact]
+    public void PatchNotesWindow_LoadsWithEverySkin()
+    {
+        RunOnStaThread(() =>
+        {
+            Uri[] skins = [.. Skins, new("/SaveHarbor.App;component/Resources/Themes/Enshrouded/Enshrouded.Theme.xaml", UriKind.Relative)];
+            foreach (var skin in skins)
+            {
+                var viewModel = new PatchNotesViewModel(PatchNotesCatalog.Releases, "2.3.0");
+                var window = new PatchNotesWindow(skin) { DataContext = viewModel };
+                Layout((FrameworkElement)window.Content, 980);
+
+                Assert.Equal("2.3.0", viewModel.SelectedRelease?.Version);
+                window.Close();
+            }
+        });
+    }
+
     // One view model per screen and sign-in step, so every part of the Sharing page is parsed and templated.
     private static IEnumerable<SharingViewModel> SharingOnEveryScreen(TempDirectory temp)
     {
