@@ -58,6 +58,10 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <StackPanel>
                     <TextBlock Text="{ui:SpacedText Inspector.Title}" Style="{DynamicResource SkinLabel}" FontFamily="{DynamicResource AppDisplayFontFamily}" />
                     <TextBlock Text="{Binding WorldName}"
@@ -67,8 +71,15 @@
                                Foreground="{DynamicResource SkinGoldTextBrush}"
                                TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
-                    <TextBlock Text="{Binding PrivacyNote}" Style="{DynamicResource SkinMuted}" Margin="0,4,0,0" />
                 </StackPanel>
+                <!-- Below the buttons and across the full width, so the whole note stays readable. -->
+                <TextBlock Grid.Row="1"
+                           Grid.ColumnSpan="2"
+                           Text="{Binding PrivacyNote}"
+                           Style="{DynamicResource SkinMuted}"
+                           TextTrimming="None"
+                           TextWrapping="Wrap"
+                           Margin="0,6,0,0" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
                     <Button Content="{ui:SpacedText Inspector.ShowFile}" Command="{Binding ShowWorldFileCommand}" Style="{DynamicResource SkinButton}"
                             Margin="0,0,8,0" ToolTip="{ui:UiText Inspector.ShowFileTooltip}" />
