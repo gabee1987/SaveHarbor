@@ -6,6 +6,29 @@ The section of a version is also the release note shown in the app and on the Gi
 
 ## [Unreleased]
 
+## [2.4.0]
+
+### Added
+
+- **Enshrouded:** SaveHarbor now supports Enshrouded as its third game. Pick it in the game switch at the top.
+- **Your Steam Cloud worlds:** SaveHarbor finds the worlds on the game's **Steam** tab of the Steam account that is signed in, shows each world once with its name and the slot the game shows, and keeps a downloaded world in that folder, so Steam backs it up after every session as well.
+- **World rules:** the details panel shows the main settings of an Enshrouded world, and **All world info** shows all of them.
+- **The game's own backups:** All world info offers the game's backup copy of a world. SaveHarbor shows how it compares and backs up your current copy before putting it back.
+- **Older copy warning:** if an older copy of an Enshrouded world comes back (for example from Steam), SaveHarbor stops before sharing it over your friends' newer progress and asks you first.
+- **Same world twice:** SaveHarbor warns when an Enshrouded world sits in more than one slot and tells you which copies to delete in the game.
+- **Its own look:** Enshrouded has its own colours, frames and a drifting mist in the background (turn it off with the ambient effects setting).
+- The companion web page lists Enshrouded worlds too.
+
+### Changed
+
+- **Removing an Enshrouded world:** delete it inside the game, because Steam Cloud would bring it back otherwise. SaveHarbor removes a world file itself only when Steam does not know it.
+- A downloaded Enshrouded world goes into a slot the game has never used, because Steam hides a new file with the name of a world deleted in the game.
+
+### Fixed
+
+- **Sharing when the game closes:** progress was sometimes not shared and the world stayed locked after the game closed. This affected every game.
+- World names on the world cards and the note at the top of **All world info** are no longer cut off.
+
 ## [2.3.0]
 
 ### Install this version once by hand
