@@ -44,18 +44,22 @@ Companion page (`web/src/styles.css`, `data-game='enshrouded'`): dark values abo
 
 ## Ornaments (vector, decorative, hidden in High Contrast)
 
-- **Filigree frame**: the panel `Border` keeps the shared metrics (1 px `LineBrush` hairline, radius 8, same padding). A `ControlTemplate` overlays four corner marks in `OrnamentBrush`, `IsHitTestVisible=False`, `Visibility={DynamicResource ShowOrnamentGlyphs}`: each mark is an L-shaped 1 px bracket 8 px long on both legs, 3 px inside the corner, with a 2.5 px circle at the elbow. `SnapsToDevicePixels` + `UseLayoutRounding` on. No other panel decoration.
-- **Section title**: a small 5 px circle before the title in `OrnamentBrush` (Dragonwilds uses a diamond; Enshrouded a circle) under the same `ShowOrnamentGlyphs` switch.
-- **Selected list item**: `AccentBrush` hairline frame + `PanelAltBrush` fill, like the game's gold selection. Hover: `LineBrush` frame.
-- **Primary Play button**: gold fill, dark text, Cinzel. Secondary buttons: slate fill, `LineBrush` border, gold border on hover.
-- **Progress / sync line**: `SuccessBrush` fill on `InputBrush` track.
-- **Game icon** (`GameIconGeometry`): an original small flame above a short horizontal line (14 px).
-- **Background**: radial gradient only; no bitmaps, no parchment, no blur.
+The shape language comes from the game's announcement art: **diamonds (gems)**, small ring nodes, "»  TITLE  «" chevrons and a flame. All shapes are original; corner marks, crests and caps sit under `Visibility={DynamicResource ShowOrnamentGlyphs}` and ignore input.
+
+- **Frame** (`SkinFrame`): metal-gradient hairline (`SkinFrameMetalBrush`), inner `SkinFrameInnerBrush` line, a faint warm "lantern" light on the top 90 px (`SkinLanternGlowBrush`). Each corner (`SkinCornerTemplate`) has a gold gem on the corner, an outer and an inner bracket and a ring node at the end of each arm; a crest (ring, gem, ring) sits on the top edge. Featured panels (hero, Settings) set `BorderBrush` to `SkinGoldBrush`.
+- **Section title**: a small circle before the title, rule ending in "o o o".
+- **World rows** (`SkinWorldItem`): a gem badge with a flame; the selected row's flame is lit (`SkinFlameBrush`) inside a gold frame.
+- **Primary Play button**: gold plate, engraved inner line, dark text, a gold gem at each end. **Secondary buttons**: dark slate plate (`SkinButtonPlateBrush`), metal edge, a small gem at each end that hangs 4 px outside the plate (so the button is as wide as in the other skins); hover lights the gems and the top sheen.
+- **Wordmark** (`SkinWordmarkTemplate`): a gem with the flame, "ENSHROUDED" with a raised initial, and "» SAVEHARBOR «" between fading rules. Our own composition in Cinzel, not the game's logo.
+- **Game switch** (`SkinGameSwitchFrame` + `SkinGameSwitch`): a dark band with gold hairlines between "»" and "«"; a gem before each name, the active one lit gold.
+- **Flame** (`SkinFlameGeometry`, `SkinFlameCoreGeometry`): one original flame on a 24 x 32 grid, used by the wordmark, the world rows and the loader. **Game icon** (`GameIconGeometry`): a small flame above a short line (14 px).
+- **Background**: radial gradient plus the ambient effect below; no bitmaps, no parchment, no blur.
 
 ## Motion
 
 - Theme switch: the shared 150 ms cross-fade.
-- Ambient effect "shroud mist" (`Enshrouded.Effects.xaml`): two large radial gradients at 4–6 % opacity in `InfoBrush` hue drifting across the background over 45–60 s, out of phase. Respects the ambient-effects setting and `SystemParameters.ClientAreaAnimation`. Nothing else animates.
+- **Loader** (`SkinArcaneLoaderTemplate`, the "flame altar"): a flickering flame in a gold gem (two flicker rates that do not divide evenly), a rune ring with ticks turning once in 24 s, violet/blue shroud spores circling just outside the flame's light, sparks rising. Exists only while busy.
+- **Ambient effect** (`ShroudMistView`): three rune circles (rings, ticks, nodes, eight-point star; 12–16 % opacity in `SkinRuneColor`) turning once in 150–240 s, two blue mist glows and a violet shroud bank (`SkinShroudColor`) drifting and breathing, 26 soft spores rising and fading. Circles and glows are cached bitmaps that only move; no effects on the spores; at most 20 frames a second. Respects the ambient-effects setting and `SystemParameters.ClientAreaAnimation` (static when off).
 
 ## Theme mechanics (WPF)
 

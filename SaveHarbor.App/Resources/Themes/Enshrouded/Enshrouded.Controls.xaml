@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- Enshrouded list, tab and input styles. Brushes come from Enshrouded.Styles.xaml (DynamicResource across dictionaries). -->
 
-    <!-- World rows: framed like the game's world list; the selected row gets a bright gold frame and warm glow. -->
+    <!-- World rows: framed like the game's world list, with a gem badge; the selected row gets a bright gold frame,
+         a lit gem and a warm glow. -->
     <Style x:Key="SkinWorldItem" TargetType="ListBoxItem">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -17,9 +18,10 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid Width="22" Height="22" Margin="0,0,11,0" VerticalAlignment="Center">
-                                <Ellipse x:Name="Badge" Stroke="{DynamicResource SkinFrameBrush}" StrokeThickness="1.2" />
-                                <Path x:Name="BadgeMark" Data="{DynamicResource SkinDiamondGeometry}" Fill="{DynamicResource SkinFrameBrush}"
-                                      Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Path x:Name="Badge" Data="M11,1 L21,11 L11,21 L1,11 Z" Fill="{DynamicResource SkinGemPlateBrush}"
+                                      Stroke="{DynamicResource SkinFrameBrush}" StrokeThickness="1.2" />
+                                <Path x:Name="BadgeMark" Data="{DynamicResource SkinFlameGeometry}" Fill="{DynamicResource SkinFrameBrush}"
+                                      Width="7" Height="10" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Grid>
                             <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
                         </Grid>
@@ -32,7 +34,12 @@
                             <Setter TargetName="Row" Property="Background" Value="{DynamicResource SkinSelectedRowBrush}" />
                             <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource SkinGoldBrightBrush}" />
                             <Setter TargetName="Badge" Property="Stroke" Value="{DynamicResource SkinGoldBrightBrush}" />
-                            <Setter TargetName="BadgeMark" Property="Fill" Value="{DynamicResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="BadgeMark" Property="Fill" Value="{DynamicResource SkinFlameBrush}" />
+                            <Setter TargetName="BadgeMark" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#F0A848" BlurRadius="8" ShadowDepth="0" Opacity="0.9" />
+                                </Setter.Value>
+                            </Setter>
                             <Setter TargetName="Row" Property="Effect">
                                 <Setter.Value>
                                     <DropShadowEffect Color="#D8B868" BlurRadius="12" ShadowDepth="0" Opacity="0.35" />
@@ -107,15 +114,23 @@
         </Setter>
     </Style>
 
+    <!-- A gem before each game name; the active game's gem is lit gold and glows, with a gold line under the name. -->
     <Style x:Key="SkinGameSwitch" TargetType="RadioButton">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Grid Background="Transparent" Margin="12,0">
-                        <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontFamily="{DynamicResource AppDisplayFontFamily}"
-                                   FontSize="12.5" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,8" />
-                        <Rectangle x:Name="Glow" Height="2" VerticalAlignment="Bottom" Margin="-6,0" Fill="{DynamicResource SkinGlowLineBrush}" Visibility="Hidden">
+                    <Grid Background="Transparent" Margin="8,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Path x:Name="Gem" Data="M4.5,0 L9,4.5 L4.5,9 L0,4.5 Z" Fill="{DynamicResource InputBrush}" Stroke="{DynamicResource SkinFrameBrush}"
+                              StrokeThickness="1" VerticalAlignment="Center" Margin="0,0,7,2" />
+                        <TextBlock x:Name="Label" Grid.Column="1" Text="{TemplateBinding Content}" FontFamily="{DynamicResource AppDisplayFontFamily}"
+                                   FontSize="12.5" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,7" />
+                        <Rectangle x:Name="Glow" Grid.ColumnSpan="2" Height="2" VerticalAlignment="Bottom" Margin="-4,0" Fill="{DynamicResource SkinGlowLineBrush}"
+                                   Visibility="Hidden">
                             <Rectangle.Effect>
                                 <DropShadowEffect Color="#E6CB86" BlurRadius="8" ShadowDepth="0" Opacity="0.9" />
                             </Rectangle.Effect>
@@ -124,10 +139,18 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource InkBrush}" />
+                            <Setter TargetName="Gem" Property="Stroke" Value="{DynamicResource SkinGoldBrightBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource SkinParchmentBrush}" />
                             <Setter TargetName="Glow" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Gem" Property="Fill" Value="{DynamicResource SkinGoldFillBrush}" />
+                            <Setter TargetName="Gem" Property="Stroke" Value="{DynamicResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="Gem" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#E6CB86" BlurRadius="8" ShadowDepth="0" Opacity="0.9" />
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />

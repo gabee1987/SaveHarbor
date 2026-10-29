@@ -11,61 +11,48 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel VerticalAlignment="Center">
-            <StackPanel.ToolTip>
+        <!-- The wordmark is the skin's own (SkinWordmarkTemplate), so a game can draw its title in its own style. -->
+        <ContentControl ContentTemplate="{DynamicResource SkinWordmarkTemplate}" Focusable="False" VerticalAlignment="Center">
+            <ContentControl.ToolTip>
                 <TextBlock>
                     <Run Text="{ui:UiText App.Title}" />
                     <Run Text="{Binding AppVersionText, Mode=OneWay}" />
                 </TextBlock>
-            </StackPanel.ToolTip>
-            <TextBlock Text="{DynamicResource SkinWordmarkKicker}"
-                       FontFamily="{DynamicResource AppDisplayFontFamily}"
-                       FontSize="11"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource SkinGoldBrush}"
-                       HorizontalAlignment="Center" />
-            <TextBlock Text="{DynamicResource SkinWordmarkTitle}"
-                       FontFamily="{DynamicResource AppDisplayFontFamily}"
-                       FontSize="28"
-                       FontWeight="Bold"
-                       Foreground="{DynamicResource SkinGoldTextBrush}">
-                <TextBlock.Effect>
-                    <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.6" />
-                </TextBlock.Effect>
-            </TextBlock>
-        </StackPanel>
+            </ContentControl.ToolTip>
+        </ContentControl>
 
-        <ItemsControl Grid.Column="1"
-                      ItemsSource="{Binding GameOptions}"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center"
-                      ToolTip="{Binding SwitchGameDisabledReason}"
-                      ToolTipService.ShowOnDisabled="True">
-            <ItemsControl.Style>
-                <Style TargetType="ItemsControl">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding CanSwitchGame}" Value="True">
-                            <Setter Property="ToolTipService.IsEnabled" Value="False" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ItemsControl.Style>
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <RadioButton GroupName="GameSwitch"
-                                 Style="{DynamicResource SkinGameSwitch}"
-                                 Content="{Binding DisplayName}"
-                                 IsChecked="{Binding IsActive, Mode=OneWay}"
-                                 Command="{Binding DataContext.SwitchGameCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                 CommandParameter="{Binding Id}" />
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <ContentControl Grid.Column="1" Style="{DynamicResource SkinGameSwitchFrame}" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ItemsControl ItemsSource="{Binding GameOptions}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          ToolTip="{Binding SwitchGameDisabledReason}"
+                          ToolTipService.ShowOnDisabled="True">
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CanSwitchGame}" Value="True">
+                                <Setter Property="ToolTipService.IsEnabled" Value="False" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <RadioButton GroupName="GameSwitch"
+                                     Style="{DynamicResource SkinGameSwitch}"
+                                     Content="{Binding DisplayName}"
+                                     IsChecked="{Binding IsActive, Mode=OneWay}"
+                                     Command="{Binding DataContext.SwitchGameCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                     CommandParameter="{Binding Id}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ContentControl>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
             <Border ToolTip="{ui:UiText Header.GameTooltip}">

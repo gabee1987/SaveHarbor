@@ -2,10 +2,14 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:shell="clr-namespace:SaveHarbor.App.Views.Shell">
     <Color x:Key="SkinMistColor">#8DB4D6</Color>
+    <Color x:Key="SkinShroudColor">#9B8AC9</Color>
+    <Color x:Key="SkinRuneColor">#CDAA5E</Color>
 
-    <!-- Ambient effect ("Ambient effects" in Settings): the shroud, two faint blue glows drifting across the window. -->
+    <!-- Ambient effect ("Ambient effects" in Settings): faint rune circles turning, the shroud's mist and violet haze
+         drifting, and spores floating up through it. -->
     <DataTemplate x:Key="SkinAmbientTemplate">
-        <shell:ShroudMistView MistColor="{DynamicResource SkinMistColor}" />
+        <shell:ShroudMistView MistColor="{DynamicResource SkinMistColor}" ShroudColor="{DynamicResource SkinShroudColor}"
+                              RuneColor="{DynamicResource SkinRuneColor}" />
     </DataTemplate>
 
     <!-- Static cool haze and vignette behind the panels. -->
@@ -46,70 +50,81 @@
         </Grid>
     </DataTemplate>
 
-    <!-- Turning ring with a shroud-blue arc, shown while an operation runs. It is a template, so it exists (and animates) only while busy. -->
+    <!-- The flame altar, shown while an operation runs: a flickering flame in a gold gem, a slow rune ring around it,
+         shroud spores circling just outside the flame's light and sparks rising from it. It is a template, so it exists
+         (and animates) only while busy. -->
     <DataTemplate x:Key="SkinArcaneLoaderTemplate">
         <Viewbox Width="64" Height="64">
             <Grid Width="64" Height="64">
-                <Ellipse x:Name="Glow" Width="44" Height="44" Opacity="0.55">
+                <Ellipse x:Name="Glow" Width="50" Height="50" Opacity="0.5">
                     <Ellipse.Fill>
                         <RadialGradientBrush>
-                            <GradientStop Color="#998DB4D6" Offset="0" />
-                            <GradientStop Color="#008DB4D6" Offset="1" />
+                            <GradientStop Color="#B0F0A848" Offset="0" />
+                            <GradientStop Color="#30D9792B" Offset="0.55" />
+                            <GradientStop Color="#00D9792B" Offset="1" />
                         </RadialGradientBrush>
                     </Ellipse.Fill>
                 </Ellipse>
 
-                <Grid x:Name="OuterRing" RenderTransformOrigin="0.5,0.5">
+                <Grid x:Name="RuneRing" RenderTransformOrigin="0.5,0.5">
                     <Grid.RenderTransform>
                         <RotateTransform />
                     </Grid.RenderTransform>
-                    <Ellipse Width="60" Height="60" Stroke="#CDAA5E" StrokeThickness="1.2" StrokeDashArray="1.5 2.5" />
-                    <Path Data="M32,1 L34,4 L32,7 L30,4 Z" Fill="#DEBD72" />
-                    <Path Data="M32,57 L34,60 L32,63 L30,60 Z" Fill="#DEBD72" />
-                    <Path Data="M1,32 L4,30 L7,32 L4,34 Z" Fill="#DEBD72" />
-                    <Path Data="M57,32 L60,30 L63,32 L60,34 Z" Fill="#DEBD72" />
+                    <Ellipse Width="60" Height="60" Stroke="#8F7A48" StrokeThickness="0.8" />
+                    <Ellipse Width="53" Height="53" Stroke="#5C4C2C" StrokeThickness="0.6" />
+                    <Path Stroke="#B39657" StrokeThickness="0.7"
+                          Data="M37.27,5.52 L37.74,3.16 M42.33,7.06 L43.25,4.84 M47.00,9.55 L48.33,7.55 M51.09,12.91 L52.79,11.21 M54.45,17.00 L56.45,15.67 M56.94,21.67 L59.16,20.75 M58.48,26.73 L60.84,26.26 M58.48,37.27 L60.84,37.74 M56.94,42.33 L59.16,43.25 M54.45,47.00 L56.45,48.33 M51.09,51.09 L52.79,52.79 M47.00,54.45 L48.33,56.45 M42.33,56.94 L43.25,59.16 M37.27,58.48 L37.74,60.84 M26.73,58.48 L26.26,60.84 M21.67,56.94 L20.75,59.16 M17.00,54.45 L15.67,56.45 M12.91,51.09 L11.21,52.79 M9.55,47.00 L7.55,48.33 M7.06,42.33 L4.84,43.25 M5.52,37.27 L3.16,37.74 M5.52,26.73 L3.16,26.26 M7.06,21.67 L4.84,20.75 M9.55,17.00 L7.55,15.67 M12.91,12.91 L11.21,11.21 M17.00,9.55 L15.67,7.55 M21.67,7.06 L20.75,4.84 M26.73,5.52 L26.26,3.16" />
+                    <Path Fill="#DEBD72" Stroke="#7A6436" StrokeThickness="0.5"
+                          Data="M32,0.5 L35,3.5 L32,6.5 L29,3.5 Z M32,57.5 L35,60.5 L32,63.5 L29,60.5 Z M0.5,32 L3.5,29 L6.5,32 L3.5,35 Z M57.5,32 L60.5,29 L63.5,32 L60.5,35 Z" />
                 </Grid>
 
-                <Ellipse Width="48" Height="48" Stroke="#8F7A48" StrokeThickness="0.8" />
-
-                <Path x:Name="Arcs" Data="M32,12 A20,20 0 0 1 52,32 M32,52 A20,20 0 0 1 12,32"
-                      Stroke="#8DB4D6" StrokeThickness="2.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                      RenderTransformOrigin="0.5,0.5">
-                    <Path.RenderTransform>
-                        <RotateTransform />
-                    </Path.RenderTransform>
-                    <Path.Effect>
-                        <DropShadowEffect Color="#8DB4D6" BlurRadius="8" ShadowDepth="0" Opacity="0.9" />
-                    </Path.Effect>
-                </Path>
-
-                <Path x:Name="Rune" Data="M32,20 L42.4,38 L21.6,38 Z M32,44 L21.6,26 L42.4,26 Z"
-                      Stroke="#CDAA5E" StrokeThickness="0.9" RenderTransformOrigin="0.5,0.5">
-                    <Path.RenderTransform>
-                        <RotateTransform />
-                    </Path.RenderTransform>
-                </Path>
-
-                <Ellipse x:Name="Orb" Width="14" Height="14" RenderTransformOrigin="0.5,0.5">
-                    <Ellipse.Fill>
-                        <RadialGradientBrush>
-                            <GradientStop Color="#FFF2F6FA" Offset="0" />
-                            <GradientStop Color="#A9C8E2" Offset="0.45" />
-                            <GradientStop Color="#008DB4D6" Offset="1" />
-                        </RadialGradientBrush>
-                    </Ellipse.Fill>
-                    <Ellipse.RenderTransform>
-                        <ScaleTransform />
-                    </Ellipse.RenderTransform>
-                </Ellipse>
-
-                <Canvas x:Name="Sparks" Width="64" Height="64" RenderTransformOrigin="0.5,0.5">
+                <Canvas x:Name="Shroud" Width="64" Height="64" RenderTransformOrigin="0.5,0.5">
                     <Canvas.RenderTransform>
                         <RotateTransform />
                     </Canvas.RenderTransform>
-                    <Path Data="M32,3 L33,6 L36,7 L33,8 L32,11 L31,8 L28,7 L31,6 Z" Fill="#DCE8F2" />
-                    <Path Data="M56,44 L57,46 L59,47 L57,48 L56,50 L55,48 L53,47 L55,46 Z" Fill="#A9C8E2" />
-                    <Path Data="M9,46 L10,48 L12,49 L10,50 L9,52 L8,50 L6,49 L8,48 Z" Fill="#DEBD72" />
+                    <Ellipse Canvas.Left="29.5" Canvas.Top="8.5" Width="5" Height="5" Fill="#B4A3E0">
+                        <Ellipse.Effect><BlurEffect Radius="2" /></Ellipse.Effect>
+                    </Ellipse>
+                    <Ellipse Canvas.Left="48.5" Canvas.Top="40.5" Width="4" Height="4" Fill="#8DB4D6">
+                        <Ellipse.Effect><BlurEffect Radius="1.5" /></Ellipse.Effect>
+                    </Ellipse>
+                    <Ellipse Canvas.Left="11" Canvas.Top="41" Width="4.5" Height="4.5" Fill="#9B8AC9">
+                        <Ellipse.Effect><BlurEffect Radius="2" /></Ellipse.Effect>
+                    </Ellipse>
+                    <Ellipse Canvas.Left="44" Canvas.Top="14" Width="2" Height="2" Fill="#DCE8F2" />
+                    <Ellipse Canvas.Left="15" Canvas.Top="20" Width="2" Height="2" Fill="#B4A3E0" />
+                </Canvas>
+
+                <Rectangle Width="30" Height="30" Fill="{DynamicResource SkinGemPlateBrush}" Stroke="#CDAA5E" StrokeThickness="1.2" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform><RotateTransform Angle="45" /></Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Width="24" Height="24" Stroke="#5C4C2C" StrokeThickness="0.7" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform><RotateTransform Angle="45" /></Rectangle.RenderTransform>
+                </Rectangle>
+
+                <Grid x:Name="Flame" Width="16" Height="21" Margin="0,0,0,2" RenderTransformOrigin="0.5,0.95">
+                    <Grid.RenderTransform>
+                        <ScaleTransform />
+                    </Grid.RenderTransform>
+                    <Path Data="{DynamicResource SkinFlameGeometry}" Fill="{DynamicResource SkinFlameBrush}" Stretch="Uniform">
+                        <Path.Effect>
+                            <DropShadowEffect Color="#F0A848" BlurRadius="10" ShadowDepth="0" Opacity="0.9" />
+                        </Path.Effect>
+                    </Path>
+                    <Path x:Name="Core" Data="{DynamicResource SkinFlameCoreGeometry}" Fill="{DynamicResource SkinFlameCoreBrush}" Stretch="Uniform"
+                          Width="8" Height="10" VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                </Grid>
+
+                <Canvas Width="64" Height="64" IsHitTestVisible="False">
+                    <Ellipse x:Name="SparkOne" Canvas.Left="31" Canvas.Top="20" Width="2" Height="2" Fill="#FFE7A8" Opacity="0">
+                        <Ellipse.RenderTransform><TranslateTransform /></Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse x:Name="SparkTwo" Canvas.Left="28.5" Canvas.Top="22" Width="1.6" Height="1.6" Fill="#F2B95A" Opacity="0">
+                        <Ellipse.RenderTransform><TranslateTransform /></Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse x:Name="SparkThree" Canvas.Left="34" Canvas.Top="21" Width="1.6" Height="1.6" Fill="#FFF0C8" Opacity="0">
+                        <Ellipse.RenderTransform><TranslateTransform /></Ellipse.RenderTransform>
+                    </Ellipse>
                 </Canvas>
             </Grid>
         </Viewbox>
@@ -118,26 +133,51 @@
                 <!-- Each part repeats on its own, so the faster parts never wait for the slowest one. -->
                 <BeginStoryboard>
                     <Storyboard>
-                        <DoubleAnimation Storyboard.TargetName="OuterRing" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:9" RepeatBehavior="Forever" />
-                        <DoubleAnimation Storyboard.TargetName="Arcs" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="360" To="0" Duration="0:0:1.6" RepeatBehavior="Forever" />
-                        <DoubleAnimation Storyboard.TargetName="Rune" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:6" RepeatBehavior="Forever" />
-                        <DoubleAnimation Storyboard.TargetName="Sparks" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                         From="0" To="360" Duration="0:0:3" RepeatBehavior="Forever" />
-                    </Storyboard>
-                </BeginStoryboard>
-                <BeginStoryboard>
-                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                        <DoubleAnimation Storyboard.TargetName="Orb" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                         From="0.8" To="1.2" Duration="0:0:0.9" />
-                        <DoubleAnimation Storyboard.TargetName="Orb" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                         From="0.8" To="1.2" Duration="0:0:0.9" />
+                        <DoubleAnimation Storyboard.TargetName="RuneRing" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                         From="0" To="360" Duration="0:0:24" RepeatBehavior="Forever" />
+                        <DoubleAnimation Storyboard.TargetName="Shroud" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                         From="360" To="0" Duration="0:0:3.6" RepeatBehavior="Forever" />
+                        <DoubleAnimation Storyboard.TargetName="Shroud" Storyboard.TargetProperty="Opacity"
+                                         From="0.45" To="0.95" Duration="0:0:1.1" AutoReverse="True" RepeatBehavior="Forever" />
                         <DoubleAnimation Storyboard.TargetName="Glow" Storyboard.TargetProperty="Opacity"
-                                         From="0.3" To="0.75" Duration="0:0:0.9" />
-                        <DoubleAnimation Storyboard.TargetName="Rune" Storyboard.TargetProperty="Opacity"
-                                         From="0.45" To="1" Duration="0:0:0.9" />
+                                         From="0.35" To="0.75" Duration="0:0:1.3" AutoReverse="True" RepeatBehavior="Forever" />
+                        <!-- Two flicker rates that do not divide evenly, so the flame never settles into a visible loop. -->
+                        <DoubleAnimation Storyboard.TargetName="Flame" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                         From="0.9" To="1.07" Duration="0:0:0.37" AutoReverse="True" RepeatBehavior="Forever">
+                            <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="Flame" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                         From="1.05" To="0.94" Duration="0:0:0.53" AutoReverse="True" RepeatBehavior="Forever">
+                            <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="Core" Storyboard.TargetProperty="Opacity"
+                                         From="0.7" To="1" Duration="0:0:0.29" AutoReverse="True" RepeatBehavior="Forever" />
+
+                        <DoubleAnimation Storyboard.TargetName="SparkOne" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                         From="0" To="-17" Duration="0:0:1.4" RepeatBehavior="Forever" />
+                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SparkOne" Storyboard.TargetProperty="Opacity" Duration="0:0:1.4" RepeatBehavior="Forever">
+                            <LinearDoubleKeyFrame Value="0" KeyTime="0:0:0" />
+                            <LinearDoubleKeyFrame Value="1" KeyTime="0:0:0.3" />
+                            <LinearDoubleKeyFrame Value="0" KeyTime="0:0:1.4" />
+                        </DoubleAnimationUsingKeyFrames>
+                        <DoubleAnimation Storyboard.TargetName="SparkTwo" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                         From="0" To="-15" Duration="0:0:1.7" BeginTime="0:0:0.5" RepeatBehavior="Forever" />
+                        <DoubleAnimation Storyboard.TargetName="SparkTwo" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                         From="0" To="-3" Duration="0:0:1.7" BeginTime="0:0:0.5" RepeatBehavior="Forever" />
+                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SparkTwo" Storyboard.TargetProperty="Opacity" Duration="0:0:1.7" BeginTime="0:0:0.5" RepeatBehavior="Forever">
+                            <LinearDoubleKeyFrame Value="0" KeyTime="0:0:0" />
+                            <LinearDoubleKeyFrame Value="0.9" KeyTime="0:0:0.35" />
+                            <LinearDoubleKeyFrame Value="0" KeyTime="0:0:1.7" />
+                        </DoubleAnimationUsingKeyFrames>
+                        <DoubleAnimation Storyboard.TargetName="SparkThree" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                         From="0" To="-16" Duration="0:0:1.55" BeginTime="0:0:0.9" RepeatBehavior="Forever" />
+                        <DoubleAnimation Storyboard.TargetName="SparkThree" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                         From="0" To="3" Duration="0:0:1.55" BeginTime="0:0:0.9" RepeatBehavior="Forever" />
+                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="SparkThree" Storyboard.TargetProperty="Opacity" Duration="0:0:1.55" BeginTime="0:0:0.9" RepeatBehavior="Forever">
+                            <LinearDoubleKeyFrame Value="0" KeyTime="0:0:0" />
+                            <LinearDoubleKeyFrame Value="0.9" KeyTime="0:0:0.3" />
+                            <LinearDoubleKeyFrame Value="0" KeyTime="0:0:1.55" />
+                        </DoubleAnimationUsingKeyFrames>
                     </Storyboard>
                 </BeginStoryboard>
             </EventTrigger>
