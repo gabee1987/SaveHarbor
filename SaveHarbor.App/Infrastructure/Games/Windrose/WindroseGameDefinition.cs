@@ -32,7 +32,7 @@ public sealed class WindroseGameDefinition(GameOptionsProvider optionsProvider, 
         "Steam Cloud keeps Windrose's own copy of this world and puts it back the next time Windrose starts, so the game "
         + "will list it again. To remove it from Windrose as well, delete it in Windrose's world list afterwards.";
 
-    public string? RemoveWorldInGameHint => null;
+    public string? GetRemoveWorldInGameHint(GameWorld world) => null;
 
     public string? SaveFolderHint => null;
 

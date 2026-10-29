@@ -11,6 +11,9 @@ public static partial class EnshroudedSlotMap
 {
     public const int MaxSlot = 9999;
 
+    // Where SaveHarbor moves the game's rolling copies of a world it removed, one "<time>_world<N>" folder per removal.
+    public const string AsideFolderName = "saveharbor-aside";
+
     public static IEnumerable<string> EnumerateWorldFiles(string worldsPath)
     {
         if (!Directory.Exists(worldsPath))
@@ -64,12 +67,13 @@ public static partial class EnshroudedSlotMap
 
     // The file that already holds the world, else the first free slot. A file whose header cannot be read is never
     // chosen, and its slot is never treated as free, so an unreadable save is not overwritten.
-    // A slot with rolling copies but no world file is not free either: the world in it was deleted in the game, which
-    // deletes the file from Steam Cloud, and Steam then hides a file of that name from the game (observed 2026-10-29: a
-    // world downloaded into such a slot never appeared in the game). A slot the game never used shows up.
+    // A slot that held a world before is not free either: one with rolling copies but no world file was deleted in the
+    // game, which deletes the file from Steam Cloud, and Steam then hides a file of that name from the game (observed
+    // 2026-10-29: a world downloaded into such a slot never appeared in the game). The same goes for a slot SaveHarbor
+    // removed a world from (its aside folder). A slot the game never used shows up.
     public static string ResolveTargetPath(string worldsPath, string worldId)
     {
-        var usedSlots = SlotsWithGameCopies(worldsPath);
+        var usedSlots = SlotsUsedBefore(worldsPath);
         foreach (var file in EnumerateWorldFiles(worldsPath).Order(StringComparer.OrdinalIgnoreCase))
         {
             if (TryGetSlot(file, out var slot))
@@ -89,19 +93,37 @@ public static partial class EnshroudedSlotMap
             : Path.Combine(worldsPath, FileName(freeSlot));
     }
 
-    private static HashSet<int> SlotsWithGameCopies(string worldsPath)
+    private static HashSet<int> SlotsUsedBefore(string worldsPath)
     {
-        var folder = Path.Combine(worldsPath, "backup");
-        if (!Directory.Exists(folder))
+        var slots = new HashSet<int>();
+        var copies = Path.Combine(worldsPath, "backup");
+        if (Directory.Exists(copies))
         {
-            return [];
+            foreach (var copy in Directory.EnumerateFiles(copies, "*", SearchOption.TopDirectoryOnly))
+            {
+                var name = Path.GetFileName(copy);
+                var suffix = GameCopySuffix().Match(name);
+                if (suffix.Success && TryGetSlot(name[..suffix.Index], out var slot))
+                {
+                    slots.Add(slot);
+                }
+            }
         }
 
-        return Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly)
-            .Select(copy => (Name: Path.GetFileName(copy), Suffix: GameCopySuffix().Match(Path.GetFileName(copy))))
-            .Select(copy => copy.Suffix.Success && TryGetSlot(copy.Name[..copy.Suffix.Index], out var slot) ? slot : -1)
-            .Where(slot => slot >= 0)
-            .ToHashSet();
+        var aside = Path.Combine(worldsPath, AsideFolderName);
+        if (Directory.Exists(aside))
+        {
+            foreach (var folder in Directory.EnumerateDirectories(aside, "*", SearchOption.TopDirectoryOnly))
+            {
+                var removed = AsideFolderSlot().Match(Path.GetFileName(folder));
+                if (removed.Success && TryGetSlot(removed.Groups[1].Value + ".ksd", out var slot))
+                {
+                    slots.Add(slot);
+                }
+            }
+        }
+
+        return slots;
     }
 
     [GeneratedRegex(@"^world([0-9]{1,9})\.ksd$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
@@ -109,4 +131,7 @@ public static partial class EnshroudedSlotMap
 
     [GeneratedRegex(@"\.backup-([0-9]{1,3})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex GameCopySuffix();
+
+    [GeneratedRegex(@"^[0-9]{8}-[0-9]{6}_(world[0-9]{1,9})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex AsideFolderSlot();
 }

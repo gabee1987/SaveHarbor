@@ -24,7 +24,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (_activeGame.Current.RemoveWorldInGameHint is { } inGameHint)
+        if (_activeGame.Current.GetRemoveWorldInGameHint(world) is { } inGameHint)
         {
             _dialogService.ShowInfo($"Remove {world.WorldName} in {ActiveGameName}", inGameHint);
             return;

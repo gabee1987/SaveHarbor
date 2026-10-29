@@ -27,7 +27,7 @@ public sealed class DragonwildsGameDefinition(GameOptionsProvider optionsProvide
 
     public string? RemoveWorldNote => null;
 
-    public string? RemoveWorldInGameHint => null;
+    public string? GetRemoveWorldInGameHint(GameWorld world) => null;
 
     public string? SaveFolderHint => null;
 

@@ -52,6 +52,15 @@ public sealed class EnshroudedSlotMapTests : IDisposable
     }
 
     [Fact]
+    public void ResolveTargetPath_SlotSaveHarborRemovedAWorldFrom_IsNotReused()
+    {
+        Directory.CreateDirectory(temp.Combine(EnshroudedSlotMap.AsideFolderName, "20260101-120000_world0"));
+        Directory.CreateDirectory(temp.Combine(EnshroudedSlotMap.AsideFolderName, "TEST_FOLDER_world1"));
+
+        Assert.Equal(Path.Combine(temp.Path, "world1.ksd"), EnshroudedSlotMap.ResolveTargetPath(temp.Path, EnshroudedSaveBuilder.WorldIdOne));
+    }
+
+    [Fact]
     public void ResolveTargetPath_WorldWithRollingCopies_IsStillReused()
     {
         var existing = Write("world1.ksd", EnshroudedSaveBuilder.WorldIdOne);

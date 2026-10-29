@@ -15,7 +15,6 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator, IA
     private const long MaxImportBytes = 256L * 1024 * 1024;
     private const string SteamCloudLabel = "Steam Cloud";
     private const string ChosenFolderLabel = "Save folder";
-    private const string AsideFolderName = "saveharbor-aside";
     private const string WorldExtension = ".ksd";
     private const string ArchiveFileName = "world" + WorldExtension;
 
@@ -139,18 +138,14 @@ public sealed class EnshroudedSaveAdapter(IEnshroudedSaveRootLocator locator, IA
 
     // After a removal the newest rolling copy was already kept with the backup (GetGameBackupCopyPath); the older ones
     // are moved out of the "backup" folder so the game cannot offer them again. Steam Cloud tracks only the files at
-    // the top of the folder, so neither folder is synced.
+    // the top of the folder, so neither folder is synced. The folder is created even when no copy is left: its name
+    // ("<time>_world<N>") records that the slot held a world, and EnshroudedSlotMap keeps new worlds out of it.
     public string? MoveGameFilesAside(GameWorld world)
     {
         var copies = EnshroudedSlotMap.GameCopies(world.SavePath);
-        if (copies.Count == 0)
-        {
-            return null;
-        }
-
         var aside = Path.Combine(
             Path.GetDirectoryName(world.SavePath)!,
-            AsideFolderName,
+            EnshroudedSlotMap.AsideFolderName,
             DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + "_" + Path.GetFileNameWithoutExtension(world.SavePath));
         Directory.CreateDirectory(aside);
         foreach (var copy in copies)

@@ -22,9 +22,9 @@ public interface IGameDefinition
     // the removal confirmation and the activity log. Null when there is nothing to add.
     string? RemoveWorldNote { get; }
 
-    // When set, SaveHarbor does not delete the world's files itself, because the game's own sync would bring them back
-    // (Enshrouded and Steam Cloud). Removing a world from this PC then shows this text, which says where to delete it.
-    string? RemoveWorldInGameHint { get; }
+    // When set for a world, SaveHarbor does not delete its files itself, because the game's own sync would bring them
+    // back (Enshrouded and Steam Cloud). Removing it from this PC then shows this text, which says where to delete it.
+    string? GetRemoveWorldInGameHint(GameWorld world);
 
     // Which of the game's save folders SaveHarbor manages, shown under the save folder in Settings. Null when the
     // folder needs no explanation.

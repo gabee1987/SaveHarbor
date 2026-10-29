@@ -28,7 +28,7 @@ public sealed class StubGameDefinition(GameId id, IGameSaveAdapter? saveAdapter 
 
     public string? RemoveWorldNote => null;
 
-    public string? RemoveWorldInGameHint => null;
+    public string? GetRemoveWorldInGameHint(GameWorld world) => null;
 
     public string? SaveFolderHint => null;
 
