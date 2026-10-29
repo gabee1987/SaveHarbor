@@ -20,7 +20,7 @@ internal sealed class FileSetPayloadStrategy : IPayloadStrategy
         foreach (var file in adapter.GetPayloadFiles(world))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var name = Path.GetFileName(file);
+            var name = string.Equals(file, world.SavePath, StringComparison.OrdinalIgnoreCase) ? adapter.GetArchiveFileName(file) : Path.GetFileName(file);
             var staged = Path.Combine(payloadRoot, name);
             File.Copy(file, staged, overwrite: true);
             entries.Add(new BackupFileEntry
@@ -34,20 +34,17 @@ internal sealed class FileSetPayloadStrategy : IPayloadStrategy
         return entries;
     }
 
-    public void Restore(string payloadRoot, GameWorld target, BackupManifest manifest, CancellationToken cancellationToken)
+    public void Restore(string payloadRoot, GameWorld target, BackupManifest manifest, IGameSaveAdapter adapter, CancellationToken cancellationToken)
     {
         var entries = ValidateEntries(payloadRoot, manifest, Path.GetExtension(target.SavePath));
-        if (entries.Count == 1 && !string.Equals(entries[0].RelativePath, Path.GetFileName(target.SavePath), StringComparison.OrdinalIgnoreCase))
+        if (entries.Count == 1
+            && !string.Equals(entries[0].RelativePath, Path.GetFileName(target.SavePath), StringComparison.OrdinalIgnoreCase)
+            && !IsArchiveName(entries[0].RelativePath, adapter, target.SavePath))
         {
             throw new InvalidOperationException("This backup belongs to a world file with a different name.");
         }
 
-        var targetDirectory = Path.GetDirectoryName(target.SavePath)!;
-        var swaps = entries
-            .Select(entry => new FileSwap(Path.Combine(payloadRoot, entry.RelativePath), SafePath.CombineUnderRoot(targetDirectory, entry.RelativePath)))
-            .ToArray();
-
-        ApplyAll(swaps, cancellationToken);
+        ApplyAll(ToSwaps(payloadRoot, entries, adapter, target.SavePath), cancellationToken);
     }
 
     public string Import(string payloadRoot, BackupManifest manifest, GameSaveRoot root, IGameSaveAdapter adapter, bool overwriteExisting, CancellationToken cancellationToken)
@@ -57,9 +54,7 @@ internal sealed class FileSetPayloadStrategy : IPayloadStrategy
 
         Directory.CreateDirectory(root.WorldsPath);
 
-        var swaps = entries
-            .Select(entry => new FileSwap(Path.Combine(payloadRoot, entry.RelativePath), SafePath.CombineUnderRoot(root.WorldsPath, entry.RelativePath)))
-            .ToArray();
+        var swaps = ToSwaps(payloadRoot, entries, adapter, expectedPath);
 
         foreach (var swap in swaps)
         {
@@ -72,6 +67,32 @@ internal sealed class FileSetPayloadStrategy : IPayloadStrategy
         ApplyAll(swaps, cancellationToken);
         return swaps[0].Target;
     }
+
+    // A single file stored under the adapter's archive name goes to the world path the caller resolved (Enshrouded: the
+    // slot on this PC); every other entry keeps its own name next to it. When the adapter renames files in backups, a
+    // single file under any other name must already have the target's name, so it can never land in another slot.
+    private static FileSwap[] ToSwaps(string payloadRoot, IReadOnlyList<BackupFileEntry> entries, IGameSaveAdapter adapter, string worldPath)
+    {
+        if (entries.Count == 1 && IsArchiveName(entries[0].RelativePath, adapter, worldPath))
+        {
+            return [new FileSwap(Path.Combine(payloadRoot, entries[0].RelativePath), worldPath)];
+        }
+
+        if (entries.Count == 1
+            && !IsArchiveName(Path.GetFileName(worldPath), adapter, worldPath)
+            && !string.Equals(entries[0].RelativePath, Path.GetFileName(worldPath), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("This backup belongs to a world file with a different name.");
+        }
+
+        var targetDirectory = Path.GetDirectoryName(worldPath)!;
+        return entries
+            .Select(entry => new FileSwap(Path.Combine(payloadRoot, entry.RelativePath), SafePath.CombineUnderRoot(targetDirectory, entry.RelativePath)))
+            .ToArray();
+    }
+
+    private static bool IsArchiveName(string name, IGameSaveAdapter adapter, string worldPath) =>
+        string.Equals(name, adapter.GetArchiveFileName(worldPath), StringComparison.OrdinalIgnoreCase);
 
     private static IReadOnlyList<BackupFileEntry> ValidateEntries(string payloadRoot, BackupManifest manifest, string requiredExtension)
     {

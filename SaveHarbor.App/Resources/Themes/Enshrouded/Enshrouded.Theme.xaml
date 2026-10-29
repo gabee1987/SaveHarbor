@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Entry point for the Enshrouded skin, merged by GameShellView only. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Enshrouded.Styles.xaml" />
+        <ResourceDictionary Source="Enshrouded.Controls.xaml" />
+        <ResourceDictionary Source="Enshrouded.Effects.xaml" />
+        <ResourceDictionary Source="Enshrouded.Sync.xaml" />
+        <ResourceDictionary Source="Enshrouded.Inputs.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

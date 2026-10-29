@@ -12,7 +12,7 @@ worlds/locks while a game is selected.
 ## Core types (planned, see `docs/plans/dragonwilds/02-game-abstraction.md`)
 
 ```csharp
-public enum GameId { Windrose, Dragonwilds }   // persisted as lowercase string: "windrose", "dragonwilds"
+public enum GameId { Windrose, Dragonwilds, Enshrouded }   // persisted as lowercase string: "windrose", "dragonwilds", "enshrouded"
 
 public interface IGameDefinition
 {
@@ -70,10 +70,17 @@ Cloud layout inside each game's folder stays `worlds/<worldId>/...` — no cloud
 - Switching: swap theme dictionary, reload worlds/status for the new game, keep window position.
 - Optional launch args: `SaveHarbor.exe --game dragonwilds` (per-game desktop shortcuts).
 
-## Adding a third game later
+## Adding a third game (Enshrouded, `docs/plans/enshrouded/`)
 
 New `IGameDefinition` + `IGameSaveAdapter` + theme dictionary + text keys + one registration line.
-If that requires editing anything else, the abstraction leaked – fix that instead.
+If that requires editing anything else, the abstraction leaked – fix that instead. Known leaks found when
+planning Enshrouded, to be fixed in its T1: `AppOptionsLoader.DefaultLaunchUri` (per-game switch → `GameDefaults`
+next to the game code) and the per-game `DataTrigger` in `MainWindow.xaml` (→ a `DataTemplateSelector`).
+
+Enshrouded adds two generic, additive members rather than game checks: `GameSaveRoot.CanReceiveWorlds`
+(a root that can be shared from but never written to – the Steam Cloud folder) and
+`IGameSaveAdapter.GetArchiveFileName` (a world whose local file name is a slot number is archived under a
+fixed name and restored into the resolved slot).
 
 SaveHarbor Cloud: one new migration with `insert into public.games (key) values ('<key>');`, where the key equals
 `GameIdExtensions.ToStorageKey`. Functions, the `worlds.game` foreign key and the storage upload policy all read that

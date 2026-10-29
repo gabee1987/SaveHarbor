@@ -1,0 +1,440 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- Enshrouded skin base: brushes, frames, headings and buttons for the shared main screen (Views/Shell).
+         Every skin defines the same Skin* keys. -->
+    <sys:String x:Key="SkinWordmarkKicker">SAVEHARBOR</sys:String>
+    <sys:String x:Key="SkinWordmarkTitle">ENSHROUDED</sys:String>
+    <!-- World cards show the slot ("Slot 2"), so a player can find the world in the game's list. -->
+    <Visibility x:Key="SkinWorldSubtitleVisibility">Visible</Visibility>
+    <SolidColorBrush x:Key="SkinGoldBrush" Color="#CDAA5E" />
+    <SolidColorBrush x:Key="SkinGoldBrightBrush" Color="#DEBD72" />
+    <SolidColorBrush x:Key="SkinParchmentBrush" Color="#EDE4D0" />
+    <SolidColorBrush x:Key="SkinFrameBrush" Color="#8F7A48" />
+    <SolidColorBrush x:Key="SkinFrameInnerBrush" Color="#2C343C" />
+    <SolidColorBrush x:Key="SkinRowBrush" Color="#66202830" />
+    <SolidColorBrush x:Key="SkinRowBorderBrush" Color="#3C4650" />
+    <SolidColorBrush x:Key="SkinMagicBrush" Color="#8DB4D6" />
+    <SolidColorBrush x:Key="SkinOverlayBrush" Color="#E00C0F12" />
+    <LinearGradientBrush x:Key="SkinGoldTextBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F0E0B0" Offset="0" />
+        <GradientStop Color="#D6B468" Offset="0.55" />
+        <GradientStop Color="#A98A48" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinGoldFillBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#EDD9A0" Offset="0" />
+        <GradientStop Color="#CDAA5E" Offset="0.55" />
+        <GradientStop Color="#A98A48" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinGoldFillHoverBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F5E6BC" Offset="0" />
+        <GradientStop Color="#DEBD72" Offset="0.55" />
+        <GradientStop Color="#B8984F" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinCardBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#E0232B33" Offset="0" />
+        <GradientStop Color="#E81C2229" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinSelectedRowBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#3A444E" Offset="0" />
+        <GradientStop Color="#2A323A" Offset="0.6" />
+        <GradientStop Color="#1C2229" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinFadeLeftBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00CDAA5E" Offset="0" />
+        <GradientStop Color="#CDAA5E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinFadeRightBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#CDAA5E" Offset="0" />
+        <GradientStop Color="#00CDAA5E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="SkinGlowLineBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00E6CB86" Offset="0" />
+        <GradientStop Color="#E6CB86" Offset="0.5" />
+        <GradientStop Color="#00E6CB86" Offset="1" />
+    </LinearGradientBrush>
+    <!-- A small circle: Enshrouded's mark where Dragonwilds uses a diamond. The key is the shared skin contract. -->
+    <EllipseGeometry x:Key="SkinDiamondGeometry" Center="4,4" RadiusX="3" RadiusY="3" />
+    <!-- Line ending in "o o o" under headings. -->
+    <GeometryGroup x:Key="SkinRuleEndGeometry">
+        <LineGeometry StartPoint="0,4" EndPoint="9,4" />
+        <EllipseGeometry Center="12.5,4" RadiusX="1.6" RadiusY="1.6" />
+        <EllipseGeometry Center="21,4" RadiusX="2.5" RadiusY="2.5" />
+        <EllipseGeometry Center="29.5,4" RadiusX="1.6" RadiusY="1.6" />
+        <LineGeometry StartPoint="33,4" EndPoint="42,4" />
+    </GeometryGroup>
+
+    <!-- Game-style page heading: short rule above, tracked capitals, rule with an ornament below. -->
+    <Style x:Key="SkinPageHeading" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <StackPanel HorizontalAlignment="Left">
+                        <Rectangle Width="220" Height="1" Fill="{StaticResource SkinFadeRightBrush}" HorizontalAlignment="Left" Margin="0,0,0,7" />
+                        <TextBlock Text="{TemplateBinding Content}" Foreground="{StaticResource SkinParchmentBrush}"
+                                   FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="{TemplateBinding FontSize}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                            <Rectangle Width="220" Height="1" Fill="{StaticResource SkinFadeLeftBrush}" VerticalAlignment="Center" />
+                            <Path Data="{StaticResource SkinRuleEndGeometry}" Stroke="{StaticResource SkinGoldBrush}" Fill="{StaticResource SkinGoldBrush}"
+                                  StrokeThickness="1" Width="42" Height="8" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="SkinMuted" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- Hairline frame with a gem, a bracket and two nodes in each corner and a small crest on the top edge, like the
+         panels on the game's menus. Featured panels set BorderBrush to the bright gold. -->
+    <Style x:Key="SkinFrame" TargetType="ContentControl">
+        <Setter Property="Background" Value="{StaticResource SkinCardBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SkinFrameMetalBrush}" />
+        <Setter Property="Padding" Value="18" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" Margin="3">
+                            <Border BorderBrush="{StaticResource SkinFrameInnerBrush}" BorderThickness="1" Margin="3">
+                                <Grid>
+                                    <Rectangle Height="90" VerticalAlignment="Top" Fill="{DynamicResource SkinLanternGlowBrush}" IsHitTestVisible="False" />
+                                    <ContentPresenter Margin="{TemplateBinding Padding}" />
+                                </Grid>
+                            </Border>
+                        </Border>
+                        <Control Template="{DynamicResource SkinCornerTemplate}" Foreground="{TemplateBinding BorderBrush}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Top" />
+                        <Control Template="{DynamicResource SkinCornerTemplate}" Foreground="{TemplateBinding BorderBrush}"
+                                 HorizontalAlignment="Right" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5">
+                            <Control.RenderTransform><ScaleTransform ScaleX="-1" /></Control.RenderTransform>
+                        </Control>
+                        <Control Template="{DynamicResource SkinCornerTemplate}" Foreground="{TemplateBinding BorderBrush}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,0.5">
+                            <Control.RenderTransform><ScaleTransform ScaleY="-1" /></Control.RenderTransform>
+                        </Control>
+                        <Control Template="{DynamicResource SkinCornerTemplate}" Foreground="{TemplateBinding BorderBrush}"
+                                 HorizontalAlignment="Right" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,0.5">
+                            <Control.RenderTransform><ScaleTransform ScaleX="-1" ScaleY="-1" /></Control.RenderTransform>
+                        </Control>
+                        <Grid Width="40" Height="8" HorizontalAlignment="Center" VerticalAlignment="Top" IsHitTestVisible="False"
+                              Visibility="{DynamicResource ShowOrnamentGlyphs}">
+                            <Path Data="M9.2,4 A1.8,1.8 0 1 1 12.8,4 A1.8,1.8 0 1 1 9.2,4 Z M27.2,4 A1.8,1.8 0 1 1 30.8,4 A1.8,1.8 0 1 1 27.2,4 Z" Fill="{DynamicResource InputBrush}"
+                                  Stroke="{TemplateBinding BorderBrush}" StrokeThickness="1" />
+                            <Path Data="M20,0 L24,4 L20,8 L16,4 Z" Fill="{StaticResource SkinGoldFillBrush}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="0.8" />
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinOrnamentDivider" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Height="1" Fill="{StaticResource SkinFadeLeftBrush}" VerticalAlignment="Center" />
+                        <Path Grid.Column="1" Data="{StaticResource SkinRuleEndGeometry}" Stroke="{StaticResource SkinGoldBrush}"
+                              Fill="{StaticResource SkinGoldBrush}" StrokeThickness="1" Width="42" Height="8" Margin="6,0" />
+                        <Rectangle Grid.Column="2" Height="1" Fill="{StaticResource SkinFadeRightBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Gold call-to-action plate with a gem at each end. The text colour is set inside the template so the app-wide
+         TextBlock style cannot override it. -->
+    <Style x:Key="SkinPlayButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource SkinGoldFillBrush}" />
+        <Setter Property="Foreground" Value="#1A1710" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppDisplayFontFamily}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="19" />
+        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="Padding" Value="24,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="#7A6436" BorderThickness="1" Margin="7,0">
+                            <Grid>
+                                <Border BorderBrush="#80FFF6DD" BorderThickness="0,1,0,0" />
+                                <Border BorderBrush="#807A6436" BorderThickness="1" Margin="3" />
+                                <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" Margin="{TemplateBinding Padding}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#D8B868" BlurRadius="20" ShadowDepth="0" Opacity="0.4" />
+                            </Border.Effect>
+                        </Border>
+                        <Path Data="M7,0 L14,7 L7,14 L0,7 Z M7,4.5 L9.5,7 L7,9.5 L4.5,7 Z" Fill="{StaticResource SkinGoldFillBrush}" Stroke="#7A6436" StrokeThickness="1"
+                              HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+                        <Path Data="M7,0 L14,7 L7,14 L0,7 Z M7,4.5 L9.5,7 L7,9.5 L4.5,7 Z" Fill="{StaticResource SkinGoldFillBrush}" Stroke="#7A6436" StrokeThickness="1"
+                              HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SkinGoldFillHoverBrush}" />
+                            <Setter TargetName="Chrome" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#E6CB86" BlurRadius="24" ShadowDepth="0" Opacity="0.65" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dark slate plate with a metal edge and a gem at each end, like the labels on the game's menus. The gems hang
+         outside the plate, so the button is no wider than in the other skins. -->
+    <Style x:Key="SkinButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource SkinParchmentBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppDisplayFontFamily}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Padding" Value="18,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Chrome" Background="{DynamicResource SkinButtonPlateBrush}" BorderBrush="{DynamicResource SkinFrameMetalBrush}" BorderThickness="1">
+                            <Border BorderBrush="{StaticResource SkinFrameInnerBrush}" BorderThickness="1" Margin="2">
+                                <Grid>
+                                    <Rectangle x:Name="Sheen" Fill="{DynamicResource SkinButtonSheenBrush}" Opacity="0" />
+                                    <TextBlock x:Name="Label" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" Margin="{TemplateBinding Padding}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </Border>
+                        <Path x:Name="CapLeft" Data="M4,0 L8,4 L4,8 L0,4 Z" Fill="{DynamicResource InputBrush}" Stroke="{StaticResource SkinFrameBrush}" StrokeThickness="1"
+                              Margin="-4,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+                        <Path x:Name="CapRight" Data="M4,0 L8,4 L4,8 L0,4 Z" Fill="{DynamicResource InputBrush}" Stroke="{StaticResource SkinFrameBrush}" StrokeThickness="1"
+                              Margin="0,0,-4,0" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="Sheen" Property="Opacity" Value="1" />
+                            <Setter TargetName="Label" Property="Foreground" Value="{StaticResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="CapLeft" Property="Fill" Value="{StaticResource SkinGoldFillBrush}" />
+                            <Setter TargetName="CapRight" Property="Fill" Value="{StaticResource SkinGoldFillBrush}" />
+                            <Setter TargetName="CapLeft" Property="Stroke" Value="{StaticResource SkinGoldBrightBrush}" />
+                            <Setter TargetName="CapRight" Property="Stroke" Value="{StaticResource SkinGoldBrightBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#E0111518" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinLinkButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource SkinGoldBrightBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <TextBlock x:Name="Label" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" Background="Transparent" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Label" Property="TextDecorations" Value="Underline" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SkinPill" TargetType="Border">
+        <Setter Property="Background" Value="#99202830" />
+        <Setter Property="BorderBrush" Value="{StaticResource SkinRowBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,3" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <LinearGradientBrush x:Key="SkinFrameMetalBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#B39657" Offset="0" />
+        <GradientStop Color="#6F5E38" Offset="0.5" />
+        <GradientStop Color="#8F7A48" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Warm light falling on the top of a panel, as from a lantern above it. -->
+    <LinearGradientBrush x:Key="SkinLanternGlowBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#14DEBD72" Offset="0" />
+        <GradientStop Color="#00DEBD72" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SkinButtonPlateBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#D81F262D" Offset="0" />
+        <GradientStop Color="#E8131719" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SkinButtonSheenBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#30DEBD72" Offset="0" />
+        <GradientStop Color="#00DEBD72" Offset="0.7" />
+    </LinearGradientBrush>
+
+    <!-- The band behind the game switch: dark in the middle, fading out at both ends, with gold hairlines. -->
+    <LinearGradientBrush x:Key="SkinBannerBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00151A1F" Offset="0" />
+        <GradientStop Color="#C8151A1F" Offset="0.12" />
+        <GradientStop Color="#C8151A1F" Offset="0.88" />
+        <GradientStop Color="#00151A1F" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SkinBannerLineBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#008F7A48" Offset="0" />
+        <GradientStop Color="#8F7A48" Offset="0.2" />
+        <GradientStop Color="#8F7A48" Offset="0.8" />
+        <GradientStop Color="#008F7A48" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- The flame that keeps the shroud away, an original shape on a 24 x 32 grid: an outer flame and its bright core. -->
+    <PathGeometry x:Key="SkinFlameGeometry" Figures="M12,0 C13.5,5 19.5,9 19.5,18 C19.5,25 16,29.5 12,31 C13.6,28 13.4,25 11.6,22.5 C10.8,25.5 8.6,26.5 8.3,29.6 C5.6,27.5 4.5,23.5 4.5,20 C4.5,13.5 9,11 10,5.5 C11.2,8.5 12.6,10 13.2,12.5 C13.8,8.5 13.4,4 12,0 Z" />
+
+    <PathGeometry x:Key="SkinFlameCoreGeometry" Figures="M12,15 C14.3,18 15.8,20 15.8,23 C15.8,26.2 14.2,28.4 12,29.2 C9.8,28.4 8.2,26.2 8.2,23.5 C8.2,21.4 9.6,19.8 10.8,18.4 C10.9,20 11.6,21 12.4,21.6 C12.1,19.4 11.8,17.2 12,15 Z" />
+
+    <RadialGradientBrush x:Key="SkinFlameBrush" Center="0.5,0.78" GradientOrigin="0.5,0.85" RadiusX="0.75" RadiusY="0.75">
+        <GradientStop Color="#FFF0C8" Offset="0" />
+        <GradientStop Color="#F2B95A" Offset="0.4" />
+        <GradientStop Color="#D9792B" Offset="0.78" />
+        <GradientStop Color="#A8461E" Offset="1" />
+    </RadialGradientBrush>
+
+    <RadialGradientBrush x:Key="SkinFlameCoreBrush" Center="0.5,0.7" GradientOrigin="0.5,0.8">
+        <GradientStop Color="#FFFDF4" Offset="0" />
+        <GradientStop Color="#FFE7A8" Offset="0.6" />
+        <GradientStop Color="#00FFE7A8" Offset="1" />
+    </RadialGradientBrush>
+
+    <LinearGradientBrush x:Key="SkinGemPlateBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#2A333C" Offset="0" />
+        <GradientStop Color="#141920" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- One frame corner: a gem on the corner, an outer and an inner bracket, a node at the end of each arm. -->
+    <ControlTemplate x:Key="SkinCornerTemplate" TargetType="Control">
+        <Grid Width="26" Height="26" IsHitTestVisible="False" Visibility="{DynamicResource ShowOrnamentGlyphs}">
+            <Path Data="M3.5,19 L3.5,3.5 L19,3.5 M8,14 L8,8 L14,8" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.2" />
+            <Path Data="M20.8,3.5 A1.7,1.7 0 1 1 24.2,3.5 A1.7,1.7 0 1 1 20.8,3.5 Z M1.8,22.5 A1.7,1.7 0 1 1 5.2,22.5 A1.7,1.7 0 1 1 1.8,22.5 Z" Fill="{DynamicResource InputBrush}"
+                  Stroke="{TemplateBinding Foreground}" StrokeThickness="1" />
+            <Path Data="M3.5,0 L7,3.5 L3.5,7 L0,3.5 Z" Fill="{StaticResource SkinGoldFillBrush}" Stroke="{TemplateBinding Foreground}" StrokeThickness="0.8" />
+        </Grid>
+    </ControlTemplate>
+
+    <!-- Around the game switch: a dark band with gold hairlines between "»" and "«", like the section titles on the
+         game's announcements. -->
+    <Style x:Key="SkinGameSwitchFrame" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Path Data="M0,0 L4.5,4.5 L0,9 M4.5,0 L9,4.5 L4.5,9" Stroke="{StaticResource SkinGoldBrush}" StrokeThickness="1.2"
+                              VerticalAlignment="Center" Margin="0,0,4,0" Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+                        <Grid Grid.Column="1" Background="{DynamicResource SkinBannerBrush}">
+                            <Rectangle Height="1" VerticalAlignment="Top" Fill="{DynamicResource SkinBannerLineBrush}" />
+                            <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{DynamicResource SkinBannerLineBrush}" />
+                            <ContentPresenter Margin="14,3" />
+                        </Grid>
+                        <Path Grid.Column="2" Data="M9,0 L4.5,4.5 L9,9 M4.5,0 L0,4.5 L4.5,9" Stroke="{StaticResource SkinGoldBrush}" StrokeThickness="1.2"
+                              VerticalAlignment="Center" Margin="4,0,0,0" Visibility="{DynamicResource ShowOrnamentGlyphs}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Header wordmark: a gem with the flame, ENSHROUDED with a raised initial, and "» SAVEHARBOR «" between fading
+         rules below it, like the titles on the game's announcements. -->
+    <DataTemplate x:Key="SkinWordmarkTemplate">
+        <StackPanel Orientation="Horizontal">
+            <Grid Width="46" Height="46" Margin="0,0,12,0" VerticalAlignment="Center">
+                <Rectangle Width="30" Height="30" Fill="{StaticResource SkinGemPlateBrush}" Stroke="{DynamicResource SkinFrameMetalBrush}" StrokeThickness="1.4"
+                           RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform><RotateTransform Angle="45" /></Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle Width="24" Height="24" Stroke="#5C4C2C" StrokeThickness="0.8" RenderTransformOrigin="0.5,0.5">
+                    <Rectangle.RenderTransform><RotateTransform Angle="45" /></Rectangle.RenderTransform>
+                </Rectangle>
+                <Path Data="{DynamicResource SkinFlameGeometry}" Fill="{DynamicResource SkinFlameBrush}" Width="15" Height="20" Stretch="Uniform" Margin="0,0,0,2">
+                    <Path.Effect>
+                        <DropShadowEffect Color="#F0A848" BlurRadius="12" ShadowDepth="0" Opacity="0.8" />
+                    </Path.Effect>
+                </Path>
+            </Grid>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock FontFamily="{DynamicResource AppDisplayFontFamily}" FontWeight="Bold" Foreground="{StaticResource SkinGoldTextBrush}">
+                    <Run Text="E" FontSize="34" /><Run Text="NSHROUDED" FontSize="25" />
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.7" />
+                    </TextBlock.Effect>
+                </TextBlock>
+                <Grid Margin="0,-3,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Rectangle Height="1" Fill="{StaticResource SkinFadeLeftBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0">
+                        <Path Data="M0,0 L3.5,3.5 L0,7 M3.5,0 L7,3.5 L3.5,7" Stroke="{StaticResource SkinGoldBrush}" StrokeThickness="1" VerticalAlignment="Center" />
+                        <TextBlock Text="{DynamicResource SkinWordmarkKicker}" FontFamily="{DynamicResource AppDisplayFontFamily}" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{StaticResource SkinGoldBrush}" Margin="6,0" VerticalAlignment="Center" />
+                        <Path Data="M7,0 L3.5,3.5 L7,7 M3.5,0 L0,3.5 L3.5,7" Stroke="{StaticResource SkinGoldBrush}" StrokeThickness="1" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Rectangle Grid.Column="2" Height="1" Fill="{StaticResource SkinFadeRightBrush}" VerticalAlignment="Center" />
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

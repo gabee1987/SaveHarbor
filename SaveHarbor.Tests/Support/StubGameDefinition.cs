@@ -28,6 +28,10 @@ public sealed class StubGameDefinition(GameId id, IGameSaveAdapter? saveAdapter 
 
     public string? RemoveWorldNote => null;
 
+    public string? GetRemoveWorldInGameHint(GameWorld world) => null;
+
+    public string? SaveFolderHint => null;
+
     public string PlayHint => string.Empty;
 
     public IGameSaveAdapter SaveAdapter => saveAdapter ?? throw new NotSupportedException();

@@ -6,6 +6,7 @@ public static class GameIdExtensions
     {
         GameId.Windrose => "windrose",
         GameId.Dragonwilds => "dragonwilds",
+        GameId.Enshrouded => "enshrouded",
         _ => throw new ArgumentOutOfRangeException(nameof(game), game, null)
     };
 

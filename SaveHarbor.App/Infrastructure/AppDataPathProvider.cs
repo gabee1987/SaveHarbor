@@ -8,7 +8,7 @@ public sealed class AppDataPathProvider : IAppDataPathProvider
 {
     public string AppDataRoot { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SaveHarbor");
+        AppEnvironment.IsDevelopment ? "SaveHarbor-Development" : "SaveHarbor");
 
     public string LocalLogsPath => Path.Combine(AppDataRoot, "logs");
 

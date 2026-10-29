@@ -8,7 +8,8 @@
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
-    "db:lint": "supabase db lint --level warning"
+    "db:lint": "supabase db lint --level warning",
+    "app:dev": "pwsh -NoProfile -File build/Start-Dev.ps1"
   },
   "devDependencies": {
     "supabase": "2.119.0"

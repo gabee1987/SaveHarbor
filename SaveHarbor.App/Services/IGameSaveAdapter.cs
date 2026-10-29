@@ -31,6 +31,10 @@ public interface IGameSaveAdapter
 
     IReadOnlyList<string> GetPayloadFiles(GameWorld world);
 
+    // The name a file-set world's save file has inside a backup. It is the real file name unless the name is only a
+    // local slot (Enshrouded "world<N>.ksd"); then restore and import place the file at the world path they resolved.
+    string GetArchiveFileName(string worldPath);
+
     string GetExpectedWorldPath(GameSaveRoot root, string worldId);
 
     // The game's save-format version a world path belongs to (Windrose: the RocksDB version folder), when it has one.

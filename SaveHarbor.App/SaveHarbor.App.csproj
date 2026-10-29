@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
     <!-- Built from build/icon/*.svg with build/icon/make-icon.mjs. -->
     <ApplicationIcon>Resources\saveharbor.ico</ApplicationIcon>
     <StartupObject>SaveHarbor.App.Program</StartupObject>
@@ -27,12 +27,18 @@
 
   <ItemGroup>
     <Resource Include="Resources\Fonts\*.ttf" />
+    <!-- The patch notes (PatchNotesCatalog): the repository's CHANGELOG.md, so they always match this build. -->
+    <EmbeddedResource Include="..\CHANGELOG.md" Link="CHANGELOG.md" LogicalName="SaveHarbor.App.CHANGELOG.md" />
     <Content Include="Resources\Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Resources\Fonts\OFL.txt')" />
     <Content Include="Resources\Texts\ui-text.en.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Include="Configuration\google-client-secret.json" Condition="Exists('Configuration\google-client-secret.json') and !Exists('Configuration\google-client-secret.enc')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

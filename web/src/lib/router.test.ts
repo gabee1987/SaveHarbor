@@ -10,6 +10,7 @@ describe('parseRoute', () => {
     ['#/', { page: 'groups' }],
     [`#/g/${group}`, { page: 'group', groupId: group, game: 'windrose' }],
     [`#/g/${group}/dragonwilds`, { page: 'group', groupId: group, game: 'dragonwilds' }],
+    [`#/g/${group}/enshrouded`, { page: 'group', groupId: group, game: 'enshrouded' }],
     [`#/g/${group}/windrose/${world}`, { page: 'world', groupId: group, game: 'windrose', worldUuid: world }]
   ])('%s', (hash, route) => {
     expect(parseRoute(hash)).toEqual(route);
@@ -35,6 +36,7 @@ describe('routeHash', () => {
     const routes: Route[] = [
       { page: 'groups' },
       { page: 'group', groupId: group, game: 'dragonwilds' },
+      { page: 'group', groupId: group, game: 'enshrouded' },
       { page: 'world', groupId: group, game: 'windrose', worldUuid: world }
     ];
 

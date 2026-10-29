@@ -12,6 +12,7 @@ public interface IDialogService
     string? SelectZipFile(string initialDirectory);
     string? SelectImportFile(string initialDirectory, string saveFileFilter);
     void ShowWorldInspector(WorldInspectorViewModel viewModel, Uri skinDictionary);
+    void ShowPatchNotes(PatchNotesViewModel viewModel, Uri skinDictionary);
     string? SelectFolder(string title, string initialDirectory);
     CloudFolderChoice? ConfigureCloudFolder(
         Uri skinDictionary,
